@@ -332,6 +332,34 @@ static struct ExprIr* visit_binop_expr2(struct RegallocVisitor2* visitor,
     return NULL;
 }
 
+static struct ExprIr* visit_addrof_expr2(struct RegallocVisitor2* visitor,
+                                         struct AddrofExprIr* ir) {
+    assert(ir_addrof_expr_tag(ir) == AddrTag_Var);
+    strtable_id reg_id = acquire_register(visitor);
+    ir_expr_set_reg_id(ir_addrof_expr_cast(ir), reg_id);
+    return NULL;
+}
+
+static struct ExprIr* visit_load_expr2(struct RegallocVisitor2* visitor,
+                                       struct LoadExprIr* ir) {
+    visitor2_visit_expr(as_visitor(visitor), ir_load_expr_addr(ir));
+    release_register(visitor);
+    strtable_id reg_id = acquire_register(visitor);
+    ir_expr_set_reg_id(ir_load_expr_cast(ir), reg_id);
+    return NULL;
+}
+
+static struct ExprIr* visit_store_expr2(struct RegallocVisitor2* visitor,
+                                        struct StoreExprIr* ir) {
+    visitor2_visit_expr(as_visitor(visitor), ir_store_expr_addr(ir));
+    visitor2_visit_expr(as_visitor(visitor), ir_store_expr_value(ir));
+    release_register(visitor);
+    release_register(visitor);
+    strtable_id reg_id = acquire_register(visitor);
+    ir_expr_set_reg_id(ir_store_expr_cast(ir), reg_id);
+    return NULL;
+}
+
 static struct Ir* visit_block_iterate_post(struct RegallocVisitor2* visitor,
                                            struct BlockIr* block,
                                            struct Ir* ir) {
@@ -341,14 +369,28 @@ static struct Ir* visit_block_iterate_post(struct RegallocVisitor2* visitor,
     return NULL;
 }
 
+static struct Ir* visit_block_post(struct RegallocVisitor2* visitor,
+                                   struct BlockIr* target_block,
+                                   struct BlockIr* result_block) {
+    (void)visitor;
+    (void)result_block;
+    ir_block_commit_region_size(target_block);
+    return NULL;
+}
+
 struct RegallocVisitor2* new_regalloc_visitor2(struct Context* context) {
     struct RegallocVisitor2* visitor = malloc(sizeof(struct RegallocVisitor2));
     visitor2_initialize(as_visitor(visitor));
 
     register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr2);
     register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr2);
+    register_visitor(visitor->as_visitor, visit_addrof_expr,
+                     visit_addrof_expr2);
+    register_visitor(visitor->as_visitor, visit_load_expr, visit_load_expr2);
+    register_visitor(visitor->as_visitor, visit_store_expr, visit_store_expr2);
     register_visitor(visitor->as_visitor, visit_block_iterate_post,
                      visit_block_iterate_post);
+    register_visitor(visitor->as_visitor, visit_block_post, visit_block_post);
 
     visitor->context = context;
     visitor->free_register_index = 0;

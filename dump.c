@@ -231,12 +231,43 @@ static struct ExprIr* visit_binop_expr2(struct DumpVisitor2* visitor,
     return NULL;
 }
 
+static struct ExprIr* visit_addrof_expr2(struct DumpVisitor2* visitor,
+                                         struct AddrofExprIr* ir) {
+    assert(ir_addrof_expr_tag(ir) == AddrTag_Var);
+    fprintf(visitor->stream, "v%p = addrof [%s]\n", ir,
+            strtable_at(&visitor->context->strtable,
+                        ir_var_index(ir_addrof_expr_var(ir))));
+    return NULL;
+}
+
+static struct ExprIr* visit_load_expr2(struct DumpVisitor2* visitor,
+                                       struct LoadExprIr* ir) {
+    struct ExprIr* addr = ir_load_expr_addr(ir);
+    visitor2_visit_expr(as_visitor(visitor), addr);
+    fprintf(visitor->stream, "v%p = load [v%p]\n", ir, addr);
+    return NULL;
+}
+
+static struct ExprIr* visit_store_expr2(struct DumpVisitor2* visitor,
+                                        struct StoreExprIr* ir) {
+    struct ExprIr* addr = ir_store_expr_addr(ir);
+    struct ExprIr* value = ir_store_expr_value(ir);
+    visitor2_visit_expr(as_visitor(visitor), addr);
+    visitor2_visit_expr(as_visitor(visitor), value);
+    fprintf(visitor->stream, "v%p = store [v%p] v%p\n", ir, addr, value);
+    return NULL;
+}
+
 struct DumpVisitor2* new_dump_visitor2(struct Context* context, FILE* stream) {
     struct DumpVisitor2* visitor = malloc(sizeof(struct DumpVisitor2));
     visitor2_initialize(as_visitor(visitor));
 
     register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr2);
     register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr2);
+    register_visitor(visitor->as_visitor, visit_addrof_expr,
+                     visit_addrof_expr2);
+    register_visitor(visitor->as_visitor, visit_load_expr, visit_load_expr2);
+    register_visitor(visitor->as_visitor, visit_store_expr, visit_store_expr2);
 
     visitor->context = context;
     visitor->stream = stream;

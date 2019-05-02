@@ -22,9 +22,16 @@ struct BlockIr* ir_as_block(struct Ir* ir) {
 
 enum IrTag ir_tag(struct Ir* ir) { return ir->tag; }
 
+struct VarIr {
+    struct Ir as_ir;
+    strtable_id index;
+    size_t offset;
+};
+
 struct BlockIr {
     struct Ir as_ir;
     struct List statemetnts;
+    size_t region_size;
 };
 
 struct BlockIterator {
@@ -75,6 +82,41 @@ void ir_block_insert_expr_at_end(struct BlockIr* ir, struct ExprIr* expr) {
     ir_block_insert_at_end(ir, ir_expr_cast(expr));
 }
 
+static struct VarIr* ir_new_var(strtable_id index, size_t offset) {
+    struct VarIr* ir = malloc(sizeof(struct VarIr));
+    initialize_ir(ir_var_cast(ir), IrTag_Var);
+    ir->index = index;
+    ir->offset = offset;
+    return ir;
+}
+
+struct VarIr* ir_block_new_var(struct BlockIr* ir, strtable_id index) {
+    size_t var_size = sizeof(void*);  // ToDo: fix to refer size of type
+    size_t offset = ir->region_size;
+    if (offset % var_size) {
+        ir->region_size =
+            (ir->region_size + var_size - 1) / var_size * var_size;
+        offset = ir->region_size;
+    }
+    ir->region_size += var_size;
+    return ir_new_var(index, offset);
+}
+
+void ir_block_commit_region_size(struct BlockIr* ir) {
+    size_t alignment = sizeof(void*);
+    if (ir->region_size % alignment)
+        ir->region_size =
+            (ir->region_size + alignment - 1) / alignment * alignment;
+}
+
+struct Ir* ir_var_cast(struct VarIr* ir) {
+    return &ir->as_ir;
+}
+
+size_t ir_var_offset(struct VarIr* ir) { return ir->offset; }
+
+strtable_id ir_var_index(struct VarIr* ir) { return ir->index; }
+
 struct ExprIr {
     struct Ir as_ir;
     enum ExprIrTag tag;
@@ -97,6 +139,18 @@ struct ConstExprIr* ir_expr_as_const(struct ExprIr* ir) {
 
 struct BinopExprIr* ir_expr_as_binop(struct ExprIr* ir) {
     return ir->tag == ExprIrTag_Binop ? (struct BinopExprIr*)ir : NULL;
+}
+
+struct AddrofExprIr* ir_expr_as_addrof(struct ExprIr* ir) {
+    return ir->tag == ExprIrTag_Addrof ? (struct AddrofExprIr*)ir : NULL;
+}
+
+struct LoadExprIr* ir_expr_as_load(struct ExprIr* ir) {
+    return ir->tag == ExprIrTag_Load ? (struct LoadExprIr*)ir : NULL;
+}
+
+struct StoreExprIr* ir_expr_as_store(struct ExprIr* ir) {
+    return ir->tag == ExprIrTag_Store ? (struct StoreExprIr*)ir : NULL;
 }
 
 enum ExprIrTag ir_expr_tag(struct ExprIr* ir) { return ir->tag; }
@@ -156,4 +210,86 @@ struct ExprIr* ir_binop_expr_lhs(struct BinopExprIr* ir) {
 
 struct ExprIr* ir_binop_expr_rhs(struct BinopExprIr* ir) {
     return ir->rhs;
+}
+
+struct AddrofExprIr {
+    struct ExprIr as_expr;
+    enum AddrTag tag;
+    union {
+        struct ExprIr* expr;
+        struct VarIr* var;
+    };
+};
+
+struct AddrofExprIr* ir_new_addrof_expr_with_expr(struct ExprIr* expr) {
+    struct AddrofExprIr* ir = malloc(sizeof(struct AddrofExprIr));
+    initialize_expr(ir_addrof_expr_cast(ir), ExprIrTag_Addrof);
+    ir->tag = AddrTag_Expr;
+    ir->expr = expr;
+    return ir;
+}
+
+struct AddrofExprIr* ir_new_addrof_expr_with_var(struct VarIr* var) {
+    struct AddrofExprIr* ir = malloc(sizeof(struct AddrofExprIr));
+    initialize_expr(ir_addrof_expr_cast(ir), ExprIrTag_Addrof);
+    ir->tag = AddrTag_Var;
+    ir->var = var;
+    return ir;
+}
+
+struct ExprIr* ir_addrof_expr_cast(struct AddrofExprIr* ir) {
+    return &ir->as_expr;
+}
+
+enum AddrTag ir_addrof_expr_tag(struct AddrofExprIr* ir) { return ir->tag; }
+
+struct VarIr* ir_addrof_expr_var(struct AddrofExprIr* ir) {
+    return ir->var;
+}
+
+struct LoadExprIr {
+    struct ExprIr as_expr;
+    struct ExprIr* addr;
+};
+
+struct LoadExprIr* ir_new_load_expr(struct ExprIr* addr) {
+    struct LoadExprIr* ir = malloc(sizeof(struct LoadExprIr));
+    initialize_expr(ir_load_expr_cast(ir), ExprIrTag_Load);
+    ir->addr = addr;
+    return ir;
+}
+
+struct ExprIr* ir_load_expr_cast(struct LoadExprIr* ir) {
+    return &ir->as_expr;
+}
+
+struct ExprIr* ir_load_expr_addr(struct LoadExprIr* ir) {
+    return ir->addr;
+}
+
+struct StoreExprIr {
+    struct ExprIr as_expr;
+    struct ExprIr* addr;
+    struct ExprIr* value;
+};
+
+struct StoreExprIr* ir_new_store_expr(struct ExprIr* addr,
+                                      struct ExprIr* value) {
+    struct StoreExprIr* ir = malloc(sizeof(struct StoreExprIr));
+    initialize_expr(ir_store_expr_cast(ir), ExprIrTag_Store);
+    ir->addr = addr;
+    ir->value = value;
+    return ir;
+}
+
+struct ExprIr* ir_store_expr_cast(struct StoreExprIr* ir) {
+    return &ir->as_expr;
+}
+
+struct ExprIr* ir_store_expr_addr(struct StoreExprIr* ir) {
+    return ir->addr;
+}
+
+struct ExprIr* ir_store_expr_value(struct StoreExprIr* ir) {
+    return ir->value;
 }

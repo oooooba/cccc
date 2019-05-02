@@ -60,6 +60,12 @@ struct ExprIr* visitor2_visit_expr(struct Visitor2* visitor,
             return visitor->visit_const_expr(visitor, ir_expr_as_const(ir));
         case ExprIrTag_Binop:
             return visitor->visit_binop_expr(visitor, ir_expr_as_binop(ir));
+        case ExprIrTag_Addrof:
+            return visitor->visit_addrof_expr(visitor, ir_expr_as_addrof(ir));
+        case ExprIrTag_Load:
+            return visitor->visit_load_expr(visitor, ir_expr_as_load(ir));
+        case ExprIrTag_Store:
+            return visitor->visit_store_expr(visitor, ir_expr_as_store(ir));
         default:
             assert(false);
     }
@@ -94,11 +100,19 @@ struct BlockIr* visitor2_visit_block(struct Visitor2* visitor,
             modified = true;
         }
     }
-    return modified ? block : NULL;
+    if (visitor->visit_block_post)
+        return visitor->visit_block_post(visitor, block,
+                                         modified ? block : NULL);
+    else
+        return modified ? block : NULL;
 }
 
 void visitor2_initialize(struct Visitor2* visitor) {
     register_visitor(*visitor, visit_const_expr, NULL);
     register_visitor(*visitor, visit_binop_expr, NULL);
+    register_visitor(*visitor, visit_addrof_expr, NULL);
+    register_visitor(*visitor, visit_load_expr, NULL);
+    register_visitor(*visitor, visit_store_expr, NULL);
     register_visitor(*visitor, visit_block_iterate_post, NULL);
+    register_visitor(*visitor, visit_block_post, NULL);
 }

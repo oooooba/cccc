@@ -308,6 +308,53 @@ static struct ExprIr* visit_binop_expr2(struct CodegenVisitor2* visitor,
     return NULL;
 }
 
+static struct ExprIr* visit_addrof_expr2(struct CodegenVisitor2* visitor,
+                                         struct AddrofExprIr* ir) {
+    assert(ir_addrof_expr_tag(ir) == AddrTag_Var);
+    struct VarIr* var = ir_addrof_expr_var(ir);
+    size_t offset = ir_var_offset(var);
+    strtable_id reg_id = ir_expr_reg_id(ir_addrof_expr_cast(ir));
+    const char* reg = strtable_at(&visitor->context->strtable, reg_id);
+    fprintf(visitor->stream, "\tlea\t%s, [ebp - %ld]\n", reg, offset);
+    return NULL;
+}
+
+static struct ExprIr* visit_load_expr2(struct CodegenVisitor2* visitor,
+                                       struct LoadExprIr* ir) {
+    struct ExprIr* addr = ir_load_expr_addr(ir);
+    visitor2_visit_expr(as_visitor(visitor), addr);
+
+    strtable_id addr_reg_id = ir_expr_reg_id(addr);
+    strtable_id result_reg_id = ir_expr_reg_id(ir_load_expr_cast(ir));
+
+    const char* addr_reg =
+        strtable_at(&visitor->context->strtable, addr_reg_id);
+    const char* result_reg =
+        strtable_at(&visitor->context->strtable, result_reg_id);
+
+    fprintf(visitor->stream, "\tmov\t%s, [%s]\n", result_reg, addr_reg);
+    return NULL;
+}
+
+static struct ExprIr* visit_store_expr2(struct CodegenVisitor2* visitor,
+                                        struct StoreExprIr* ir) {
+    struct ExprIr* addr = ir_store_expr_addr(ir);
+    struct ExprIr* value = ir_store_expr_value(ir);
+    visitor2_visit_expr(as_visitor(visitor), addr);
+    visitor2_visit_expr(as_visitor(visitor), value);
+
+    strtable_id addr_reg_id = ir_expr_reg_id(addr);
+    strtable_id value_reg_id = ir_expr_reg_id(value);
+
+    const char* addr_reg =
+        strtable_at(&visitor->context->strtable, addr_reg_id);
+    const char* value_reg =
+        strtable_at(&visitor->context->strtable, value_reg_id);
+
+    fprintf(visitor->stream, "\tmov\t[%s], %s\n", addr_reg, value_reg);
+    return NULL;
+}
+
 struct CodegenVisitor2* new_codegen_visitor2(struct Context* context,
                                              FILE* stream) {
     struct CodegenVisitor2* visitor = malloc(sizeof(struct CodegenVisitor2));
@@ -315,6 +362,10 @@ struct CodegenVisitor2* new_codegen_visitor2(struct Context* context,
 
     register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr2);
     register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr2);
+    register_visitor(visitor->as_visitor, visit_addrof_expr,
+                     visit_addrof_expr2);
+    register_visitor(visitor->as_visitor, visit_load_expr, visit_load_expr2);
+    register_visitor(visitor->as_visitor, visit_store_expr, visit_store_expr2);
 
     visitor->context = context;
     visitor->stream = stream;

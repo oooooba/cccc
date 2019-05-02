@@ -40,9 +40,18 @@ struct Visitor2 {
                                        struct ConstExprIr* ir);
     struct ExprIr* (*visit_binop_expr)(struct Visitor2* visitor,
                                        struct BinopExprIr* ir);
+    struct ExprIr* (*visit_addrof_expr)(struct Visitor2* visitor,
+                                        struct AddrofExprIr* ir);
+    struct ExprIr* (*visit_load_expr)(struct Visitor2* visitor,
+                                      struct LoadExprIr* ir);
+    struct ExprIr* (*visit_store_expr)(struct Visitor2* visitor,
+                                       struct StoreExprIr* ir);
     struct Ir* (*visit_block_iterate_post)(struct Visitor2* visitor,
                                            struct BlockIr* block,
                                            struct Ir* statement);
+    struct BlockIr* (*visit_block_post)(struct Visitor2* visitor,
+                                        struct BlockIr* target_block,
+                                        struct BlockIr* result_block);
 };
 
 struct ExprIr* visitor2_visit_expr(struct Visitor2* visitor, struct ExprIr* ir);

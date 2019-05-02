@@ -10,24 +10,37 @@ struct Ir;
 
 struct BlockIr;
 struct BlockIterator;
+struct VarIr;
 
 struct ExprIr;
 struct ConstExprIr;
 struct BinopExprIr;
+struct AddrofExprIr;
+struct LoadExprIr;
+struct StoreExprIr;
 
 enum IrTag {
-    IrTag_Expr,
     IrTag_Block,
+    IrTag_Expr,
+    IrTag_Var,
 };
 
 enum ExprIrTag {
     ExprIrTag_Const,
     ExprIrTag_Binop,
+    ExprIrTag_Addrof,
+    ExprIrTag_Load,
+    ExprIrTag_Store,
 };
 
 enum BinopExprIrTag {
     BinopExprIrTag_Add,
     BinopExprIrTag_Sub,
+};
+
+enum AddrTag {
+    AddrTag_Var,
+    AddrTag_Expr,
 };
 
 struct ExprIr* ir_as_expr(struct Ir* ir);
@@ -41,10 +54,19 @@ struct Ir* ir_block_iterator_next(struct BlockIterator* it);
 struct Ir* ir_block_iterator_swap_at(struct BlockIterator* it,
                                      struct Ir* statement);
 void ir_block_insert_expr_at_end(struct BlockIr* ir, struct ExprIr* expr);
+struct VarIr* ir_block_new_var(struct BlockIr* ir, strtable_id index);
+void ir_block_commit_region_size(struct BlockIr* ir);
+
+struct Ir* ir_var_cast(struct VarIr* ir);
+strtable_id ir_var_index(struct VarIr* ir);
+size_t ir_var_offset(struct VarIr* ir);
 
 struct Ir* ir_expr_cast(struct ExprIr* ir);
 struct ConstExprIr* ir_expr_as_const(struct ExprIr* ir);
 struct BinopExprIr* ir_expr_as_binop(struct ExprIr* ir);
+struct AddrofExprIr* ir_expr_as_addrof(struct ExprIr* ir);
+struct LoadExprIr* ir_expr_as_load(struct ExprIr* ir);
+struct StoreExprIr* ir_expr_as_store(struct ExprIr* ir);
 enum ExprIrTag ir_expr_tag(struct ExprIr* ir);
 strtable_id ir_expr_reg_id(struct ExprIr* ir);
 void ir_expr_set_reg_id(struct ExprIr* ir, strtable_id id);
@@ -59,5 +81,21 @@ struct ExprIr* ir_binop_expr_cast(struct BinopExprIr* ir);
 enum BinopExprIrTag ir_binop_expr_op(struct BinopExprIr* ir);
 struct ExprIr* ir_binop_expr_lhs(struct BinopExprIr* ir);
 struct ExprIr* ir_binop_expr_rhs(struct BinopExprIr* ir);
+
+struct AddrofExprIr* ir_new_addrof_expr_with_expr(struct ExprIr* expr);
+struct AddrofExprIr* ir_new_addrof_expr_with_var(struct VarIr* var);
+struct ExprIr* ir_addrof_expr_cast(struct AddrofExprIr* ir);
+enum AddrTag ir_addrof_expr_tag(struct AddrofExprIr* ir);
+struct VarIr* ir_addrof_expr_var(struct AddrofExprIr* ir);
+
+struct LoadExprIr* ir_new_load_expr(struct ExprIr* addr);
+struct ExprIr* ir_load_expr_cast(struct LoadExprIr* ir);
+struct ExprIr* ir_load_expr_addr(struct LoadExprIr* ir);
+
+struct StoreExprIr* ir_new_store_expr(struct ExprIr* addr,
+                                      struct ExprIr* value);
+struct ExprIr* ir_store_expr_cast(struct StoreExprIr* ir);
+struct ExprIr* ir_store_expr_addr(struct StoreExprIr* ir);
+struct ExprIr* ir_store_expr_value(struct StoreExprIr* ir);
 
 #endif
