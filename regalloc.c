@@ -332,12 +332,23 @@ static struct ExprIr* visit_binop_expr2(struct RegallocVisitor2* visitor,
     return NULL;
 }
 
+static struct Ir* visit_block_iterate_post(struct RegallocVisitor2* visitor,
+                                           struct BlockIr* block,
+                                           struct Ir* ir) {
+    (void)block;
+    (void)ir;
+    release_register(visitor);
+    return NULL;
+}
+
 struct RegallocVisitor2* new_regalloc_visitor2(struct Context* context) {
     struct RegallocVisitor2* visitor = malloc(sizeof(struct RegallocVisitor2));
     visitor2_initialize(as_visitor(visitor));
 
     register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr2);
     register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr2);
+    register_visitor(visitor->as_visitor, visit_block_iterate_post,
+                     visit_block_iterate_post);
 
     visitor->context = context;
     visitor->free_register_index = 0;
