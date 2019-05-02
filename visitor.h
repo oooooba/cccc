@@ -2,6 +2,7 @@
 #define VISITOR_H
 
 #include "ast.h"
+#include "ir.h"
 
 struct Visitor {
     struct ExprNode* (*visit_literal_expr)(struct Visitor* visitor,
@@ -28,6 +29,25 @@ struct StmtNode* visitor_visit_stmt(struct Visitor* visitor,
                                     struct StmtNode* node);
 
 void visitor_initialize(struct Visitor* visitor);
+
+#define register_visitor(obj, member, proc) \
+    do {                                    \
+        (obj).member = (void*)(proc);       \
+    } while (0)
+
+struct Visitor2 {
+    struct ExprIr* (*visit_const_expr)(struct Visitor2* visitor,
+                                       struct ConstExprIr* ir);
+    struct ExprIr* (*visit_binop_expr)(struct Visitor2* visitor,
+                                       struct BinopExprIr* ir);
+};
+
+struct ExprIr* visitor2_visit_expr(struct Visitor2* visitor, struct ExprIr* ir);
+
+struct BlockIr* visitor2_visit_block(struct Visitor2* visitor,
+                                     struct BlockIr* ir);
+
+void visitor2_initialize(struct Visitor2* visitor);
 
 #define register_visitor(obj, member, proc) \
     do {                                    \

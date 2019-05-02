@@ -1,5 +1,6 @@
 #include "ast.h"
 #include "context.h"
+#include "ir.h"
 #include "list.h"
 #include "visitor.h"
 
@@ -254,4 +255,72 @@ void codegen_apply(struct CodegenVisitor* visitor, struct FundefNode* node) {
     fprintf(visitor->output_stream, ".text\n");
 
     visit_fundef(visitor, node);
+}
+
+struct CodegenVisitor2 {
+    struct Visitor2 as_visitor;
+    struct Context* context;
+    FILE* stream;
+};
+
+static struct Visitor2* as_visitor(struct CodegenVisitor2* visitor) {
+    return &visitor->as_visitor;
+}
+
+static struct ExprIr* visit_const_expr2(struct CodegenVisitor2* visitor,
+                                        struct ConstExprIr* ir) {
+    strtable_id reg_id = ir_expr_reg_id(ir_const_expr_cast(ir));
+    const char* reg = strtable_at(&visitor->context->strtable, reg_id);
+    fprintf(visitor->stream, "\tmov\t%s, %ld\n", reg,
+            ir_const_expr_integer_value(ir));
+    return NULL;
+}
+
+static struct ExprIr* visit_binop_expr2(struct CodegenVisitor2* visitor,
+                                        struct BinopExprIr* ir) {
+    struct ExprIr* lhs = ir_binop_expr_lhs(ir);
+    struct ExprIr* rhs = ir_binop_expr_rhs(ir);
+    visitor2_visit_expr(as_visitor(visitor), lhs);
+    visitor2_visit_expr(as_visitor(visitor), rhs);
+
+    strtable_id lhs_reg_id = ir_expr_reg_id(lhs);
+    strtable_id rhs_reg_id = ir_expr_reg_id(rhs);
+    strtable_id result_reg_id = ir_expr_reg_id(ir_binop_expr_cast(ir));
+    assert(lhs_reg_id == result_reg_id);
+
+    const char* rhs_reg = strtable_at(&visitor->context->strtable, rhs_reg_id);
+    const char* result_reg =
+        strtable_at(&visitor->context->strtable, result_reg_id);
+
+    const char* op;
+    switch (ir_binop_expr_op(ir)) {
+        case BinopExprIrTag_Add:
+            op = "add";
+            break;
+        case BinopExprIrTag_Sub:
+            op = "sub";
+            break;
+        default:
+            assert(false);
+    }
+
+    fprintf(visitor->stream, "\t%s\t%s, %s\n", op, result_reg, rhs_reg);
+    return NULL;
+}
+
+struct CodegenVisitor2* new_codegen_visitor2(struct Context* context,
+                                             FILE* stream) {
+    struct CodegenVisitor2* visitor = malloc(sizeof(struct CodegenVisitor2));
+    visitor2_initialize(as_visitor(visitor));
+
+    register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr2);
+    register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr2);
+
+    visitor->context = context;
+    visitor->stream = stream;
+    return visitor;
+}
+
+void codegen2_apply(struct CodegenVisitor2* visitor, struct BlockIr* ir) {
+    visitor2_visit_block(as_visitor(visitor), ir);
 }

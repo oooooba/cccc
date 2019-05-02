@@ -1,5 +1,6 @@
 #include "visitor.h"
 #include "ast.h"
+#include "ir.h"
 
 #include <assert.h>
 #include <stdbool.h>
@@ -50,4 +51,50 @@ void visitor_initialize(struct Visitor* visitor) {
     register_visitor(*visitor, visit_block_stmt, NULL);
     register_visitor(*visitor, visit_if_stmt, NULL);
     register_visitor(*visitor, visit_decl_stmt, NULL);
+}
+
+struct ExprIr* visitor2_visit_expr(struct Visitor2* visitor,
+                                   struct ExprIr* ir) {
+    switch (ir_expr_tag(ir)) {
+        case ExprIrTag_Const:
+            return visitor->visit_const_expr(visitor, ir_expr_as_const(ir));
+        case ExprIrTag_Binop:
+            return visitor->visit_binop_expr(visitor, ir_expr_as_binop(ir));
+        default:
+            assert(false);
+    }
+    return NULL;
+}
+
+struct BlockIr* visitor2_visit_block(struct Visitor2* visitor,
+                                     struct BlockIr* block) {
+    struct BlockIterator* it = ir_block_new_iterator(block);
+    bool modified = false;
+    for (;;) {
+        struct Ir* stmt = ir_block_iterator_next(it);
+        if (!stmt) break;
+        struct Ir* new_stmt;
+        switch (ir_tag(stmt)) {
+            case IrTag_Expr:
+                new_stmt = ir_expr_cast(
+                    visitor2_visit_expr(visitor, ir_as_expr(stmt)));
+                break;
+            case IrTag_Block:
+                new_stmt = ir_block_cast(
+                    visitor2_visit_block(visitor, ir_as_block(stmt)));
+                break;
+            default:
+                assert(false);
+        }
+        if (new_stmt) {
+            ir_block_iterator_swap_at(it, new_stmt);
+            modified = true;
+        }
+    }
+    return modified ? block : NULL;
+}
+
+void visitor2_initialize(struct Visitor2* visitor) {
+    register_visitor(*visitor, visit_const_expr, NULL);
+    register_visitor(*visitor, visit_binop_expr, NULL);
 }

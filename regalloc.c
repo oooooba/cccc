@@ -1,5 +1,6 @@
 #include "ast.h"
 #include "context.h"
+#include "ir.h"
 #include "list.h"
 #include "map.h"
 #include "type.h"
@@ -283,4 +284,66 @@ struct RegallocVisitor* new_regalloc_visitor(struct Context* context) {
 
 void regalloc_apply(struct RegallocVisitor* visitor, struct FundefNode* node) {
     visit_fundef(visitor, node);
+}
+
+struct RegallocVisitor2 {
+    struct Visitor2 as_visitor;
+    struct Context* context;
+
+    /*
+     * behave like stack pointer
+     *   0 <= i < free_register_index : valid values are located
+     *   free_register_index <= i     : free registers
+     *   result must be located at free_register_index
+     */
+    size_t free_register_index;
+};
+
+static struct Visitor2* as_visitor(struct RegallocVisitor2* visitor) {
+    return &visitor->as_visitor;
+}
+
+static strtable_id acquire_register(struct RegallocVisitor2* visitor) {
+    strtable_id id = *((strtable_id*)vector_at(&visitor->context->register_ids,
+                                               visitor->free_register_index));
+    ++visitor->free_register_index;
+    return id;
+}
+
+static void release_register(struct RegallocVisitor2* visitor) {
+    --visitor->free_register_index;
+}
+
+static struct ExprIr* visit_const_expr2(struct RegallocVisitor2* visitor,
+                                        struct ConstExprIr* ir) {
+    strtable_id reg_id = acquire_register(visitor);
+    ir_expr_set_reg_id(ir_const_expr_cast(ir), reg_id);
+    return NULL;
+}
+
+static struct ExprIr* visit_binop_expr2(struct RegallocVisitor2* visitor,
+                                        struct BinopExprIr* ir) {
+    visitor2_visit_expr(as_visitor(visitor), ir_binop_expr_lhs(ir));
+    visitor2_visit_expr(as_visitor(visitor), ir_binop_expr_rhs(ir));
+    release_register(visitor);
+    release_register(visitor);
+    strtable_id reg_id = acquire_register(visitor);
+    ir_expr_set_reg_id(ir_binop_expr_cast(ir), reg_id);
+    return NULL;
+}
+
+struct RegallocVisitor2* new_regalloc_visitor2(struct Context* context) {
+    struct RegallocVisitor2* visitor = malloc(sizeof(struct RegallocVisitor2));
+    visitor2_initialize(as_visitor(visitor));
+
+    register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr2);
+    register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr2);
+
+    visitor->context = context;
+    visitor->free_register_index = 0;
+    return visitor;
+}
+
+void regalloc2_apply(struct RegallocVisitor2* visitor, struct BlockIr* ir) {
+    visitor2_visit_block(as_visitor(visitor), ir);
 }

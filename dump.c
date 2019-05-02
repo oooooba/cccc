@@ -1,5 +1,6 @@
 #include "ast.h"
 #include "context.h"
+#include "ir.h"
 #include "list.h"
 #include "type.h"
 #include "visitor.h"
@@ -190,4 +191,58 @@ void dump_apply(struct FundefNode* node, struct Context* context,
                 FILE* output_stream) {
     struct DumpVisitor* visitor = new_dump_visitor(context, output_stream);
     visit_fundef(visitor, node);
+}
+
+struct DumpVisitor2 {
+    struct Visitor2 as_visitor;
+    struct Context* context;
+    FILE* stream;
+};
+
+static struct Visitor2* as_visitor(struct DumpVisitor2* visitor) {
+    return &visitor->as_visitor;
+}
+
+static struct ExprIr* visit_const_expr2(struct DumpVisitor2* visitor,
+                                        struct ConstExprIr* ir) {
+    fprintf(visitor->stream, "v%p = %ld\n", ir,
+            ir_const_expr_integer_value(ir));
+    return NULL;
+}
+
+static struct ExprIr* visit_binop_expr2(struct DumpVisitor2* visitor,
+                                        struct BinopExprIr* ir) {
+    struct ExprIr* lhs = ir_binop_expr_lhs(ir);
+    struct ExprIr* rhs = ir_binop_expr_rhs(ir);
+    visitor2_visit_expr(as_visitor(visitor), lhs);
+    visitor2_visit_expr(as_visitor(visitor), rhs);
+    const char* op;
+    switch (ir_binop_expr_op(ir)) {
+        case BinopExprIrTag_Add:
+            op = "add";
+            break;
+        case BinopExprIrTag_Sub:
+            op = "sub";
+            break;
+        default:
+            assert(false);
+    }
+    fprintf(visitor->stream, "v%p = %s v%p, v%p\n", ir, op, lhs, rhs);
+    return NULL;
+}
+
+struct DumpVisitor2* new_dump_visitor2(struct Context* context, FILE* stream) {
+    struct DumpVisitor2* visitor = malloc(sizeof(struct DumpVisitor2));
+    visitor2_initialize(as_visitor(visitor));
+
+    register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr2);
+    register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr2);
+
+    visitor->context = context;
+    visitor->stream = stream;
+    return visitor;
+}
+
+void dump2_apply(struct DumpVisitor2* visitor, struct BlockIr* ir) {
+    visitor2_visit_block(as_visitor(visitor), ir);
 }

@@ -9,6 +9,7 @@ add_executable(cccc
     codegen.c
     context.c
     dump.c
+    ir.c
     lexer.c
     list.c
     map.c
