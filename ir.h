@@ -48,6 +48,7 @@ enum AddrTag {
 
 struct ExprIr* ir_as_expr(struct Ir* ir);
 struct BlockIr* ir_as_block(struct Ir* ir);
+struct FunctionIr* ir_as_function(struct Ir* ir);
 enum IrTag ir_tag(struct Ir* ir);
 
 struct FunctionIr* ir_new_function(strtable_id name_index,

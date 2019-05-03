@@ -355,6 +355,34 @@ static struct ExprIr* visit_store_expr2(struct CodegenVisitor2* visitor,
     return NULL;
 }
 
+static struct BlockIr* visit_block2(struct CodegenVisitor2* visitor,
+                                    struct BlockIr* ir) {
+    fprintf(visitor->stream, "lab_%p:\n", ir);
+    struct BlockIterator* it = ir_block_new_iterator(ir);
+    for (;;) {
+        struct Ir* stmt = ir_block_iterator_next(it);
+        if (!stmt) break;
+
+        visitor2_visit_ir(as_visitor(visitor), stmt);
+    }
+    return NULL;
+}
+
+static struct FunctionIr* visit_function2(struct CodegenVisitor2* visitor,
+                                          struct FunctionIr* ir) {
+    fprintf(visitor->stream, "\n");
+
+    const char* name =
+        strtable_at(&visitor->context->strtable, ir_function_name_index(ir));
+    fprintf(visitor->stream, ".global %s\n", name);
+    fprintf(visitor->stream, "%s:\n", name);
+    struct BlockIr* body = ir_function_body(ir);
+    visitor2_visit_block2(as_visitor(visitor), body);
+
+    fprintf(visitor->stream, "\tret\n");
+    return NULL;
+}
+
 struct CodegenVisitor2* new_codegen_visitor2(struct Context* context,
                                              FILE* stream) {
     struct CodegenVisitor2* visitor = malloc(sizeof(struct CodegenVisitor2));
@@ -366,12 +394,18 @@ struct CodegenVisitor2* new_codegen_visitor2(struct Context* context,
                      visit_addrof_expr2);
     register_visitor(visitor->as_visitor, visit_load_expr, visit_load_expr2);
     register_visitor(visitor->as_visitor, visit_store_expr, visit_store_expr2);
+    register_visitor(visitor->as_visitor, visit_block, visit_block2);
+    register_visitor(visitor->as_visitor, visit_function, visit_function2);
 
     visitor->context = context;
     visitor->stream = stream;
+
+    fprintf(stream, ".intel_syntax noprefix\n");
+    fprintf(stream, ".text\n");
+
     return visitor;
 }
 
-void codegen2_apply(struct CodegenVisitor2* visitor, struct BlockIr* ir) {
-    visitor2_visit_block(as_visitor(visitor), ir);
+void codegen2_apply(struct CodegenVisitor2* visitor, struct FunctionIr* ir) {
+    visitor2_visit_function(as_visitor(visitor), ir);
 }

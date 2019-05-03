@@ -50,17 +50,29 @@ struct Visitor2 {
                                            struct BlockIr* block,
                                            struct Ir* target_statement,
                                            struct Ir* result_statement);
+    struct BlockIr* (*visit_block)(struct Visitor2* visitor,
+                                   struct BlockIr* ir);
     struct BlockIr* (*visit_block_pre)(struct Visitor2* visitor,
                                        struct BlockIr* block);
     struct BlockIr* (*visit_block_post)(struct Visitor2* visitor,
                                         struct BlockIr* target_block,
                                         struct BlockIr* result_block);
+    struct FunctionIr* (*visit_function)(struct Visitor2* visitor,
+                                         struct FunctionIr* ir);
 };
+
+struct Ir* visitor2_visit_ir(struct Visitor2* visitor, struct Ir* ir);
 
 struct ExprIr* visitor2_visit_expr(struct Visitor2* visitor, struct ExprIr* ir);
 
 struct BlockIr* visitor2_visit_block(struct Visitor2* visitor,
                                      struct BlockIr* ir);
+
+struct BlockIr* visitor2_visit_block2(struct Visitor2* visitor,
+                                      struct BlockIr* ir);
+
+struct FunctionIr* visitor2_visit_function(struct Visitor2* visitor,
+                                           struct FunctionIr* ir);
 
 void visitor2_initialize(struct Visitor2* visitor);
 

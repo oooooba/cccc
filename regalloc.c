@@ -378,6 +378,13 @@ static struct BlockIr* visit_block_post(struct RegallocVisitor2* visitor,
     return result_block;
 }
 
+static struct FunctionIr* visit_function2(struct RegallocVisitor2* visitor,
+                                          struct FunctionIr* ir) {
+    struct BlockIr* body = ir_function_body(ir);
+    visitor2_visit_block(as_visitor(visitor), body);
+    return NULL;
+}
+
 struct RegallocVisitor2* new_regalloc_visitor2(struct Context* context) {
     struct RegallocVisitor2* visitor = malloc(sizeof(struct RegallocVisitor2));
     visitor2_initialize(as_visitor(visitor));
@@ -391,12 +398,13 @@ struct RegallocVisitor2* new_regalloc_visitor2(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_block_iterate_post,
                      visit_block_iterate_post);
     register_visitor(visitor->as_visitor, visit_block_post, visit_block_post);
+    register_visitor(visitor->as_visitor, visit_function, visit_function2);
 
     visitor->context = context;
     visitor->free_register_index = 0;
     return visitor;
 }
 
-void regalloc2_apply(struct RegallocVisitor2* visitor, struct BlockIr* ir) {
-    visitor2_visit_block(as_visitor(visitor), ir);
+void regalloc2_apply(struct RegallocVisitor2* visitor, struct FunctionIr* ir) {
+    visitor2_visit_function(as_visitor(visitor), ir);
 }

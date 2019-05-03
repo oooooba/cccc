@@ -258,27 +258,27 @@ static struct ExprIr* visit_store_expr2(struct DumpVisitor2* visitor,
     return NULL;
 }
 
-static struct BlockIr* visit_block_pre(struct DumpVisitor2* visitor,
-                                       struct BlockIr* block) {
-    fprintf(visitor->stream, "(@%p){\n", block);
+static struct BlockIr* visit_block2(struct DumpVisitor2* visitor,
+                                    struct BlockIr* ir) {
+    fprintf(visitor->stream, "(%p){\n", ir);
+    struct BlockIterator* it = ir_block_new_iterator(ir);
+    for (;;) {
+        struct Ir* stmt = ir_block_iterator_next(it);
+        if (!stmt) break;
+
+        visitor2_visit_ir(as_visitor(visitor), stmt);
+    }
+    fprintf(visitor->stream, "}\n");
     return NULL;
 }
 
-static struct BlockIr* visit_block_post(struct DumpVisitor2* visitor,
-                                        struct BlockIr* target_block,
-                                        struct BlockIr* result_block) {
-    (void)result_block;
-    fprintf(visitor->stream, "}(@%p)\n", target_block);
-    return NULL;
-}
-
-static struct FunctionIr* visit_function(struct DumpVisitor2* visitor,
-                                         struct FunctionIr* ir) {
+static struct FunctionIr* visit_function2(struct DumpVisitor2* visitor,
+                                          struct FunctionIr* ir) {
     const char* name =
         strtable_at(&visitor->context->strtable, ir_function_name_index(ir));
     struct BlockIr* body = ir_function_body(ir);
     fprintf(visitor->stream, "function %s () ", name);
-    visitor2_visit_block(as_visitor(visitor), body);
+    visitor2_visit_block2(as_visitor(visitor), body);
     return NULL;
 }
 
@@ -292,8 +292,8 @@ struct DumpVisitor2* new_dump_visitor2(struct Context* context, FILE* stream) {
                      visit_addrof_expr2);
     register_visitor(visitor->as_visitor, visit_load_expr, visit_load_expr2);
     register_visitor(visitor->as_visitor, visit_store_expr, visit_store_expr2);
-    register_visitor(visitor->as_visitor, visit_block_pre, visit_block_pre);
-    register_visitor(visitor->as_visitor, visit_block_post, visit_block_post);
+    register_visitor(visitor->as_visitor, visit_block, visit_block2);
+    register_visitor(visitor->as_visitor, visit_function, visit_function2);
 
     visitor->context = context;
     visitor->stream = stream;
@@ -301,5 +301,5 @@ struct DumpVisitor2* new_dump_visitor2(struct Context* context, FILE* stream) {
 }
 
 void dump2_apply(struct DumpVisitor2* visitor, struct FunctionIr* ir) {
-    visit_function(visitor, ir);
+    visitor2_visit_function(as_visitor(visitor), ir);
 }

@@ -21,6 +21,10 @@ struct BlockIr* ir_as_block(struct Ir* ir) {
     return ir->tag == IrTag_Block ? (struct BlockIr*)ir : NULL;
 }
 
+struct FunctionIr* ir_as_function(struct Ir* ir) {
+    return ir->tag == IrTag_Function ? (struct FunctionIr*)ir : NULL;
+}
+
 enum IrTag ir_tag(struct Ir* ir) { return ir->tag; }
 
 struct FunctionIr {

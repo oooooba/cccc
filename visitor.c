@@ -53,6 +53,22 @@ void visitor_initialize(struct Visitor* visitor) {
     register_visitor(*visitor, visit_decl_stmt, NULL);
 }
 
+struct Ir* visitor2_visit_ir(struct Visitor2* visitor, struct Ir* ir) {
+    switch (ir_tag(ir)) {
+        case IrTag_Expr:
+            return ir_expr_cast(visitor2_visit_expr(visitor, ir_as_expr(ir)));
+        case IrTag_Block:
+            return ir_block_cast(
+                visitor2_visit_block(visitor, ir_as_block(ir)));
+        case IrTag_Function:
+            return ir_function_cast(
+                visitor2_visit_function(visitor, ir_as_function(ir)));
+        default:
+            assert(false);
+    }
+    return NULL;
+}
+
 struct ExprIr* visitor2_visit_expr(struct Visitor2* visitor,
                                    struct ExprIr* ir) {
     switch (ir_expr_tag(ir)) {
@@ -84,19 +100,8 @@ struct BlockIr* visitor2_visit_block(struct Visitor2* visitor,
     for (;;) {
         struct Ir* stmt = ir_block_iterator_next(it);
         if (!stmt) break;
-        struct Ir* new_stmt;
-        switch (ir_tag(stmt)) {
-            case IrTag_Expr:
-                new_stmt = ir_expr_cast(
-                    visitor2_visit_expr(visitor, ir_as_expr(stmt)));
-                break;
-            case IrTag_Block:
-                new_stmt = ir_block_cast(
-                    visitor2_visit_block(visitor, ir_as_block(stmt)));
-                break;
-            default:
-                assert(false);
-        }
+        struct Ir* new_stmt = visitor2_visit_ir(visitor, stmt);
+
         if (visitor->visit_block_iterate_post)
             new_stmt = visitor->visit_block_iterate_post(visitor, block, stmt,
                                                          new_stmt);
@@ -112,6 +117,16 @@ struct BlockIr* visitor2_visit_block(struct Visitor2* visitor,
         return modified ? block : NULL;
 }
 
+struct BlockIr* visitor2_visit_block2(struct Visitor2* visitor,
+                                      struct BlockIr* ir) {
+    return visitor->visit_block(visitor, ir);
+}
+
+struct FunctionIr* visitor2_visit_function(struct Visitor2* visitor,
+                                           struct FunctionIr* ir) {
+    return visitor->visit_function(visitor, ir);
+}
+
 void visitor2_initialize(struct Visitor2* visitor) {
     register_visitor(*visitor, visit_const_expr, NULL);
     register_visitor(*visitor, visit_binop_expr, NULL);
@@ -121,4 +136,6 @@ void visitor2_initialize(struct Visitor2* visitor) {
     register_visitor(*visitor, visit_block_iterate_post, NULL);
     register_visitor(*visitor, visit_block_pre, NULL);
     register_visitor(*visitor, visit_block_post, NULL);
+    register_visitor(*visitor, visit_block, NULL);
+    register_visitor(*visitor, visit_function, NULL);
 }
