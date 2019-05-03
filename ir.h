@@ -55,7 +55,7 @@ struct Ir* ir_block_iterator_swap_at(struct BlockIterator* it,
                                      struct Ir* statement);
 void ir_block_insert_expr_at_end(struct BlockIr* ir, struct ExprIr* expr);
 struct VarIr* ir_block_new_var(struct BlockIr* ir, strtable_id index);
-void ir_block_commit_region_size(struct BlockIr* ir);
+void ir_block_commit_region_status(struct BlockIr* ir, size_t region_base);
 
 struct Ir* ir_var_cast(struct VarIr* ir);
 strtable_id ir_var_index(struct VarIr* ir);

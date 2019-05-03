@@ -2,6 +2,7 @@
 #include "list.h"
 #include "strtable.h"
 
+#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -25,13 +26,15 @@ enum IrTag ir_tag(struct Ir* ir) { return ir->tag; }
 struct VarIr {
     struct Ir as_ir;
     strtable_id index;
-    size_t offset;
+    size_t region_offset;
+    struct BlockIr* block;
 };
 
 struct BlockIr {
     struct Ir as_ir;
     struct List statemetnts;
     size_t region_size;
+    size_t region_base;
 };
 
 struct BlockIterator {
@@ -43,6 +46,8 @@ struct BlockIr* ir_new_block(void) {
     struct BlockIr* ir = malloc(sizeof(struct BlockIr));
     initialize_ir(ir_block_cast(ir), IrTag_Block);
     list_initialize(&ir->statemetnts);
+    ir->region_size = 0;
+    ir->region_base = (size_t)-1;
     return ir;
 }
 
@@ -82,38 +87,50 @@ void ir_block_insert_expr_at_end(struct BlockIr* ir, struct ExprIr* expr) {
     ir_block_insert_at_end(ir, ir_expr_cast(expr));
 }
 
-static struct VarIr* ir_new_var(strtable_id index, size_t offset) {
+static struct VarIr* ir_new_var(struct BlockIr* block, strtable_id index,
+                                size_t region_offset) {
     struct VarIr* ir = malloc(sizeof(struct VarIr));
     initialize_ir(ir_var_cast(ir), IrTag_Var);
     ir->index = index;
-    ir->offset = offset;
+    ir->region_offset = region_offset;
+    ir->block = block;
     return ir;
 }
 
 struct VarIr* ir_block_new_var(struct BlockIr* ir, strtable_id index) {
+    assert(ir->region_base == (size_t)-1);
     size_t var_size = sizeof(void*);  // ToDo: fix to refer size of type
-    size_t offset = ir->region_size;
-    if (offset % var_size) {
+    size_t region_offset = ir->region_size;
+    if (region_offset % var_size) {
         ir->region_size =
             (ir->region_size + var_size - 1) / var_size * var_size;
-        offset = ir->region_size;
+        region_offset = ir->region_size;
     }
     ir->region_size += var_size;
-    return ir_new_var(index, offset);
+    return ir_new_var(ir, index, region_offset);
 }
 
-void ir_block_commit_region_size(struct BlockIr* ir) {
+static size_t ir_block_region_base(struct BlockIr* ir) {
+    assert(ir->region_base != (size_t)-1);
+    return ir->region_base;
+}
+
+void ir_block_commit_region_status(struct BlockIr* ir, size_t region_base) {
     size_t alignment = sizeof(void*);
+    assert(region_base % alignment == 0);
     if (ir->region_size % alignment)
         ir->region_size =
             (ir->region_size + alignment - 1) / alignment * alignment;
+    ir->region_base = region_base;
 }
 
 struct Ir* ir_var_cast(struct VarIr* ir) {
     return &ir->as_ir;
 }
 
-size_t ir_var_offset(struct VarIr* ir) { return ir->offset; }
+size_t ir_var_offset(struct VarIr* ir) {
+    return ir_block_region_base(ir->block) + ir->region_offset;
+}
 
 strtable_id ir_var_index(struct VarIr* ir) { return ir->index; }
 

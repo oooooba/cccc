@@ -374,7 +374,8 @@ static struct Ir* visit_block_post(struct RegallocVisitor2* visitor,
                                    struct BlockIr* result_block) {
     (void)visitor;
     (void)result_block;
-    ir_block_commit_region_size(target_block);
+    ir_block_commit_region_status(target_block,
+                                  0);  // ToDo: fix to refer parent block
     return NULL;
 }
 
