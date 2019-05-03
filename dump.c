@@ -224,6 +224,9 @@ static struct ExprIr* visit_binop_expr2(struct DumpVisitor2* visitor,
         case BinopExprIrTag_Sub:
             op = "sub";
             break;
+        case BinopExprIrTag_Mul:
+            op = "mul";
+            break;
         default:
             assert(false);
     }

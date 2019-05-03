@@ -52,6 +52,9 @@ static struct ExprIr* visit_binop_expr2(struct SimplifyVisitor2* visitor,
         case BinopExprIrTag_Sub:
             value = lhs_const - rhs_const;
             break;
+        case BinopExprIrTag_Mul:
+            value = lhs_const * rhs_const;
+            break;
         default:
             assert(false);
     }

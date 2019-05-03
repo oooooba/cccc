@@ -39,6 +39,7 @@ enum ExprIrTag {
 enum BinopExprIrTag {
     BinopExprIrTag_Add,
     BinopExprIrTag_Sub,
+    BinopExprIrTag_Mul,
 };
 
 enum AddrTag {

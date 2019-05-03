@@ -300,6 +300,9 @@ static struct ExprIr* visit_binop_expr2(struct CodegenVisitor2* visitor,
         case BinopExprIrTag_Sub:
             op = "sub";
             break;
+        case BinopExprIrTag_Mul:
+            op = "imul";
+            break;
         default:
             assert(false);
     }
