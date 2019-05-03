@@ -360,13 +360,17 @@ static struct ExprIr* visit_store_expr2(struct RegallocVisitor2* visitor,
     return NULL;
 }
 
-static struct Ir* visit_block_iterate_post(struct RegallocVisitor2* visitor,
-                                           struct BlockIr* block,
-                                           struct Ir* target_ir,
-                                           struct Ir* result_ir) {
-    (void)block;
-    if (ir_as_expr(target_ir)) release_register(visitor);
-    return result_ir;
+static struct BlockIr* visit_block2(struct RegallocVisitor2* visitor,
+                                    struct BlockIr* ir) {
+    struct BlockIterator* it = ir_block_new_iterator(ir);
+    for (;;) {
+        struct Ir* stmt = ir_block_iterator_next(it);
+        if (!stmt) break;
+
+        visitor2_visit_ir(as_visitor(visitor), stmt);
+        if (ir_as_expr(stmt)) release_register(visitor);
+    }
+    return NULL;
 }
 
 static struct FunctionIr* visit_function2(struct RegallocVisitor2* visitor,
@@ -386,8 +390,7 @@ struct RegallocVisitor2* new_regalloc_visitor2(struct Context* context) {
                      visit_addrof_expr2);
     register_visitor(visitor->as_visitor, visit_load_expr, visit_load_expr2);
     register_visitor(visitor->as_visitor, visit_store_expr, visit_store_expr2);
-    register_visitor(visitor->as_visitor, visit_block_iterate_post,
-                     visit_block_iterate_post);
+    register_visitor(visitor->as_visitor, visit_block, visit_block2);
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
 
     visitor->context = context;
@@ -429,7 +432,7 @@ static struct BlockIr* visit_block2_post_process(
         struct BlockIr* block = ir_as_block(stmt);
         if (block) {
             visitor->parent_region_end = new_region_end;
-            visitor2_visit_block2(as_visitor_post_process(visitor), block);
+            visitor2_visit_block(as_visitor_post_process(visitor), block);
         }
     }
     return NULL;
@@ -441,7 +444,7 @@ static struct FunctionIr* visit_function2_post_process(
     visitor->max_region_end = 0;
 
     struct BlockIr* body = ir_function_body(ir);
-    visitor2_visit_block2(as_visitor_post_process(visitor), body);
+    visitor2_visit_block(as_visitor_post_process(visitor), body);
 
     ir_function_set_region_size(ir, visitor->max_region_end);
     return NULL;

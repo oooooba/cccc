@@ -89,36 +89,7 @@ struct ExprIr* visitor2_visit_expr(struct Visitor2* visitor,
 }
 
 struct BlockIr* visitor2_visit_block(struct Visitor2* visitor,
-                                     struct BlockIr* block) {
-    if (visitor->visit_block_pre) {
-        struct BlockIr* tmp_block = visitor->visit_block_pre(visitor, block);
-        if (tmp_block) block = tmp_block;
-    }
-
-    struct BlockIterator* it = ir_block_new_iterator(block);
-    bool modified = false;
-    for (;;) {
-        struct Ir* stmt = ir_block_iterator_next(it);
-        if (!stmt) break;
-        struct Ir* new_stmt = visitor2_visit_ir(visitor, stmt);
-
-        if (visitor->visit_block_iterate_post)
-            new_stmt = visitor->visit_block_iterate_post(visitor, block, stmt,
-                                                         new_stmt);
-        if (new_stmt) {
-            ir_block_iterator_swap_at(it, new_stmt);
-            modified = true;
-        }
-    }
-    if (visitor->visit_block_post)
-        return visitor->visit_block_post(visitor, block,
-                                         modified ? block : NULL);
-    else
-        return modified ? block : NULL;
-}
-
-struct BlockIr* visitor2_visit_block2(struct Visitor2* visitor,
-                                      struct BlockIr* ir) {
+                                     struct BlockIr* ir) {
     return visitor->visit_block(visitor, ir);
 }
 
@@ -133,9 +104,6 @@ void visitor2_initialize(struct Visitor2* visitor) {
     register_visitor(*visitor, visit_addrof_expr, NULL);
     register_visitor(*visitor, visit_load_expr, NULL);
     register_visitor(*visitor, visit_store_expr, NULL);
-    register_visitor(*visitor, visit_block_iterate_post, NULL);
-    register_visitor(*visitor, visit_block_pre, NULL);
-    register_visitor(*visitor, visit_block_post, NULL);
     register_visitor(*visitor, visit_block, NULL);
     register_visitor(*visitor, visit_function, NULL);
 }

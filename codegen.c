@@ -377,7 +377,7 @@ static struct FunctionIr* visit_function2(struct CodegenVisitor2* visitor,
     fprintf(visitor->stream, ".global %s\n", name);
     fprintf(visitor->stream, "%s:\n", name);
     struct BlockIr* body = ir_function_body(ir);
-    visitor2_visit_block2(as_visitor(visitor), body);
+    visitor2_visit_block(as_visitor(visitor), body);
 
     fprintf(visitor->stream, "\tret\n");
     return NULL;

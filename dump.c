@@ -278,7 +278,7 @@ static struct FunctionIr* visit_function2(struct DumpVisitor2* visitor,
         strtable_at(&visitor->context->strtable, ir_function_name_index(ir));
     struct BlockIr* body = ir_function_body(ir);
     fprintf(visitor->stream, "function %s () ", name);
-    visitor2_visit_block2(as_visitor(visitor), body);
+    visitor2_visit_block(as_visitor(visitor), body);
     return NULL;
 }
 
