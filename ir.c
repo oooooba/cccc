@@ -283,6 +283,14 @@ struct ExprIr* ir_binop_expr_rhs(struct BinopExprIr* ir) {
     return ir->rhs;
 }
 
+void ir_binop_expr_set_lhs(struct BinopExprIr* ir, struct ExprIr* lhs) {
+    ir->lhs = lhs;
+}
+
+void ir_binop_expr_set_rhs(struct BinopExprIr* ir, struct ExprIr* rhs) {
+    ir->rhs = rhs;
+}
+
 struct AddrofExprIr {
     struct ExprIr as_expr;
     enum AddrTag tag;
@@ -314,8 +322,12 @@ struct ExprIr* ir_addrof_expr_cast(struct AddrofExprIr* ir) {
 
 enum AddrTag ir_addrof_expr_tag(struct AddrofExprIr* ir) { return ir->tag; }
 
-struct VarIr* ir_addrof_expr_var(struct AddrofExprIr* ir) {
-    return ir->var;
+struct VarIr* ir_addrof_expr_operand_as_var(struct AddrofExprIr* ir) {
+    return ir->tag == AddrTag_Var ? ir->var : NULL;
+}
+
+struct ExprIr* ir_addrof_expr_operand_as_expr(struct AddrofExprIr* ir) {
+    return ir->tag == AddrTag_Expr ? ir->expr : NULL;
 }
 
 struct LoadExprIr {
@@ -336,6 +348,10 @@ struct ExprIr* ir_load_expr_cast(struct LoadExprIr* ir) {
 
 struct ExprIr* ir_load_expr_addr(struct LoadExprIr* ir) {
     return ir->addr;
+}
+
+void ir_load_expr_set_addr(struct LoadExprIr* ir, struct ExprIr* addr) {
+    ir->addr = addr;
 }
 
 struct StoreExprIr {
@@ -361,6 +377,14 @@ struct ExprIr* ir_store_expr_addr(struct StoreExprIr* ir) {
     return ir->addr;
 }
 
+void ir_store_expr_set_addr(struct StoreExprIr* ir, struct ExprIr* addr) {
+    ir->addr = addr;
+}
+
 struct ExprIr* ir_store_expr_value(struct StoreExprIr* ir) {
     return ir->value;
+}
+
+void ir_store_expr_set_value(struct StoreExprIr* ir, struct ExprIr* value) {
+    ir->value = value;
 }

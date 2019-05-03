@@ -233,10 +233,15 @@ static struct ExprIr* visit_binop_expr2(struct DumpVisitor2* visitor,
 
 static struct ExprIr* visit_addrof_expr2(struct DumpVisitor2* visitor,
                                          struct AddrofExprIr* ir) {
-    assert(ir_addrof_expr_tag(ir) == AddrTag_Var);
-    fprintf(visitor->stream, "v%p = addrof [%s]\n", ir,
-            strtable_at(&visitor->context->strtable,
-                        ir_var_index(ir_addrof_expr_var(ir))));
+    if (ir_addrof_expr_tag(ir) == AddrTag_Var) {
+        fprintf(visitor->stream, "v%p = addrof [%s]\n", ir,
+                strtable_at(&visitor->context->strtable,
+                            ir_var_index(ir_addrof_expr_operand_as_var(ir))));
+    } else {
+        struct ExprIr* expr = ir_addrof_expr_operand_as_expr(ir);
+        visitor2_visit_expr(as_visitor(visitor), expr);
+        fprintf(visitor->stream, "v%p = addrof [v%p]\n", ir, expr);
+    }
     return NULL;
 }
 

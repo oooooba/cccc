@@ -16,6 +16,7 @@ add_executable(cccc
     parser.c
     regalloc.c
     strtable.c
+    simplify.c
     type.c
     vector.c
     visitor.c)

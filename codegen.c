@@ -311,7 +311,7 @@ static struct ExprIr* visit_binop_expr2(struct CodegenVisitor2* visitor,
 static struct ExprIr* visit_addrof_expr2(struct CodegenVisitor2* visitor,
                                          struct AddrofExprIr* ir) {
     assert(ir_addrof_expr_tag(ir) == AddrTag_Var);
-    struct VarIr* var = ir_addrof_expr_var(ir);
+    struct VarIr* var = ir_addrof_expr_operand_as_var(ir);
     size_t offset = ir_var_offset(var);
     strtable_id reg_id = ir_expr_reg_id(ir_addrof_expr_cast(ir));
     const char* reg = strtable_at(&visitor->context->strtable, reg_id);
