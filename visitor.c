@@ -84,9 +84,6 @@ struct BlockIr* visitor2_visit_block(struct Visitor2* visitor,
             case IrTag_Expr:
                 new_stmt = ir_expr_cast(
                     visitor2_visit_expr(visitor, ir_as_expr(stmt)));
-                if (visitor->visit_block_iterate_post)
-                    new_stmt = visitor->visit_block_iterate_post(visitor, block,
-                                                                 new_stmt);
                 break;
             case IrTag_Block:
                 new_stmt = ir_block_cast(
@@ -95,6 +92,9 @@ struct BlockIr* visitor2_visit_block(struct Visitor2* visitor,
             default:
                 assert(false);
         }
+        if (visitor->visit_block_iterate_post)
+            new_stmt = visitor->visit_block_iterate_post(visitor, block, stmt,
+                                                         new_stmt);
         if (new_stmt) {
             ir_block_iterator_swap_at(it, new_stmt);
             modified = true;

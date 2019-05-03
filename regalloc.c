@@ -362,21 +362,20 @@ static struct ExprIr* visit_store_expr2(struct RegallocVisitor2* visitor,
 
 static struct Ir* visit_block_iterate_post(struct RegallocVisitor2* visitor,
                                            struct BlockIr* block,
-                                           struct Ir* ir) {
+                                           struct Ir* target_ir,
+                                           struct Ir* result_ir) {
     (void)block;
-    (void)ir;
-    release_register(visitor);
-    return NULL;
+    if (ir_as_expr(target_ir)) release_register(visitor);
+    return result_ir;
 }
 
-static struct Ir* visit_block_post(struct RegallocVisitor2* visitor,
-                                   struct BlockIr* target_block,
-                                   struct BlockIr* result_block) {
+static struct BlockIr* visit_block_post(struct RegallocVisitor2* visitor,
+                                        struct BlockIr* target_block,
+                                        struct BlockIr* result_block) {
     (void)visitor;
-    (void)result_block;
     ir_block_commit_region_status(target_block,
                                   0);  // ToDo: fix to refer parent block
-    return NULL;
+    return result_block;
 }
 
 struct RegallocVisitor2* new_regalloc_visitor2(struct Context* context) {
