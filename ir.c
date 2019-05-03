@@ -31,6 +31,7 @@ struct FunctionIr {
     struct Ir as_ir;
     strtable_id name_index;
     struct BlockIr* body;
+    size_t region_size;
 };
 
 struct FunctionIr* ir_new_function(strtable_id name_index,
@@ -39,6 +40,7 @@ struct FunctionIr* ir_new_function(strtable_id name_index,
     initialize_ir(ir_function_cast(ir), IrTag_Function);
     ir->name_index = name_index;
     ir->body = body;
+    ir->region_size = (size_t)-1;
     return ir;
 }
 
@@ -52,6 +54,17 @@ strtable_id ir_function_name_index(struct FunctionIr* ir) {
 
 struct BlockIr* ir_function_body(struct FunctionIr* ir) {
     return ir->body;
+}
+
+size_t ir_function_region_size(struct FunctionIr* ir) {
+    assert(ir->region_size != (size_t)-1);
+    return ir->region_size;
+}
+
+void ir_function_set_region_size(struct FunctionIr* ir, size_t region_size) {
+    assert(region_size % sizeof(void*) == 0);
+    assert(ir->region_size == (size_t)-1);
+    ir->region_size = region_size;
 }
 
 struct VarIr {
@@ -118,6 +131,10 @@ void ir_block_insert_expr_at_end(struct BlockIr* ir, struct ExprIr* expr) {
     ir_block_insert_at_end(ir, ir_expr_cast(expr));
 }
 
+void ir_block_insert_block_at_end(struct BlockIr* ir, struct BlockIr* block) {
+    ir_block_insert_at_end(ir, ir_block_cast(block));
+}
+
 static struct VarIr* ir_new_var(struct BlockIr* block, strtable_id index,
                                 size_t region_offset) {
     struct VarIr* ir = malloc(sizeof(struct VarIr));
@@ -147,12 +164,18 @@ static size_t ir_block_region_base(struct BlockIr* ir) {
 }
 
 void ir_block_commit_region_status(struct BlockIr* ir, size_t region_base) {
+    assert(ir->region_base == (size_t)-1);
     size_t alignment = sizeof(void*);
     assert(region_base % alignment == 0);
     if (ir->region_size % alignment)
         ir->region_size =
             (ir->region_size + alignment - 1) / alignment * alignment;
     ir->region_base = region_base;
+}
+
+size_t ir_block_region_size(struct BlockIr* ir) {
+    assert(ir->region_base != (size_t)-1);
+    return ir->region_size;
 }
 
 struct Ir* ir_var_cast(struct VarIr* ir) {

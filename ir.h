@@ -56,6 +56,8 @@ struct FunctionIr* ir_new_function(strtable_id name_index,
 struct Ir* ir_function_cast(struct FunctionIr* ir);
 strtable_id ir_function_name_index(struct FunctionIr* ir);
 struct BlockIr* ir_function_body(struct FunctionIr* ir);
+size_t ir_function_region_size(struct FunctionIr* ir);
+void ir_function_set_region_size(struct FunctionIr* ir, size_t region_size);
 
 struct BlockIr* ir_new_block(void);
 struct Ir* ir_block_cast(struct BlockIr* ir);
@@ -64,8 +66,10 @@ struct Ir* ir_block_iterator_next(struct BlockIterator* it);
 struct Ir* ir_block_iterator_swap_at(struct BlockIterator* it,
                                      struct Ir* statement);
 void ir_block_insert_expr_at_end(struct BlockIr* ir, struct ExprIr* expr);
+void ir_block_insert_block_at_end(struct BlockIr* ir, struct BlockIr* block);
 struct VarIr* ir_block_new_var(struct BlockIr* ir, strtable_id index);
 void ir_block_commit_region_status(struct BlockIr* ir, size_t region_base);
+size_t ir_block_region_size(struct BlockIr* ir);
 
 struct Ir* ir_var_cast(struct VarIr* ir);
 strtable_id ir_var_index(struct VarIr* ir);

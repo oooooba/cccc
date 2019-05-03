@@ -369,15 +369,6 @@ static struct Ir* visit_block_iterate_post(struct RegallocVisitor2* visitor,
     return result_ir;
 }
 
-static struct BlockIr* visit_block_post(struct RegallocVisitor2* visitor,
-                                        struct BlockIr* target_block,
-                                        struct BlockIr* result_block) {
-    (void)visitor;
-    ir_block_commit_region_status(target_block,
-                                  0);  // ToDo: fix to refer parent block
-    return result_block;
-}
-
 static struct FunctionIr* visit_function2(struct RegallocVisitor2* visitor,
                                           struct FunctionIr* ir) {
     struct BlockIr* body = ir_function_body(ir);
@@ -397,7 +388,6 @@ struct RegallocVisitor2* new_regalloc_visitor2(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_store_expr, visit_store_expr2);
     register_visitor(visitor->as_visitor, visit_block_iterate_post,
                      visit_block_iterate_post);
-    register_visitor(visitor->as_visitor, visit_block_post, visit_block_post);
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
 
     visitor->context = context;
@@ -407,4 +397,72 @@ struct RegallocVisitor2* new_regalloc_visitor2(struct Context* context) {
 
 void regalloc2_apply(struct RegallocVisitor2* visitor, struct FunctionIr* ir) {
     visitor2_visit_function(as_visitor(visitor), ir);
+}
+
+struct PostRegallocVisitor2 {
+    struct Visitor2 as_visitor;
+    struct Context* context;
+    size_t parent_region_end;
+    size_t max_region_end;
+};
+
+static struct Visitor2* as_visitor_post_process(
+    struct PostRegallocVisitor2* visitor) {
+    return &visitor->as_visitor;
+}
+
+static struct BlockIr* visit_block2_post_process(
+    struct PostRegallocVisitor2* visitor, struct BlockIr* ir) {
+    size_t region_base = visitor->parent_region_end;
+    ir_block_commit_region_status(ir, region_base);
+    size_t region_size = ir_block_region_size(ir);
+    size_t new_region_end = region_base + region_size;
+
+    if (new_region_end > visitor->max_region_end)
+        visitor->max_region_end = new_region_end;
+
+    struct BlockIterator* it = ir_block_new_iterator(ir);
+    for (;;) {
+        struct Ir* stmt = ir_block_iterator_next(it);
+        if (!stmt) break;
+
+        struct BlockIr* block = ir_as_block(stmt);
+        if (block) {
+            visitor->parent_region_end = new_region_end;
+            visitor2_visit_block2(as_visitor_post_process(visitor), block);
+        }
+    }
+    return NULL;
+}
+
+static struct FunctionIr* visit_function2_post_process(
+    struct PostRegallocVisitor2* visitor, struct FunctionIr* ir) {
+    visitor->parent_region_end = 0;
+    visitor->max_region_end = 0;
+
+    struct BlockIr* body = ir_function_body(ir);
+    visitor2_visit_block2(as_visitor_post_process(visitor), body);
+
+    ir_function_set_region_size(ir, visitor->max_region_end);
+    return NULL;
+}
+
+struct PostRegallocVisitor2* new_post_regalloc_visitor2(
+    struct Context* context) {
+    struct PostRegallocVisitor2* visitor =
+        malloc(sizeof(struct PostRegallocVisitor2));
+    visitor2_initialize(as_visitor_post_process(visitor));
+
+    register_visitor(visitor->as_visitor, visit_block,
+                     visit_block2_post_process);
+    register_visitor(visitor->as_visitor, visit_function,
+                     visit_function2_post_process);
+
+    visitor->context = context;
+    return visitor;
+}
+
+void regalloc2_apply_post_process(struct PostRegallocVisitor2* visitor,
+                                  struct FunctionIr* ir) {
+    visitor2_visit_function(as_visitor_post_process(visitor), ir);
 }
