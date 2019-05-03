@@ -74,6 +74,11 @@ struct ExprIr* visitor2_visit_expr(struct Visitor2* visitor,
 
 struct BlockIr* visitor2_visit_block(struct Visitor2* visitor,
                                      struct BlockIr* block) {
+    if (visitor->visit_block_pre) {
+        struct BlockIr* tmp_block = visitor->visit_block_pre(visitor, block);
+        if (tmp_block) block = tmp_block;
+    }
+
     struct BlockIterator* it = ir_block_new_iterator(block);
     bool modified = false;
     for (;;) {
@@ -114,5 +119,6 @@ void visitor2_initialize(struct Visitor2* visitor) {
     register_visitor(*visitor, visit_load_expr, NULL);
     register_visitor(*visitor, visit_store_expr, NULL);
     register_visitor(*visitor, visit_block_iterate_post, NULL);
+    register_visitor(*visitor, visit_block_pre, NULL);
     register_visitor(*visitor, visit_block_post, NULL);
 }

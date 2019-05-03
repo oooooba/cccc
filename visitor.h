@@ -50,6 +50,8 @@ struct Visitor2 {
                                            struct BlockIr* block,
                                            struct Ir* target_statement,
                                            struct Ir* result_statement);
+    struct BlockIr* (*visit_block_pre)(struct Visitor2* visitor,
+                                       struct BlockIr* block);
     struct BlockIr* (*visit_block_post)(struct Visitor2* visitor,
                                         struct BlockIr* target_block,
                                         struct BlockIr* result_block);

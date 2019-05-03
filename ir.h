@@ -8,6 +8,8 @@
 
 struct Ir;
 
+struct FunctionIr;
+
 struct BlockIr;
 struct BlockIterator;
 struct VarIr;
@@ -23,6 +25,7 @@ enum IrTag {
     IrTag_Block,
     IrTag_Expr,
     IrTag_Var,
+    IrTag_Function,
 };
 
 enum ExprIrTag {
@@ -46,6 +49,12 @@ enum AddrTag {
 struct ExprIr* ir_as_expr(struct Ir* ir);
 struct BlockIr* ir_as_block(struct Ir* ir);
 enum IrTag ir_tag(struct Ir* ir);
+
+struct FunctionIr* ir_new_function(strtable_id name_index,
+                                   struct BlockIr* body);
+struct Ir* ir_function_cast(struct FunctionIr* ir);
+strtable_id ir_function_name_index(struct FunctionIr* ir);
+struct BlockIr* ir_function_body(struct FunctionIr* ir);
 
 struct BlockIr* ir_new_block(void);
 struct Ir* ir_block_cast(struct BlockIr* ir);

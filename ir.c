@@ -23,6 +23,33 @@ struct BlockIr* ir_as_block(struct Ir* ir) {
 
 enum IrTag ir_tag(struct Ir* ir) { return ir->tag; }
 
+struct FunctionIr {
+    struct Ir as_ir;
+    strtable_id name_index;
+    struct BlockIr* body;
+};
+
+struct FunctionIr* ir_new_function(strtable_id name_index,
+                                   struct BlockIr* body) {
+    struct FunctionIr* ir = malloc(sizeof(struct FunctionIr));
+    initialize_ir(ir_function_cast(ir), IrTag_Function);
+    ir->name_index = name_index;
+    ir->body = body;
+    return ir;
+}
+
+struct Ir* ir_function_cast(struct FunctionIr* ir) {
+    return &ir->as_ir;
+}
+
+strtable_id ir_function_name_index(struct FunctionIr* ir) {
+    return ir->name_index;
+}
+
+struct BlockIr* ir_function_body(struct FunctionIr* ir) {
+    return ir->body;
+}
+
 struct VarIr {
     struct Ir as_ir;
     strtable_id index;
