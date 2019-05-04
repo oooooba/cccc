@@ -95,6 +95,8 @@ struct BranchCfIr* ir_new_branch_cf(struct ExprIr* cond_expr,
                                     struct BlockIr* false_block);
 struct CfIr* ir_branch_cf_cast(struct BranchCfIr* ir);
 struct ExprIr* ir_branch_cf_cond_expr(struct BranchCfIr* ir);
+void ir_branch_cf_set_cond_expr(struct BranchCfIr* ir,
+                                struct ExprIr* cond_expr);
 struct BlockIr* ir_branch_cf_true_block(struct BranchCfIr* ir);
 struct BlockIr* ir_branch_cf_false_block(struct BranchCfIr* ir);
 

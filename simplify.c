@@ -124,6 +124,20 @@ static struct FunctionIr* visit_function2(struct SimplifyVisitor2* visitor,
     return NULL;
 }
 
+static struct CfIr* visit_branch_cf2(struct SimplifyVisitor2* visitor,
+                                     struct BranchCfIr* ir) {
+    struct ExprIr* cond_expr =
+        visitor2_visit_expr(as_visitor(visitor), ir_branch_cf_cond_expr(ir));
+    if (cond_expr) {
+        ir_branch_cf_set_cond_expr(ir, cond_expr);
+    }
+
+    visitor2_visit_block(as_visitor(visitor), ir_branch_cf_true_block(ir));
+    visitor2_visit_block(as_visitor(visitor), ir_branch_cf_false_block(ir));
+
+    return NULL;
+}
+
 struct SimplifyVisitor2* new_simplify_visitor2(struct Context* context) {
     struct SimplifyVisitor2* visitor = malloc(sizeof(struct SimplifyVisitor2));
     visitor2_initialize(as_visitor(visitor));
@@ -136,6 +150,7 @@ struct SimplifyVisitor2* new_simplify_visitor2(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_store_expr, visit_store_expr2);
     register_visitor(visitor->as_visitor, visit_block, visit_block2);
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
+    register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf2);
 
     visitor->context = context;
     return visitor;

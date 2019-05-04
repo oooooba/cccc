@@ -238,6 +238,11 @@ struct ExprIr* ir_branch_cf_cond_expr(struct BranchCfIr* ir) {
     return ir->cond_expr;
 }
 
+void ir_branch_cf_set_cond_expr(struct BranchCfIr* ir,
+                                struct ExprIr* cond_expr) {
+    ir->cond_expr = cond_expr;
+}
+
 struct BlockIr* ir_branch_cf_true_block(struct BranchCfIr* ir) {
     return ir->true_block;
 }
