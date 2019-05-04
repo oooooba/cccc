@@ -409,6 +409,6 @@ struct CodegenVisitor2* new_codegen_visitor2(struct Context* context,
     return visitor;
 }
 
-void codegen2_apply(struct CodegenVisitor2* visitor, struct FunctionIr* ir) {
-    visitor2_visit_function(as_visitor(visitor), ir);
+void codegen2_apply(struct CodegenVisitor2* visitor, struct BlockIr* ir) {
+    visitor2_visit_block(as_visitor(visitor), ir);
 }

@@ -25,6 +25,10 @@ struct FunctionIr* ir_as_function(struct Ir* ir) {
     return ir->tag == IrTag_Function ? (struct FunctionIr*)ir : NULL;
 }
 
+struct CfIr* ir_as_cf(struct Ir* ir) {
+    return ir->tag == IrTag_Cf ? (struct CfIr*)ir : NULL;
+}
+
 enum IrTag ir_tag(struct Ir* ir) { return ir->tag; }
 
 struct FunctionIr {
@@ -121,7 +125,7 @@ struct Ir* ir_block_iterator_swap_at(struct BlockIterator* it,
     return prev_statement;
 }
 
-static void ir_block_insert_at_end(struct BlockIr* ir, struct Ir* statement) {
+void ir_block_insert_at_end(struct BlockIr* ir, struct Ir* statement) {
     struct ListItem* item = malloc(sizeof(struct ListItem));
     item->item = statement;
     list_insert_at_end(&ir->statemetnts, &item->header);
@@ -187,6 +191,60 @@ size_t ir_var_offset(struct VarIr* ir) {
 }
 
 strtable_id ir_var_index(struct VarIr* ir) { return ir->index; }
+
+struct CfIr {
+    struct Ir as_ir;
+    enum CfIrTag tag;
+};
+
+static void initialize_cf(struct CfIr* ir, enum CfIrTag tag) {
+    initialize_ir(ir_cf_cast(ir), IrTag_Cf);
+    ir->tag = tag;
+}
+
+enum CfIrTag ir_cf_tag(struct CfIr* ir) { return ir->tag; }
+
+struct Ir* ir_cf_cast(struct CfIr* ir) {
+    return &ir->as_ir;
+}
+
+struct BranchCfIr* ir_cf_as_branch(struct CfIr* ir) {
+    return ir->tag == CfIrTag_Branch ? (struct BranchCfIr*)ir : NULL;
+}
+
+struct BranchCfIr {
+    struct CfIr as_cf;
+    struct ExprIr* cond_expr;
+    struct BlockIr* true_block;
+    struct BlockIr* false_block;
+};
+
+struct BranchCfIr* ir_new_branch_cf(struct ExprIr* cond_expr,
+                                    struct BlockIr* true_block,
+                                    struct BlockIr* false_block) {
+    struct BranchCfIr* ir = malloc(sizeof(struct BranchCfIr));
+    initialize_cf(ir_branch_cf_cast(ir), CfIrTag_Branch);
+    ir->cond_expr = cond_expr;
+    ir->true_block = true_block;
+    ir->false_block = false_block;
+    return ir;
+}
+
+struct CfIr* ir_branch_cf_cast(struct BranchCfIr* ir) {
+    return &ir->as_cf;
+}
+
+struct ExprIr* ir_branch_cf_cond_expr(struct BranchCfIr* ir) {
+    return ir->cond_expr;
+}
+
+struct BlockIr* ir_branch_cf_true_block(struct BranchCfIr* ir) {
+    return ir->true_block;
+}
+
+struct BlockIr* ir_branch_cf_false_block(struct BranchCfIr* ir) {
+    return ir->false_block;
+}
 
 struct ExprIr {
     struct Ir as_ir;

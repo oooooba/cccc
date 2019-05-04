@@ -63,6 +63,8 @@ struct Ir* visitor2_visit_ir(struct Visitor2* visitor, struct Ir* ir) {
         case IrTag_Function:
             return ir_function_cast(
                 visitor2_visit_function(visitor, ir_as_function(ir)));
+        case IrTag_Cf:
+            return ir_cf_cast(visitor2_visit_cf(visitor, ir_as_cf(ir)));
         default:
             assert(false);
     }
@@ -98,6 +100,16 @@ struct FunctionIr* visitor2_visit_function(struct Visitor2* visitor,
     return visitor->visit_function(visitor, ir);
 }
 
+struct CfIr* visitor2_visit_cf(struct Visitor2* visitor, struct CfIr* ir) {
+    switch (ir_cf_tag(ir)) {
+        case CfIrTag_Branch:
+            return visitor->visit_branch_cf(visitor, ir_cf_as_branch(ir));
+        default:
+            assert(false);
+    }
+    return NULL;
+}
+
 void visitor2_initialize(struct Visitor2* visitor) {
     register_visitor(*visitor, visit_const_expr, NULL);
     register_visitor(*visitor, visit_binop_expr, NULL);
@@ -106,4 +118,5 @@ void visitor2_initialize(struct Visitor2* visitor) {
     register_visitor(*visitor, visit_store_expr, NULL);
     register_visitor(*visitor, visit_block, NULL);
     register_visitor(*visitor, visit_function, NULL);
+    register_visitor(*visitor, visit_branch_cf, NULL);
 }

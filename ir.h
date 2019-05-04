@@ -14,6 +14,9 @@ struct BlockIr;
 struct BlockIterator;
 struct VarIr;
 
+struct CfIr;
+struct BranchCfIr;
+
 struct ExprIr;
 struct ConstExprIr;
 struct BinopExprIr;
@@ -26,6 +29,11 @@ enum IrTag {
     IrTag_Expr,
     IrTag_Var,
     IrTag_Function,
+    IrTag_Cf,
+};
+
+enum CfIrTag {
+    CfIrTag_Branch,
 };
 
 enum ExprIrTag {
@@ -50,6 +58,7 @@ enum AddrTag {
 struct ExprIr* ir_as_expr(struct Ir* ir);
 struct BlockIr* ir_as_block(struct Ir* ir);
 struct FunctionIr* ir_as_function(struct Ir* ir);
+struct CfIr* ir_as_cf(struct Ir* ir);
 enum IrTag ir_tag(struct Ir* ir);
 
 struct FunctionIr* ir_new_function(strtable_id name_index,
@@ -66,6 +75,7 @@ struct BlockIterator* ir_block_new_iterator(struct BlockIr* ir);
 struct Ir* ir_block_iterator_next(struct BlockIterator* it);
 struct Ir* ir_block_iterator_swap_at(struct BlockIterator* it,
                                      struct Ir* statement);
+void ir_block_insert_at_end(struct BlockIr* ir, struct Ir* statement);
 void ir_block_insert_expr_at_end(struct BlockIr* ir, struct ExprIr* expr);
 void ir_block_insert_block_at_end(struct BlockIr* ir, struct BlockIr* block);
 struct VarIr* ir_block_new_var(struct BlockIr* ir, strtable_id index);
@@ -75,6 +85,18 @@ size_t ir_block_region_size(struct BlockIr* ir);
 struct Ir* ir_var_cast(struct VarIr* ir);
 strtable_id ir_var_index(struct VarIr* ir);
 size_t ir_var_offset(struct VarIr* ir);
+
+struct Ir* ir_cf_cast(struct CfIr* ir);
+struct BranchCfIr* ir_cf_as_branch(struct CfIr* ir);
+enum CfIrTag ir_cf_tag(struct CfIr* ir);
+
+struct BranchCfIr* ir_new_branch_cf(struct ExprIr* cond_expr,
+                                    struct BlockIr* true_block,
+                                    struct BlockIr* false_block);
+struct CfIr* ir_branch_cf_cast(struct BranchCfIr* ir);
+struct ExprIr* ir_branch_cf_cond_expr(struct BranchCfIr* ir);
+struct BlockIr* ir_branch_cf_true_block(struct BranchCfIr* ir);
+struct BlockIr* ir_branch_cf_false_block(struct BranchCfIr* ir);
 
 struct Ir* ir_expr_cast(struct ExprIr* ir);
 struct ConstExprIr* ir_expr_as_const(struct ExprIr* ir);

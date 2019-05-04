@@ -268,7 +268,7 @@ static struct ExprIr* visit_store_expr2(struct DumpVisitor2* visitor,
 
 static struct BlockIr* visit_block2(struct DumpVisitor2* visitor,
                                     struct BlockIr* ir) {
-    fprintf(visitor->stream, "(%p){\n", ir);
+    fprintf(visitor->stream, "[@%p]{\n", ir);
     struct BlockIterator* it = ir_block_new_iterator(ir);
     for (;;) {
         struct Ir* stmt = ir_block_iterator_next(it);
@@ -290,6 +290,21 @@ static struct FunctionIr* visit_function2(struct DumpVisitor2* visitor,
     return NULL;
 }
 
+static struct CfIr* visit_branch_cf2(struct DumpVisitor2* visitor,
+                                     struct BranchCfIr* ir) {
+    struct ExprIr* cond_expr = ir_branch_cf_cond_expr(ir);
+    visitor2_visit_expr(as_visitor(visitor), cond_expr);
+    fprintf(visitor->stream, "if (v%p) ", cond_expr);
+
+    struct BlockIr* true_block = ir_branch_cf_true_block(ir);
+    visitor2_visit_block(as_visitor(visitor), true_block);
+
+    struct BlockIr* false_block = ir_branch_cf_false_block(ir);
+    if (false_block) visitor2_visit_block(as_visitor(visitor), false_block);
+
+    return NULL;
+}
+
 struct DumpVisitor2* new_dump_visitor2(struct Context* context, FILE* stream) {
     struct DumpVisitor2* visitor = malloc(sizeof(struct DumpVisitor2));
     visitor2_initialize(as_visitor(visitor));
@@ -302,12 +317,13 @@ struct DumpVisitor2* new_dump_visitor2(struct Context* context, FILE* stream) {
     register_visitor(visitor->as_visitor, visit_store_expr, visit_store_expr2);
     register_visitor(visitor->as_visitor, visit_block, visit_block2);
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
+    register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf2);
 
     visitor->context = context;
     visitor->stream = stream;
     return visitor;
 }
 
-void dump2_apply(struct DumpVisitor2* visitor, struct FunctionIr* ir) {
-    visitor2_visit_function(as_visitor(visitor), ir);
+void dump2_apply(struct DumpVisitor2* visitor, struct BlockIr* ir) {
+    visitor2_visit_block(as_visitor(visitor), ir);
 }

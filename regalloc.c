@@ -398,8 +398,8 @@ struct RegallocVisitor2* new_regalloc_visitor2(struct Context* context) {
     return visitor;
 }
 
-void regalloc2_apply(struct RegallocVisitor2* visitor, struct FunctionIr* ir) {
-    visitor2_visit_function(as_visitor(visitor), ir);
+void regalloc2_apply(struct RegallocVisitor2* visitor, struct BlockIr* ir) {
+    visitor2_visit_block(as_visitor(visitor), ir);
 }
 
 struct PostRegallocVisitor2 {
@@ -466,6 +466,6 @@ struct PostRegallocVisitor2* new_post_regalloc_visitor2(
 }
 
 void regalloc2_apply_post_process(struct PostRegallocVisitor2* visitor,
-                                  struct FunctionIr* ir) {
-    visitor2_visit_function(as_visitor_post_process(visitor), ir);
+                                  struct BlockIr* ir) {
+    visitor2_visit_block(as_visitor_post_process(visitor), ir);
 }
