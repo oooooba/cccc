@@ -104,6 +104,7 @@ static struct VarIr* parse_identifier(struct Parser* parser) {
     strtable_id index = peek(parser)->strtable_index;
     struct VarIr* var = env_find(parser->current_env, index);
     assert(var);
+    advance(parser);
     return var;
 }
 
@@ -167,8 +168,25 @@ static struct ExprIr* parse_additive_expression(struct Parser* parser) {
     return lhs;
 }
 
+static struct ExprIr* parse_assignment_expression(struct Parser* parser) {
+    struct ExprIr* lhs = parse_additive_expression(parser);
+    if (acceptable(parser, Token_Equal)) {
+        advance(parser);
+
+        struct LoadExprIr* deref_expr = ir_expr_as_load(lhs);
+        assert(deref_expr);
+        struct ExprIr* addr_expr = ir_load_expr_addr(deref_expr);
+
+        struct ExprIr* rhs = parse_additive_expression(parser);
+        struct StoreExprIr* subst_expr = ir_new_store_expr(addr_expr, rhs);
+
+        lhs = ir_store_expr_cast(subst_expr);
+    }
+    return lhs;
+}
+
 static struct ExprIr* parse_expression(struct Parser* parser) {
-    return parse_additive_expression(parser);
+    return parse_assignment_expression(parser);
 }
 
 /***** declarations *****/
