@@ -324,7 +324,7 @@ static struct ExprIr* visit_addrof_expr2(struct CodegenVisitor2* visitor,
     size_t offset = ir_var_offset(var);
     strtable_id reg_id = ir_expr_reg_id(ir_addrof_expr_cast(ir));
     const char* reg = register_name(visitor, reg_id);
-    fprintf(visitor->stream, "\tlea\t%s, [ebp - %ld]\n", reg, offset);
+    fprintf(visitor->stream, "\tlea\t%s, [rbp - %ld]\n", reg, offset);
     return NULL;
 }
 
