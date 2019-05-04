@@ -386,6 +386,28 @@ static struct FunctionIr* visit_function2(struct CodegenVisitor2* visitor,
     return NULL;
 }
 
+static struct CfIr* visit_branch_cf2(struct CodegenVisitor2* visitor,
+                                     struct BranchCfIr* ir) {
+    struct ExprIr* cond_expr = ir_branch_cf_cond_expr(ir);
+    visitor2_visit_expr(as_visitor(visitor), cond_expr);
+
+    strtable_id cond_reg_id = ir_expr_reg_id(cond_expr);
+    const char* cond_reg =
+        strtable_at(&visitor->context->strtable, cond_reg_id);
+
+    fprintf(visitor->stream, "\tand\t%s, %s\n", cond_reg, cond_reg);
+    fprintf(visitor->stream, "\tjz\tlab_%p_else\n", ir);
+
+    visitor2_visit_block(as_visitor(visitor), ir_branch_cf_true_block(ir));
+    fprintf(visitor->stream, "\tjmp\tlab_%p_cont\n", ir);
+
+    fprintf(visitor->stream, "lab_%p_else:\n", ir);
+    visitor2_visit_block(as_visitor(visitor), ir_branch_cf_false_block(ir));
+
+    fprintf(visitor->stream, "lab_%p_cont:\n", ir);
+    return NULL;
+}
+
 struct CodegenVisitor2* new_codegen_visitor2(struct Context* context,
                                              FILE* stream) {
     struct CodegenVisitor2* visitor = malloc(sizeof(struct CodegenVisitor2));
@@ -399,6 +421,7 @@ struct CodegenVisitor2* new_codegen_visitor2(struct Context* context,
     register_visitor(visitor->as_visitor, visit_store_expr, visit_store_expr2);
     register_visitor(visitor->as_visitor, visit_block, visit_block2);
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
+    register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf2);
 
     visitor->context = context;
     visitor->stream = stream;
