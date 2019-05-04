@@ -5,24 +5,24 @@
 #include <assert.h>
 #include <stdlib.h>
 
-struct SimplifyVisitor2 {
+struct SimplifyVisitor {
     struct Visitor2 as_visitor;
     struct Context* context;
 };
 
-static struct Visitor2* as_visitor(struct SimplifyVisitor2* visitor) {
+static struct Visitor2* as_visitor(struct SimplifyVisitor* visitor) {
     return &visitor->as_visitor;
 }
 
-static struct ExprIr* visit_const_expr2(struct SimplifyVisitor2* visitor,
-                                        struct ConstExprIr* ir) {
+static struct ExprIr* visit_const_expr(struct SimplifyVisitor* visitor,
+                                       struct ConstExprIr* ir) {
     (void)visitor;
     (void)ir;
     return NULL;
 }
 
-static struct ExprIr* visit_binop_expr2(struct SimplifyVisitor2* visitor,
-                                        struct BinopExprIr* ir) {
+static struct ExprIr* visit_binop_expr(struct SimplifyVisitor* visitor,
+                                       struct BinopExprIr* ir) {
     struct ExprIr* lhs = ir_binop_expr_lhs(ir);
     struct ExprIr* new_lhs = visitor2_visit_expr(as_visitor(visitor), lhs);
     if (new_lhs) {
@@ -62,8 +62,8 @@ static struct ExprIr* visit_binop_expr2(struct SimplifyVisitor2* visitor,
     return ir_const_expr_cast(ir_new_integer_const_expr(value));
 }
 
-static struct ExprIr* visit_addrof_expr2(struct SimplifyVisitor2* visitor,
-                                         struct AddrofExprIr* ir) {
+static struct ExprIr* visit_addrof_expr(struct SimplifyVisitor* visitor,
+                                        struct AddrofExprIr* ir) {
     struct ExprIr* addrof_operand = ir_addrof_expr_operand_as_expr(ir);
     if (!addrof_operand) return NULL;
 
@@ -77,8 +77,8 @@ static struct ExprIr* visit_addrof_expr2(struct SimplifyVisitor2* visitor,
     return new_load_addr ? new_load_addr : load_addr;
 }
 
-static struct ExprIr* visit_load_expr2(struct SimplifyVisitor2* visitor,
-                                       struct LoadExprIr* ir) {
+static struct ExprIr* visit_load_expr(struct SimplifyVisitor* visitor,
+                                      struct LoadExprIr* ir) {
     struct ExprIr* addr = ir_load_expr_addr(ir);
     struct ExprIr* new_addr = visitor2_visit_expr(as_visitor(visitor), addr);
     if (new_addr) {
@@ -87,8 +87,8 @@ static struct ExprIr* visit_load_expr2(struct SimplifyVisitor2* visitor,
     return NULL;
 }
 
-static struct ExprIr* visit_store_expr2(struct SimplifyVisitor2* visitor,
-                                        struct StoreExprIr* ir) {
+static struct ExprIr* visit_store_expr(struct SimplifyVisitor* visitor,
+                                       struct StoreExprIr* ir) {
     struct ExprIr* addr = ir_store_expr_addr(ir);
     struct ExprIr* new_addr = visitor2_visit_expr(as_visitor(visitor), addr);
     if (new_addr) {
@@ -104,8 +104,8 @@ static struct ExprIr* visit_store_expr2(struct SimplifyVisitor2* visitor,
     return NULL;
 }
 
-static struct BlockIr* visit_block2(struct SimplifyVisitor2* visitor,
-                                    struct BlockIr* ir) {
+static struct BlockIr* visit_block(struct SimplifyVisitor* visitor,
+                                   struct BlockIr* ir) {
     struct BlockIterator* it = ir_block_new_iterator(ir);
     for (;;) {
         struct Ir* stmt = ir_block_iterator_next(it);
@@ -117,15 +117,15 @@ static struct BlockIr* visit_block2(struct SimplifyVisitor2* visitor,
     return NULL;
 }
 
-static struct FunctionIr* visit_function2(struct SimplifyVisitor2* visitor,
-                                          struct FunctionIr* ir) {
+static struct FunctionIr* visit_function(struct SimplifyVisitor* visitor,
+                                         struct FunctionIr* ir) {
     struct BlockIr* body = ir_function_body(ir);
     visitor2_visit_block(as_visitor(visitor), body);
     return NULL;
 }
 
-static struct CfIr* visit_branch_cf2(struct SimplifyVisitor2* visitor,
-                                     struct BranchCfIr* ir) {
+static struct CfIr* visit_branch_cf(struct SimplifyVisitor* visitor,
+                                    struct BranchCfIr* ir) {
     struct ExprIr* cond_expr =
         visitor2_visit_expr(as_visitor(visitor), ir_branch_cf_cond_expr(ir));
     if (cond_expr) {
@@ -138,24 +138,23 @@ static struct CfIr* visit_branch_cf2(struct SimplifyVisitor2* visitor,
     return NULL;
 }
 
-struct SimplifyVisitor2* new_simplify_visitor2(struct Context* context) {
-    struct SimplifyVisitor2* visitor = malloc(sizeof(struct SimplifyVisitor2));
+struct SimplifyVisitor* new_simplify_visitor(struct Context* context) {
+    struct SimplifyVisitor* visitor = malloc(sizeof(struct SimplifyVisitor));
     visitor2_initialize(as_visitor(visitor));
 
-    register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr2);
-    register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr2);
-    register_visitor(visitor->as_visitor, visit_addrof_expr,
-                     visit_addrof_expr2);
-    register_visitor(visitor->as_visitor, visit_load_expr, visit_load_expr2);
-    register_visitor(visitor->as_visitor, visit_store_expr, visit_store_expr2);
-    register_visitor(visitor->as_visitor, visit_block, visit_block2);
-    register_visitor(visitor->as_visitor, visit_function, visit_function2);
-    register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf2);
+    register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr);
+    register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr);
+    register_visitor(visitor->as_visitor, visit_addrof_expr, visit_addrof_expr);
+    register_visitor(visitor->as_visitor, visit_load_expr, visit_load_expr);
+    register_visitor(visitor->as_visitor, visit_store_expr, visit_store_expr);
+    register_visitor(visitor->as_visitor, visit_block, visit_block);
+    register_visitor(visitor->as_visitor, visit_function, visit_function);
+    register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf);
 
     visitor->context = context;
     return visitor;
 }
 
-void simplify2_apply(struct SimplifyVisitor2* visitor, struct BlockIr* ir) {
+void simplify_apply(struct SimplifyVisitor* visitor, struct BlockIr* ir) {
     visitor2_visit_block(as_visitor(visitor), ir);
 }

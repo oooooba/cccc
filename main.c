@@ -11,9 +11,9 @@ struct DumpVisitor2;
 struct DumpVisitor2* new_dump_visitor2(struct Context* context, FILE* stream);
 void dump2_apply(struct DumpVisitor2* visitor, struct BlockIr* ir);
 
-struct SimplifyVisitor2;
-struct SimplifyVisitor2* new_simplify_visitor2(struct Context* context);
-void simplify2_apply(struct SimplifyVisitor2* visitor, struct BlockIr* ir);
+struct SimplifyVisitor;
+struct SimplifyVisitor* new_simplify_visitor(struct Context* context);
+void simplify_apply(struct SimplifyVisitor* visitor, struct BlockIr* ir);
 
 struct RegallocVisitor2;
 void regalloc2_apply(struct RegallocVisitor2* visitor, struct BlockIr* ir);
@@ -50,8 +50,8 @@ int main(void) {
     dump2_apply(dump_visitor, translation_unit);
 
     fprintf(stderr, "[apply simplify]\n");
-    struct SimplifyVisitor2* simplify_visitor = new_simplify_visitor2(&context);
-    simplify2_apply(simplify_visitor, translation_unit);
+    struct SimplifyVisitor* simplify_visitor = new_simplify_visitor(&context);
+    simplify_apply(simplify_visitor, translation_unit);
 
     fprintf(stderr, "[apply dump (2)]\n");
     dump2_apply(dump_visitor, translation_unit);
