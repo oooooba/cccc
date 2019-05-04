@@ -42,10 +42,8 @@ int main(void) {
     lexer_initialize(&lexer, &context, &tokens, stdin);
     lexer_read_and_tokenize(&lexer);
 
-    struct Parser parser;
-    parser_initialize(&parser, &context, lexer.tokens);
-
-    struct BlockIr* translation_unit = parser_run(&parser);
+    struct Parser* parser = parser_new(&context, lexer.tokens);
+    struct BlockIr* translation_unit = parser_run(parser);
 
     fprintf(stderr, "[apply dump (1)]\n");
     struct DumpVisitor2* dump_visitor = new_dump_visitor2(&context, stderr);

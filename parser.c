@@ -3,6 +3,7 @@
 #include "context.h"
 #include "ir.h"
 #include "list.h"
+#include "map.h"
 #include "token.h"
 #include "type.h"
 #include "vector.h"
@@ -11,7 +12,39 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+struct Env;
+
+struct Parser {
+    struct Context* context;
+    struct List* tokens;
+    struct ListHeader* current_token;
+    struct BlockIr* current_block;
+    struct Env* current_env;
+};
+
 /***** helper functions *****/
+
+struct Env {
+    struct Map var_map;  // key: strtable_id, value: VarIr*
+    struct Env* outer_env;
+};
+
+static struct Env* env_new(struct Env* outer_env) {
+    struct Env* env = malloc(sizeof(struct Env));
+    map_initialize(&env->var_map);
+    env->outer_env = outer_env;
+    return env;
+}
+
+static struct VarIr* env_find(struct Env* env, strtable_id index) {
+    if (!env) return NULL;
+    struct VarIr* var = (struct VarIr*)map_find(&env->var_map, (void*)index);
+    return var ? var : env_find(env->outer_env, index);
+}
+
+static void env_insert(struct Env* env, strtable_id index, struct VarIr* var) {
+    map_insert(&env->var_map, (void*)index, var);
+}
 
 static struct Token* peek_k(struct Parser* parser, size_t k) {
     struct ListHeader* it = parser->current_token;
@@ -67,10 +100,11 @@ static struct ExprIr* parse_integer_constant(struct Parser* parser) {
 }
 
 static struct VarIr* parse_identifier(struct Parser* parser) {
-    assert("wrong implementation" && false);
     assert(acceptable(parser, Token_Id));
-    struct Token* token = peek(parser);
-    return ir_block_new_var(parser->current_block, token->strtable_index, NULL);
+    strtable_id index = peek(parser)->strtable_index;
+    struct VarIr* var = env_find(parser->current_env, index);
+    assert(var);
+    return var;
 }
 
 static struct ExprIr* parse_constant(struct Parser* parser) {
@@ -159,9 +193,13 @@ static strtable_id parse_declarator(struct Parser* parser) {
 
 static struct Ir* parse_declaration(struct Parser* parser) {
     struct TypeIr* type = parse_type_specifier(parser);
+
     strtable_id var_index = parse_declarator(parser);
+    assert(!env_find(parser->current_env, var_index));
     struct VarIr* var =
         ir_block_new_var(parser->current_block, var_index, type);
+    env_insert(parser->current_env, var_index, var);
+
     if (acceptable(parser, Token_Equal)) {
         advance(parser);
 
@@ -184,15 +222,23 @@ static struct Ir* parse_statement(struct Parser* parser);
 static struct BlockIr* parse_compound_statement(struct Parser* parser) {
     expect(parser, Token_LeftCurry);
     struct BlockIr* prev_block = parser->current_block;
+
     struct BlockIr* block = ir_new_block();
     parser->current_block = block;
+
+    struct Env* env = env_new(parser->current_env);
+    parser->current_env = env;
+
     while (!acceptable(parser, Token_RightCurry)) {
         struct Ir* item = acceptable_type(parser) ? parse_declaration(parser)
                                                   : parse_statement(parser);
         if (item) ir_block_insert_at_end(block, item);
     }
     expect(parser, Token_RightCurry);
+
+    parser->current_env = env->outer_env;
     parser->current_block = prev_block;
+
     return block;
 }
 
@@ -269,10 +315,12 @@ struct BlockIr* parser_run(struct Parser* parser) {
     return parse_translation_unit(parser);
 }
 
-void parser_initialize(struct Parser* parser, struct Context* context,
-                       struct List* tokens) {
+struct Parser* parser_new(struct Context* context, struct List* tokens) {
+    struct Parser* parser = malloc(sizeof(struct Parser));
     parser->context = context;
     parser->tokens = tokens;
     parser->current_token = list_begin(tokens);
     parser->current_block = NULL;
+    parser->current_env = NULL;
+    return parser;
 }
