@@ -446,6 +446,12 @@ static struct BlockIr* visit_block2_post_process(
             visitor->parent_region_end = new_region_end;
             visitor2_visit_block(as_visitor_post_process(visitor), block);
         }
+
+        // FunctionIr-s are stored in BlockIr (translation unit)
+        struct FunctionIr* function = ir_as_function(stmt);
+        if (function) {
+            visitor2_visit_function(as_visitor_post_process(visitor), function);
+        }
     }
     return NULL;
 }
