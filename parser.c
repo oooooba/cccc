@@ -132,8 +132,23 @@ static struct ExprIr* parse_primary_expression(struct Parser* parser) {
     }
 }
 
+static struct ExprIr* parse_cast_expression(struct Parser* parser);
+
+static struct ExprIr* parse_unary_expression(struct Parser* parser) {
+    if (acceptable(parser, Token_Ampersand)) {
+        advance(parser);
+        struct ExprIr* expr = parse_cast_expression(parser);
+        return ir_addrof_expr_cast(ir_new_addrof_expr_with_expr(expr));
+    } else if (acceptable(parser, Token_Asterisk)) {
+        advance(parser);
+        struct ExprIr* expr = parse_cast_expression(parser);
+        return ir_load_expr_cast(ir_new_load_expr(expr));
+    } else
+        return parse_primary_expression(parser);
+}
+
 static struct ExprIr* parse_cast_expression(struct Parser* parser) {
-    return parse_primary_expression(parser);
+    return parse_unary_expression(parser);
 }
 
 static struct ExprIr* parse_multiplicative_expression(struct Parser* parser) {
@@ -201,18 +216,28 @@ static struct TypeIr* parse_type_specifier(struct Parser* parser) {
     return type_new_int2();
 }
 
-static strtable_id parse_declarator(struct Parser* parser) {
+static strtable_id parse_declarator(struct Parser* parser,
+                                    struct TypeIr* base_type,
+                                    struct TypeIr** result_type) {
+    if (acceptable(parser, Token_Asterisk)) {
+        advance(parser);
+        *result_type = type_new_pointer2(base_type);
+    } else
+        *result_type = base_type;
+
     assert(acceptable(parser, Token_Id));
     struct Token* token = peek(parser);
     strtable_id name_index = token->strtable_index;
     advance(parser);
+
     return name_index;
 }
 
 static struct Ir* parse_declaration(struct Parser* parser) {
-    struct TypeIr* type = parse_type_specifier(parser);
+    struct TypeIr* base_type = parse_type_specifier(parser);
+    struct TypeIr* type;
 
-    strtable_id var_index = parse_declarator(parser);
+    strtable_id var_index = parse_declarator(parser, base_type, &type);
     assert(!env_find(parser->current_env, var_index));
     struct VarIr* var =
         ir_block_new_var(parser->current_block, var_index, type);

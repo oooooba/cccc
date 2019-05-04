@@ -22,5 +22,6 @@ size_t type_size(struct TypeNode* node);
 struct TypeIr;
 
 struct TypeIr* type_new_int2(void);
+struct TypeIr* type_new_pointer2(struct TypeIr* elem_type);
 
 #endif
