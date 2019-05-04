@@ -7,9 +7,9 @@
 
 #include <stdio.h>
 
-struct DumpVisitor2;
-struct DumpVisitor2* new_dump_visitor2(struct Context* context, FILE* stream);
-void dump2_apply(struct DumpVisitor2* visitor, struct BlockIr* ir);
+struct DumpVisitor;
+struct DumpVisitor* new_dump_visitor(struct Context* context, FILE* stream);
+void dump_apply(struct DumpVisitor* visitor, struct BlockIr* ir);
 
 struct SimplifyVisitor;
 struct SimplifyVisitor* new_simplify_visitor(struct Context* context);
@@ -46,15 +46,15 @@ int main(void) {
     struct BlockIr* translation_unit = parser_run(parser);
 
     fprintf(stderr, "[apply dump (1)]\n");
-    struct DumpVisitor2* dump_visitor = new_dump_visitor2(&context, stderr);
-    dump2_apply(dump_visitor, translation_unit);
+    struct DumpVisitor* dump_visitor = new_dump_visitor(&context, stderr);
+    dump_apply(dump_visitor, translation_unit);
 
     fprintf(stderr, "[apply simplify]\n");
     struct SimplifyVisitor* simplify_visitor = new_simplify_visitor(&context);
     simplify_apply(simplify_visitor, translation_unit);
 
     fprintf(stderr, "[apply dump (2)]\n");
-    dump2_apply(dump_visitor, translation_unit);
+    dump_apply(dump_visitor, translation_unit);
 
     fprintf(stderr, "[apply regalloc]\n");
     struct RegallocVisitor2* regalloc_visitor = new_regalloc_visitor2(&context);
