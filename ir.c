@@ -1,6 +1,7 @@
 #include "ir.h"
 #include "list.h"
 #include "strtable.h"
+#include "type.h"
 
 #include <assert.h>
 #include <stddef.h>
@@ -76,6 +77,7 @@ struct VarIr {
     strtable_id index;
     size_t region_offset;
     struct BlockIr* block;
+    struct TypeIr* type;
 };
 
 struct BlockIr {
@@ -140,16 +142,18 @@ void ir_block_insert_block_at_end(struct BlockIr* ir, struct BlockIr* block) {
 }
 
 static struct VarIr* ir_new_var(struct BlockIr* block, strtable_id index,
-                                size_t region_offset) {
+                                struct TypeIr* type, size_t region_offset) {
     struct VarIr* ir = malloc(sizeof(struct VarIr));
     initialize_ir(ir_var_cast(ir), IrTag_Var);
     ir->index = index;
     ir->region_offset = region_offset;
     ir->block = block;
+    ir->type = type;
     return ir;
 }
 
-struct VarIr* ir_block_new_var(struct BlockIr* ir, strtable_id index) {
+struct VarIr* ir_block_new_var(struct BlockIr* ir, strtable_id index,
+                               struct TypeIr* type) {
     assert(ir->region_base == (size_t)-1);
     size_t var_size = sizeof(void*);  // ToDo: fix to refer size of type
     size_t region_offset = ir->region_size;
@@ -159,7 +163,7 @@ struct VarIr* ir_block_new_var(struct BlockIr* ir, strtable_id index) {
         region_offset = ir->region_size;
     }
     ir->region_size += var_size;
-    return ir_new_var(ir, index, region_offset);
+    return ir_new_var(ir, index, type, region_offset);
 }
 
 static size_t ir_block_region_base(struct BlockIr* ir) {

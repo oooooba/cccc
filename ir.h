@@ -2,6 +2,7 @@
 #define IR_H
 
 #include "strtable.h"
+#include "type.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -78,7 +79,8 @@ struct Ir* ir_block_iterator_swap_at(struct BlockIterator* it,
 void ir_block_insert_at_end(struct BlockIr* ir, struct Ir* statement);
 void ir_block_insert_expr_at_end(struct BlockIr* ir, struct ExprIr* expr);
 void ir_block_insert_block_at_end(struct BlockIr* ir, struct BlockIr* block);
-struct VarIr* ir_block_new_var(struct BlockIr* ir, strtable_id index);
+struct VarIr* ir_block_new_var(struct BlockIr* ir, strtable_id index,
+                               struct TypeIr* type);
 void ir_block_commit_region_status(struct BlockIr* ir, size_t region_base);
 size_t ir_block_region_size(struct BlockIr* ir);
 

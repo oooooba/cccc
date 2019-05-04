@@ -34,6 +34,10 @@ static bool acceptable(struct Parser* parser, enum TokenTag expected) {
         return false;
 }
 
+static bool acceptable_type(struct Parser* parser) {
+    return acceptable(parser, Token_KeywordInt);
+}
+
 static void expect(struct Parser* parser, enum TokenTag expected) {
     if (!acceptable(parser, expected)) {
         fprintf(stderr, "expected %d, actual %d\n", expected,
@@ -63,9 +67,10 @@ static struct ExprIr* parse_integer_constant(struct Parser* parser) {
 }
 
 static struct VarIr* parse_identifier(struct Parser* parser) {
+    assert("wrong implementation" && false);
     assert(acceptable(parser, Token_Id));
     struct Token* token = peek(parser);
-    return ir_block_new_var(parser->current_block, token->strtable_index);
+    return ir_block_new_var(parser->current_block, token->strtable_index, NULL);
 }
 
 static struct ExprIr* parse_constant(struct Parser* parser) {
@@ -132,6 +137,46 @@ static struct ExprIr* parse_expression(struct Parser* parser) {
     return parse_additive_expression(parser);
 }
 
+/***** declarations *****/
+
+static struct ExprIr* parse_initializer(struct Parser* parser) {
+    return parse_expression(parser);
+}
+
+static struct TypeIr* parse_type_specifier(struct Parser* parser) {
+    assert(acceptable(parser, Token_KeywordInt));
+    advance(parser);
+    return type_new_int2();
+}
+
+static strtable_id parse_declarator(struct Parser* parser) {
+    assert(acceptable(parser, Token_Id));
+    struct Token* token = peek(parser);
+    strtable_id name_index = token->strtable_index;
+    advance(parser);
+    return name_index;
+}
+
+static struct Ir* parse_declaration(struct Parser* parser) {
+    struct TypeIr* type = parse_type_specifier(parser);
+    strtable_id var_index = parse_declarator(parser);
+    struct VarIr* var =
+        ir_block_new_var(parser->current_block, var_index, type);
+    if (acceptable(parser, Token_Equal)) {
+        advance(parser);
+
+        struct ExprIr* initializer = parse_initializer(parser);
+
+        struct AddrofExprIr* addrof_var = ir_new_addrof_expr_with_var(var);
+        struct StoreExprIr* subst =
+            ir_new_store_expr(ir_addrof_expr_cast(addrof_var), initializer);
+        ir_block_insert_expr_at_end(parser->current_block,
+                                    ir_store_expr_cast(subst));
+    }
+    expect(parser, Token_Semicolon);
+    return NULL;
+}
+
 /***** statements and blocks *****/
 
 static struct Ir* parse_statement(struct Parser* parser);
@@ -142,7 +187,8 @@ static struct BlockIr* parse_compound_statement(struct Parser* parser) {
     struct BlockIr* block = ir_new_block();
     parser->current_block = block;
     while (!acceptable(parser, Token_RightCurry)) {
-        struct Ir* item = parse_statement(parser);
+        struct Ir* item = acceptable_type(parser) ? parse_declaration(parser)
+                                                  : parse_statement(parser);
         if (item) ir_block_insert_at_end(block, item);
     }
     expect(parser, Token_RightCurry);

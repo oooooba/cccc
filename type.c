@@ -60,3 +60,22 @@ size_t type_size(struct TypeNode* node) {
     }
     return (size_t)-1;
 }
+
+////////////////////////////////////////////////////////
+
+struct TypeIr {
+    enum TypeTag tag;
+#if 0
+    union {
+        struct PointerTypeIr* pointer;
+        struct StructTypeIr* structure;
+        struct ArrayTypeIr* array;
+    };
+#endif
+};
+
+struct TypeIr* type_new_int2(void) {
+    struct TypeIr* type = malloc(sizeof(struct TypeIr));
+    type->tag = Type_Int;
+    return type;
+}
