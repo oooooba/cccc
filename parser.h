@@ -2,6 +2,7 @@
 #define PARSER_H
 
 #include "context.h"
+#include "ir.h"
 #include "list.h"
 
 struct Parser {
