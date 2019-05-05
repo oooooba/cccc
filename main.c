@@ -16,14 +16,13 @@ struct SimplifyVisitor* new_simplify_visitor(struct Context* context);
 void simplify_apply(struct SimplifyVisitor* visitor, struct BlockIr* ir);
 
 struct RegallocVisitor2;
-void regalloc2_apply(struct RegallocVisitor2* visitor, struct BlockIr* ir);
-struct RegallocVisitor2* new_regalloc_visitor2(struct Context* context);
+void regalloc_apply(struct RegallocVisitor2* visitor, struct BlockIr* ir);
+struct RegallocVisitor2* new_regalloc_visitor(struct Context* context);
 
 struct PostRegallocVisitor2;
-struct PostRegallocVisitor2* new_post_regalloc_visitor2(
-    struct Context* context);
-void regalloc2_apply_post_process(struct PostRegallocVisitor2* visitor,
-                                  struct BlockIr* ir);
+struct PostRegallocVisitor2* new_post_regalloc_visitor(struct Context* context);
+void regalloc_apply_post_process(struct PostRegallocVisitor2* visitor,
+                                 struct BlockIr* ir);
 
 struct CodegenVisitor2;
 struct CodegenVisitor2* new_codegen_visitor(struct Context* context,
@@ -57,13 +56,13 @@ int main(void) {
     dump_apply(dump_visitor, translation_unit);
 
     fprintf(stderr, "[apply regalloc]\n");
-    struct RegallocVisitor2* regalloc_visitor = new_regalloc_visitor2(&context);
-    regalloc2_apply(regalloc_visitor, translation_unit);
+    struct RegallocVisitor2* regalloc_visitor = new_regalloc_visitor(&context);
+    regalloc_apply(regalloc_visitor, translation_unit);
 
     fprintf(stderr, "[apply post regalloc]\n");
     struct PostRegallocVisitor2* post_regalloc_visitor =
-        new_post_regalloc_visitor2(&context);
-    regalloc2_apply_post_process(post_regalloc_visitor, translation_unit);
+        new_post_regalloc_visitor(&context);
+    regalloc_apply_post_process(post_regalloc_visitor, translation_unit);
 
     fprintf(stderr, "[apply codegen]\n");
     struct CodegenVisitor2* codegen_visitor =
