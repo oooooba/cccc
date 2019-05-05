@@ -18,7 +18,6 @@ struct Parser {
     struct Context* context;
     struct List* tokens;
     struct ListHeader* current_token;
-    struct BlockIr* current_block;
     struct Env* current_env;
 };
 
@@ -206,6 +205,13 @@ static struct ExprIr* parse_expression(struct Parser* parser) {
 
 /***** declarations *****/
 
+struct Declaration {
+    struct ListHeader as_list;
+    strtable_id name_index;
+    struct TypeIr* type;
+    struct ExprIr* initializer;
+};
+
 static struct ExprIr* parse_initializer(struct Parser* parser) {
     return parse_expression(parser);
 }
@@ -233,29 +239,25 @@ static strtable_id parse_declarator(struct Parser* parser,
     return name_index;
 }
 
-static struct Ir* parse_declaration(struct Parser* parser) {
+static void parse_declaration(struct Parser* parser, struct List* result) {
     struct TypeIr* base_type = parse_type_specifier(parser);
+
     struct TypeIr* type;
-
     strtable_id var_index = parse_declarator(parser, base_type, &type);
-    assert(!env_find(parser->current_env, var_index));
-    struct VarIr* var =
-        ir_block_new_var(parser->current_block, var_index, type);
-    env_insert(parser->current_env, var_index, var);
 
+    struct ExprIr* initializer = NULL;
     if (acceptable(parser, Token_Equal)) {
         advance(parser);
-
-        struct ExprIr* initializer = parse_initializer(parser);
-
-        struct AddrofExprIr* addrof_var = ir_new_addrof_expr_with_var(var);
-        struct StoreExprIr* subst =
-            ir_new_store_expr(ir_addrof_expr_cast(addrof_var), initializer);
-        ir_block_insert_expr_at_end(parser->current_block,
-                                    ir_store_expr_cast(subst));
+        initializer = parse_initializer(parser);
     }
+
+    struct Declaration* decl = malloc(sizeof(struct Declaration));
+    decl->name_index = var_index;
+    decl->type = type;
+    decl->initializer = initializer;
+    list_insert_at_end(result, list_from(decl));
+
     expect(parser, Token_Semicolon);
-    return NULL;
 }
 
 /***** statements and blocks *****/
@@ -264,23 +266,43 @@ static struct Ir* parse_statement(struct Parser* parser);
 
 static struct BlockIr* parse_compound_statement(struct Parser* parser) {
     expect(parser, Token_LeftCurry);
-    struct BlockIr* prev_block = parser->current_block;
-
-    struct BlockIr* block = ir_new_block();
-    parser->current_block = block;
 
     struct Env* env = env_new(parser->current_env);
     parser->current_env = env;
 
+    struct BlockIr* block = ir_new_block();
     while (!acceptable(parser, Token_RightCurry)) {
-        struct Ir* item = acceptable_type(parser) ? parse_declaration(parser)
-                                                  : parse_statement(parser);
-        if (item) ir_block_insert_at_end(block, item);
+        if (acceptable_type(parser)) {
+            struct List decls;
+            list_initialize(&decls);
+            parse_declaration(parser, &decls);
+            for (struct ListHeader *it = list_begin(&decls),
+                                   *eit = list_end(&decls);
+                 it != eit; it = list_next(it)) {
+                struct Declaration* decl = (struct Declaration*)it;
+                strtable_id var_index = decl->name_index;
+
+                assert(!env_find(env, var_index));
+                struct VarIr* var =
+                    ir_block_new_var(block, var_index, decl->type);
+                env_insert(env, var_index, var);
+
+                if (!decl->initializer) continue;
+
+                struct AddrofExprIr* addrof_var =
+                    ir_new_addrof_expr_with_var(var);
+                struct StoreExprIr* subst = ir_new_store_expr(
+                    ir_addrof_expr_cast(addrof_var), decl->initializer);
+                ir_block_insert_expr_at_end(block, ir_store_expr_cast(subst));
+            }
+        } else {
+            struct Ir* item = parse_statement(parser);
+            if (item) ir_block_insert_at_end(block, item);
+        }
     }
     expect(parser, Token_RightCurry);
 
     parser->current_env = env->outer_env;
-    parser->current_block = prev_block;
 
     return block;
 }
@@ -363,7 +385,6 @@ struct Parser* parser_new(struct Context* context, struct List* tokens) {
     parser->context = context;
     parser->tokens = tokens;
     parser->current_token = list_begin(tokens);
-    parser->current_block = NULL;
     parser->current_env = NULL;
     return parser;
 }
