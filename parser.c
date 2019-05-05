@@ -256,8 +256,6 @@ static void parse_declaration(struct Parser* parser, struct List* result) {
     decl->type = type;
     decl->initializer = initializer;
     list_insert_at_end(result, list_from(decl));
-
-    expect(parser, Token_Semicolon);
 }
 
 /***** statements and blocks *****/
@@ -276,6 +274,7 @@ static struct BlockIr* parse_compound_statement(struct Parser* parser) {
             struct List decls;
             list_initialize(&decls);
             parse_declaration(parser, &decls);
+            expect(parser, Token_Semicolon);
             for (struct ListHeader *it = list_begin(&decls),
                                    *eit = list_end(&decls);
                  it != eit; it = list_next(it)) {
@@ -350,12 +349,14 @@ static struct Ir* parse_statement(struct Parser* parser) {
 /***** external definitions *****/
 
 static struct FunctionIr* parse_function_definition(struct Parser* parser) {
-    expect(parser, Token_KeywordInt);
+    struct List func_decls;
+    list_initialize(&func_decls);
+    parse_declaration(parser, &func_decls);
+    assert(list_size(&func_decls) == 1);
+    struct Declaration* func_decl =
+        (struct Declaration*)list_begin(&func_decls);
 
-    assert(acceptable(parser, Token_Id));
-    struct Token* token = peek(parser);
-    strtable_id name_index = token->strtable_index;
-    advance(parser);
+    strtable_id name_index = func_decl->name_index;
 
     expect(parser, Token_LeftParen);
     expect(parser, Token_RightParen);
