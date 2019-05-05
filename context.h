@@ -5,8 +5,6 @@
 #include "strtable.h"
 #include "vector.h"
 
-#include <stddef.h>
-
 struct Context {
     struct Strtable strtable;
     struct Vector register_ids;
