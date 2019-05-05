@@ -262,13 +262,15 @@ static void parse_declaration(struct Parser* parser, struct List* result) {
 
 static struct Ir* parse_statement(struct Parser* parser);
 
-static struct BlockIr* parse_compound_statement(struct Parser* parser) {
+static struct BlockIr* parse_compound_statement(struct Parser* parser,
+                                                struct BlockIr* block) {
     expect(parser, Token_LeftCurry);
+
+    if (!block) block = ir_new_block();
 
     struct Env* env = env_new(parser->current_env);
     parser->current_env = env;
 
-    struct BlockIr* block = ir_new_block();
     while (!acceptable(parser, Token_RightCurry)) {
         if (acceptable_type(parser)) {
             struct List decls;
@@ -339,7 +341,7 @@ static struct CfIr* parse_selection_statement(struct Parser* parser) {
 
 static struct Ir* parse_statement(struct Parser* parser) {
     if (acceptable(parser, Token_LeftCurry))
-        return ir_block_cast(parse_compound_statement(parser));
+        return ir_block_cast(parse_compound_statement(parser, NULL));
     else if (acceptable(parser, Token_KeywordIf))
         return ir_cf_cast(parse_selection_statement(parser));
     else
@@ -356,12 +358,37 @@ static struct FunctionIr* parse_function_definition(struct Parser* parser) {
     struct Declaration* func_decl =
         (struct Declaration*)list_begin(&func_decls);
 
+    struct Env* env = env_new(parser->current_env);
+    parser->current_env = env;
+
+    // ToDo: this function must be registered to call recursively
     strtable_id name_index = func_decl->name_index;
 
+    struct BlockIr* body = ir_new_block();
+
     expect(parser, Token_LeftParen);
+    while (!acceptable(parser, Token_RightParen)) {
+        struct List param_decls;
+        list_initialize(&param_decls);
+        parse_declaration(parser, &param_decls);
+        assert(list_size(&param_decls) == 1);
+
+        struct Declaration* param_decl =
+            (struct Declaration*)list_begin(&param_decls);
+        strtable_id var_index = param_decl->name_index;
+        struct VarIr* var = ir_block_new_var(body, var_index, param_decl->type);
+        env_insert(env, var_index, var);
+
+        if (acceptable(parser, Token_Comma)) {
+            assert(peek_k(parser, 1)->tag != Token_RightParen);
+            advance(parser);
+        }
+    }
     expect(parser, Token_RightParen);
 
-    struct BlockIr* body = parse_compound_statement(parser);
+    body = parse_compound_statement(parser, body);
+
+    parser->current_env = env->outer_env;
 
     return ir_new_function(name_index, body);
 }
