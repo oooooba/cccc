@@ -3,6 +3,7 @@
 #include "visitor.h"
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stdlib.h>
 
 struct SimplifyVisitor {
