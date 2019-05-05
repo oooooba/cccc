@@ -26,9 +26,9 @@ void regalloc2_apply_post_process(struct PostRegallocVisitor2* visitor,
                                   struct BlockIr* ir);
 
 struct CodegenVisitor2;
-struct CodegenVisitor2* new_codegen_visitor2(struct Context* context,
-                                             FILE* stream);
-void codegen2_apply(struct CodegenVisitor2* visitor, struct BlockIr* ir);
+struct CodegenVisitor2* new_codegen_visitor(struct Context* context,
+                                            FILE* stream);
+void codegen_apply(struct CodegenVisitor2* visitor, struct BlockIr* ir);
 
 int main(void) {
     struct Context context;
@@ -67,8 +67,8 @@ int main(void) {
 
     fprintf(stderr, "[apply codegen]\n");
     struct CodegenVisitor2* codegen_visitor =
-        new_codegen_visitor2(&context, stdout);
-    codegen2_apply(codegen_visitor, translation_unit);
+        new_codegen_visitor(&context, stdout);
+    codegen_apply(codegen_visitor, translation_unit);
 
     return 0;
 }
