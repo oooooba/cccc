@@ -5,7 +5,6 @@ set(CMAKE_C_FLAGS "-g -std=c11 -Wall -Wextra -Werror")
 
 add_executable(cccc
     main.c
-    ast.c
     codegen.c
     context.c
     dump.c

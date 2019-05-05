@@ -1,5 +1,4 @@
 #include "parser.h"
-#include "ast.h"
 #include "context.h"
 #include "ir.h"
 #include "list.h"
@@ -9,6 +8,7 @@
 #include "vector.h"
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -154,7 +154,7 @@ static struct ExprIr* parse_cast_expression(struct Parser* parser) {
 static struct ExprIr* parse_multiplicative_expression(struct Parser* parser) {
     struct ExprIr* lhs = parse_cast_expression(parser);
     for (;;) {
-        enum BinopExprNodeTag op;
+        enum BinopExprIrTag op;
         if (acceptable(parser, Token_Asterisk))
             op = BinopExprIrTag_Mul;
         else
@@ -169,7 +169,7 @@ static struct ExprIr* parse_multiplicative_expression(struct Parser* parser) {
 static struct ExprIr* parse_additive_expression(struct Parser* parser) {
     struct ExprIr* lhs = parse_multiplicative_expression(parser);
     for (;;) {
-        enum BinopExprNodeTag op;
+        enum BinopExprIrTag op;
         if (acceptable(parser, Token_Plus))
             op = BinopExprIrTag_Add;
         else if (acceptable(parser, Token_Minus))
