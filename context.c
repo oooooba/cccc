@@ -33,6 +33,7 @@ void context_register_registers(struct Context* context) {
     reg(r9);
 
     reg(rsp);
+    reg(rbp);
 
 #undef reg
 
@@ -56,4 +57,9 @@ strtable_id context_func_call_result_reg(struct Context* context) {
 strtable_id context_stack_pointer_reg(struct Context* context) {
     return *((strtable_id*)vector_at(&context->register_ids,
                                      context->special_purpose_reg_offset + 0));
+}
+
+strtable_id context_base_pointer_reg(struct Context* context) {
+    return *((strtable_id*)vector_at(&context->register_ids,
+                                     context->special_purpose_reg_offset + 1));
 }

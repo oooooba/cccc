@@ -121,10 +121,11 @@ strtable_id ir_expr_reg_id(struct ExprIr* ir);
 void ir_expr_set_reg_id(struct ExprIr* ir, strtable_id id);
 
 struct ConstExprIr* ir_new_integer_const_expr(intptr_t value);
-struct ConstExprIr* ir_new_register_const_expr(void);
+struct ConstExprIr* ir_new_register_const_expr(strtable_id register_id);
 struct ExprIr* ir_const_expr_cast(struct ConstExprIr* ir);
 enum ConstExprIrTag ir_const_expr_tag(struct ConstExprIr* ir);
 intptr_t ir_const_expr_integer_value(struct ConstExprIr* ir);
+strtable_id ir_const_expr_register_id(struct ConstExprIr* ir);
 
 struct BinopExprIr* ir_new_binop_expr(enum BinopExprIrTag op,
                                       struct ExprIr* lhs, struct ExprIr* rhs);

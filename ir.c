@@ -314,6 +314,7 @@ struct ConstExprIr {
     enum ConstExprIrTag tag;
     union {
         intptr_t integer;
+        strtable_id register_id;
     };
 };
 
@@ -325,10 +326,11 @@ struct ConstExprIr* ir_new_integer_const_expr(intptr_t value) {
     return ir;
 }
 
-struct ConstExprIr* ir_new_register_const_expr(void) {
+struct ConstExprIr* ir_new_register_const_expr(strtable_id register_id) {
     struct ConstExprIr* ir = malloc(sizeof(struct ConstExprIr));
     initialize_expr(ir_const_expr_cast(ir), ExprIrTag_Const);
     ir->tag = ConstExprIrTag_Register;
+    ir->register_id = register_id;
     return ir;
 }
 
@@ -343,6 +345,11 @@ enum ConstExprIrTag ir_const_expr_tag(struct ConstExprIr* ir) {
 intptr_t ir_const_expr_integer_value(struct ConstExprIr* ir) {
     assert(ir->tag == ConstExprIrTag_Integer);
     return ir->integer;
+}
+
+strtable_id ir_const_expr_register_id(struct ConstExprIr* ir) {
+    assert(ir->tag == ConstExprIrTag_Register);
+    return ir->register_id;
 }
 
 struct BinopExprIr {

@@ -189,6 +189,32 @@ static struct FunctionIr* visit_function2_post_process(
     // initially, insert_point points to List::end (= List itself)
     ir_block_iterator_next(insert_point);
 
+    strtable_id sp_reg_id = context_stack_pointer_reg(visitor->context);
+    strtable_id bp_reg_id = context_base_pointer_reg(visitor->context);
+
+    // insert saving base pointer register code
+    {
+        struct ConstExprIr* mov = ir_new_register_const_expr(sp_reg_id);
+        ir_expr_set_reg_id(ir_const_expr_cast(mov), bp_reg_id);
+        ir_block_insert_expr_at(insert_point, ir_const_expr_cast(mov));
+    }
+
+    // insert allocating stack frame code
+    {
+        struct ConstExprIr* size =
+            ir_new_integer_const_expr(ir_function_region_size(ir));
+        ir_expr_set_reg_id(ir_const_expr_cast(size),
+                           context_func_call_result_reg(visitor->context));
+        struct ConstExprIr* sp = ir_new_register_const_expr(sp_reg_id);
+        ir_expr_set_reg_id(ir_const_expr_cast(sp), sp_reg_id);
+        struct BinopExprIr* sub =
+            ir_new_binop_expr(BinopExprIrTag_Sub, ir_const_expr_cast(sp),
+                              ir_const_expr_cast(size));
+        ir_expr_set_reg_id(ir_binop_expr_cast(sub),
+                           context_stack_pointer_reg(visitor->context));
+        ir_block_insert_expr_at(insert_point, ir_binop_expr_cast(sub));
+    }
+
     // insert saving parameter register code
     size_t i = 0;
     for (struct ListHeader *it = list_begin(ir_function_params(ir)),
@@ -199,9 +225,9 @@ static struct FunctionIr* visit_function2_post_process(
         strtable_id tmp_reg_id = context_func_call_result_reg(visitor->context);
         ir_expr_set_reg_id(ir_addrof_expr_cast(addrof_var), tmp_reg_id);
 
-        struct ConstExprIr* src_reg = ir_new_register_const_expr();
         strtable_id param_reg_id =
             context_nth_func_call_arg_reg(visitor->context, i);
+        struct ConstExprIr* src_reg = ir_new_register_const_expr(param_reg_id);
         ir_expr_set_reg_id(ir_const_expr_cast(src_reg), param_reg_id);
 
         struct StoreExprIr* subst = ir_new_store_expr(
@@ -211,19 +237,12 @@ static struct FunctionIr* visit_function2_post_process(
         ++i;
     }
 
-    // insert allocating stack frame code
-    struct ConstExprIr* size =
-        ir_new_integer_const_expr(ir_function_region_size(ir));
-    ir_expr_set_reg_id(ir_const_expr_cast(size),
-                       context_func_call_result_reg(visitor->context));
-    struct ConstExprIr* sp = ir_new_register_const_expr();
-    ir_expr_set_reg_id(ir_const_expr_cast(sp),
-                       context_stack_pointer_reg(visitor->context));
-    struct BinopExprIr* sub = ir_new_binop_expr(
-        BinopExprIrTag_Sub, ir_const_expr_cast(sp), ir_const_expr_cast(size));
-    ir_expr_set_reg_id(ir_binop_expr_cast(sub),
-                       context_stack_pointer_reg(visitor->context));
-    ir_block_insert_expr_at(insert_point, ir_binop_expr_cast(sub));
+    // insert restoring base pointer register code
+    {
+        struct ConstExprIr* mov = ir_new_register_const_expr(bp_reg_id);
+        ir_expr_set_reg_id(ir_const_expr_cast(mov), sp_reg_id);
+        ir_block_insert_expr_at_end(body, ir_const_expr_cast(mov));
+    }
 
     return NULL;
 }

@@ -26,11 +26,24 @@ static const char* register_name(struct CodegenVisitor2* visitor,
 
 static struct ExprIr* visit_const_expr2(struct CodegenVisitor2* visitor,
                                         struct ConstExprIr* ir) {
-    if (ir_const_expr_tag(ir) == ConstExprIrTag_Register) return NULL;
-    strtable_id reg_id = ir_expr_reg_id(ir_const_expr_cast(ir));
-    const char* reg = register_name(visitor, reg_id);
-    fprintf(visitor->stream, "\tmov\t%s, %ld\n", reg,
-            ir_const_expr_integer_value(ir));
+    strtable_id dst_reg_id = ir_expr_reg_id(ir_const_expr_cast(ir));
+    const char* dst_reg = register_name(visitor, dst_reg_id);
+
+    switch (ir_const_expr_tag(ir)) {
+        case ConstExprIrTag_Integer:
+            fprintf(visitor->stream, "\tmov\t%s, %ld\n", dst_reg,
+                    ir_const_expr_integer_value(ir));
+            break;
+        case ConstExprIrTag_Register: {
+            strtable_id src_reg_id = ir_const_expr_register_id(ir);
+            if (src_reg_id == dst_reg_id) break;
+            const char* src_reg = register_name(visitor, src_reg_id);
+            fprintf(visitor->stream, "\tmov\t%s, %s\n", dst_reg, src_reg);
+        } break;
+        default:
+            assert(false);
+    }
+
     return NULL;
 }
 
@@ -136,12 +149,11 @@ static struct FunctionIr* visit_function2(struct CodegenVisitor2* visitor,
     fprintf(stderr, "codegen: 0x%p: %s\n", ir, name);
 
     fprintf(visitor->stream, "\tpush\trbp\n");
-    fprintf(visitor->stream, "\tmov\trbp, rsp\n");
 
     struct BlockIr* body = ir_function_body(ir);
     visitor2_visit_block(as_visitor(visitor), body);
 
-    fprintf(visitor->stream, "\tleave\n");
+    fprintf(visitor->stream, "\tpop\trbp\n");
     fprintf(visitor->stream, "\tret\n");
     return NULL;
 }
