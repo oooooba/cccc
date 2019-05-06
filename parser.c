@@ -367,6 +367,8 @@ static struct FunctionIr* parse_function_definition(struct Parser* parser) {
     struct BlockIr* body = ir_new_block();
 
     expect(parser, Token_LeftParen);
+    struct List* params = malloc(sizeof(struct List));
+    list_initialize(params);
     while (!acceptable(parser, Token_RightParen)) {
         struct List param_decls;
         list_initialize(&param_decls);
@@ -379,6 +381,10 @@ static struct FunctionIr* parse_function_definition(struct Parser* parser) {
         struct VarIr* var = ir_block_new_var(body, var_index, param_decl->type);
         env_insert(env, var_index, var);
 
+        struct ListItem* param_item = malloc(sizeof(struct ListItem));
+        param_item->item = var;
+        list_insert_at_end(params, list_from(param_item));
+
         if (acceptable(parser, Token_Comma)) {
             assert(peek_k(parser, 1)->tag != Token_RightParen);
             advance(parser);
@@ -390,7 +396,7 @@ static struct FunctionIr* parse_function_definition(struct Parser* parser) {
 
     parser->current_env = env->outer_env;
 
-    return ir_new_function(name_index, body);
+    return ir_new_function(name_index, params, body);
 }
 
 static struct BlockIr* parse_translation_unit(struct Parser* parser) {

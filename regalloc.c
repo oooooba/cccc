@@ -23,8 +23,8 @@ static struct Visitor2* as_visitor(struct RegallocVisitor2* visitor) {
 }
 
 static strtable_id acquire_register(struct RegallocVisitor2* visitor) {
-    strtable_id id = *((strtable_id*)vector_at(&visitor->context->register_ids,
-                                               visitor->free_register_index));
+    strtable_id id =
+        context_nth_reg(visitor->context, visitor->free_register_index);
     ++visitor->free_register_index;
     return id;
 }
@@ -184,6 +184,31 @@ static struct FunctionIr* visit_function2_post_process(
     visitor2_visit_block(as_visitor_post_process(visitor), body);
 
     ir_function_set_region_size(ir, visitor->max_region_end);
+
+    struct BlockIterator* insert_point = ir_block_new_iterator(body);
+    // initially, insert_point points to List::end (= List itself)
+    ir_block_iterator_next(insert_point);
+    size_t i = 0;
+    for (struct ListHeader *it = list_begin(ir_function_params(ir)),
+                           *eit = list_end(ir_function_params(ir));
+         it != eit; it = list_next(it)) {
+        struct VarIr* dst_var = ((struct ListItem*)it)->item;
+        struct AddrofExprIr* addrof_var = ir_new_addrof_expr_with_var(dst_var);
+        strtable_id tmp_reg_id = context_func_call_result_reg(visitor->context);
+        ir_expr_set_reg_id(ir_addrof_expr_cast(addrof_var), tmp_reg_id);
+
+        struct ConstExprIr* src_reg = ir_new_register_const_expr();
+        strtable_id param_reg_id =
+            context_nth_func_call_arg_reg(visitor->context, i);
+        ir_expr_set_reg_id(ir_const_expr_cast(src_reg), param_reg_id);
+
+        struct StoreExprIr* subst = ir_new_store_expr(
+            ir_addrof_expr_cast(addrof_var), ir_const_expr_cast(src_reg));
+        ir_block_insert_expr_at(insert_point, ir_store_expr_cast(subst));
+
+        ++i;
+    }
+
     return NULL;
 }
 

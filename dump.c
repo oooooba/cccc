@@ -99,7 +99,21 @@ static struct FunctionIr* visit_function2(struct DumpVisitor* visitor,
     const char* name =
         strtable_at(&visitor->context->strtable, ir_function_name_index(ir));
     struct BlockIr* body = ir_function_body(ir);
-    fprintf(visitor->stream, "function %s () ", name);
+    fprintf(visitor->stream, "function %s (", name);
+    bool first = true;
+    for (struct ListHeader *it = list_begin(ir_function_params(ir)),
+                           *eit = list_end(ir_function_params(ir));
+         it != eit; it = list_next(it)) {
+        struct VarIr* var = ((struct ListItem*)it)->item;
+        const char* var_name =
+            strtable_at(&visitor->context->strtable, ir_var_index(var));
+        if (first)
+            first = false;
+        else
+            fprintf(visitor->stream, ", ");
+        fprintf(visitor->stream, "%s", var_name);
+    }
+    fprintf(visitor->stream, ") ");
     visitor2_visit_block(as_visitor(visitor), body);
     return NULL;
 }

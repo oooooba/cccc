@@ -1,6 +1,7 @@
 #ifndef IR_H
 #define IR_H
 
+#include "list.h"
 #include "strtable.h"
 #include "type.h"
 
@@ -45,6 +46,11 @@ enum ExprIrTag {
     ExprIrTag_Store,
 };
 
+enum ConstExprIrTag {
+    ConstExprIrTag_Integer,
+    ConstExprIrTag_Register,
+};
+
 enum BinopExprIrTag {
     BinopExprIrTag_Add,
     BinopExprIrTag_Sub,
@@ -62,13 +68,14 @@ struct FunctionIr* ir_as_function(struct Ir* ir);
 struct CfIr* ir_as_cf(struct Ir* ir);
 enum IrTag ir_tag(struct Ir* ir);
 
-struct FunctionIr* ir_new_function(strtable_id name_index,
+struct FunctionIr* ir_new_function(strtable_id name_index, struct List* params,
                                    struct BlockIr* body);
 struct Ir* ir_function_cast(struct FunctionIr* ir);
 strtable_id ir_function_name_index(struct FunctionIr* ir);
 struct BlockIr* ir_function_body(struct FunctionIr* ir);
 size_t ir_function_region_size(struct FunctionIr* ir);
 void ir_function_set_region_size(struct FunctionIr* ir, size_t region_size);
+struct List* ir_function_params(struct FunctionIr* ir);
 
 struct BlockIr* ir_new_block(void);
 struct Ir* ir_block_cast(struct BlockIr* ir);
@@ -76,6 +83,7 @@ struct BlockIterator* ir_block_new_iterator(struct BlockIr* ir);
 struct Ir* ir_block_iterator_next(struct BlockIterator* it);
 struct Ir* ir_block_iterator_swap_at(struct BlockIterator* it,
                                      struct Ir* statement);
+void ir_block_insert_expr_at(struct BlockIterator* it, struct ExprIr* expr);
 void ir_block_insert_at_end(struct BlockIr* ir, struct Ir* statement);
 void ir_block_insert_expr_at_end(struct BlockIr* ir, struct ExprIr* expr);
 void ir_block_insert_block_at_end(struct BlockIr* ir, struct BlockIr* block);
@@ -113,7 +121,9 @@ strtable_id ir_expr_reg_id(struct ExprIr* ir);
 void ir_expr_set_reg_id(struct ExprIr* ir, strtable_id id);
 
 struct ConstExprIr* ir_new_integer_const_expr(intptr_t value);
+struct ConstExprIr* ir_new_register_const_expr(void);
 struct ExprIr* ir_const_expr_cast(struct ConstExprIr* ir);
+enum ConstExprIrTag ir_const_expr_tag(struct ConstExprIr* ir);
 intptr_t ir_const_expr_integer_value(struct ConstExprIr* ir);
 
 struct BinopExprIr* ir_new_binop_expr(enum BinopExprIrTag op,

@@ -37,15 +37,17 @@ struct FunctionIr {
     strtable_id name_index;
     struct BlockIr* body;
     size_t region_size;
+    struct List* params;  // VarIr* list
 };
 
-struct FunctionIr* ir_new_function(strtable_id name_index,
+struct FunctionIr* ir_new_function(strtable_id name_index, struct List* params,
                                    struct BlockIr* body) {
     struct FunctionIr* ir = malloc(sizeof(struct FunctionIr));
     initialize_ir(ir_function_cast(ir), IrTag_Function);
     ir->name_index = name_index;
     ir->body = body;
     ir->region_size = (size_t)-1;
+    ir->params = params;
     return ir;
 }
 
@@ -70,6 +72,10 @@ void ir_function_set_region_size(struct FunctionIr* ir, size_t region_size) {
     assert(region_size % sizeof(void*) == 0);
     assert(ir->region_size == (size_t)-1);
     ir->region_size = region_size;
+}
+
+struct List* ir_function_params(struct FunctionIr* ir) {
+    return ir->params;
 }
 
 struct VarIr {
@@ -125,6 +131,12 @@ struct Ir* ir_block_iterator_swap_at(struct BlockIterator* it,
     struct Ir* prev_statement = item->item;
     item->item = statement;
     return prev_statement;
+}
+
+void ir_block_insert_expr_at(struct BlockIterator* it, struct ExprIr* expr) {
+    struct ListItem* item = malloc(sizeof(struct ListItem));
+    item->item = expr;
+    list_insert_at(&it->block->statemetnts, it->current, &item->header);
 }
 
 void ir_block_insert_at_end(struct BlockIr* ir, struct Ir* statement) {
@@ -299,6 +311,7 @@ void ir_expr_set_reg_id(struct ExprIr* ir, strtable_id id) { ir->reg_id = id; }
 
 struct ConstExprIr {
     struct ExprIr as_expr;
+    enum ConstExprIrTag tag;
     union {
         intptr_t integer;
     };
@@ -307,7 +320,15 @@ struct ConstExprIr {
 struct ConstExprIr* ir_new_integer_const_expr(intptr_t value) {
     struct ConstExprIr* ir = malloc(sizeof(struct ConstExprIr));
     initialize_expr(ir_const_expr_cast(ir), ExprIrTag_Const);
+    ir->tag = ConstExprIrTag_Integer;
     ir->integer = value;
+    return ir;
+}
+
+struct ConstExprIr* ir_new_register_const_expr(void) {
+    struct ConstExprIr* ir = malloc(sizeof(struct ConstExprIr));
+    initialize_expr(ir_const_expr_cast(ir), ExprIrTag_Const);
+    ir->tag = ConstExprIrTag_Register;
     return ir;
 }
 
@@ -315,7 +336,12 @@ struct ExprIr* ir_const_expr_cast(struct ConstExprIr* ir) {
     return &ir->as_expr;
 }
 
+enum ConstExprIrTag ir_const_expr_tag(struct ConstExprIr* ir) {
+    return ir->tag;
+}
+
 intptr_t ir_const_expr_integer_value(struct ConstExprIr* ir) {
+    assert(ir->tag == ConstExprIrTag_Integer);
     return ir->integer;
 }
 

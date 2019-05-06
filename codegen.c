@@ -26,6 +26,7 @@ static const char* register_name(struct CodegenVisitor2* visitor,
 
 static struct ExprIr* visit_const_expr2(struct CodegenVisitor2* visitor,
                                         struct ConstExprIr* ir) {
+    if (ir_const_expr_tag(ir) == ConstExprIrTag_Register) return NULL;
     strtable_id reg_id = ir_expr_reg_id(ir_const_expr_cast(ir));
     const char* reg = register_name(visitor, reg_id);
     fprintf(visitor->stream, "\tmov\t%s, %ld\n", reg,
