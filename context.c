@@ -1,4 +1,5 @@
 #include "context.h"
+#include "ir.h"
 #include "map.h"
 #include "strtable.h"
 #include "vector.h"
@@ -9,7 +10,18 @@
 
 void context_initialize(struct Context* context) {
     strtable_initialize(&context->strtable);
+    map_initialize(&context->var_for_func_map);
     vector_initialize(&context->register_ids, sizeof(strtable_id));
+}
+
+void context_register_var_for_func(struct Context* context, strtable_id index,
+                                   struct VarIr* var_for_func) {
+    map_insert(&context->var_for_func_map, (void*)index, var_for_func);
+}
+
+struct VarIr* context_find_var_for_func(struct Context* context,
+                                        strtable_id index) {
+    return map_find(&context->var_for_func_map, (void*)index);
 }
 
 void context_register_registers(struct Context* context) {

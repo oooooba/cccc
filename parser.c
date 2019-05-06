@@ -102,6 +102,7 @@ static struct VarIr* parse_identifier(struct Parser* parser) {
     assert(acceptable(parser, Token_Id));
     strtable_id index = peek(parser)->strtable_index;
     struct VarIr* var = env_find(parser->current_env, index);
+    if (!var) var = context_find_var_for_func(parser->context, index);
     assert(var);
     advance(parser);
     return var;
@@ -131,6 +132,37 @@ static struct ExprIr* parse_primary_expression(struct Parser* parser) {
     }
 }
 
+static struct ExprIr* parse_assignment_expression(struct Parser* parser);
+
+static struct ExprIr* parse_postfix_expression(struct Parser* parser) {
+    struct ExprIr* expr = parse_primary_expression(parser);
+    if (acceptable(parser, Token_LeftParen)) {
+        advance(parser);
+        struct VarIr* var;
+        {
+            // ToDo: this is ugly, fix
+            struct LoadExprIr* le = ir_expr_as_load(expr);
+            struct AddrofExprIr* ae = ir_expr_as_addrof(ir_load_expr_addr(le));
+            var = ir_addrof_expr_operand_as_var(ae);
+        }
+        struct List* args = malloc(sizeof(struct List));
+        list_initialize(args);
+        while (!acceptable(parser, Token_RightParen)) {
+            struct ExprIr* arg = parse_assignment_expression(parser);
+            struct ListItem* item = malloc(sizeof(struct ListItem));
+            item->item = arg;
+            list_insert_at_end(args, list_from(item));
+            if (acceptable(parser, Token_Comma)) {
+                assert(peek_k(parser, 1)->tag != Token_RightParen);
+                advance(parser);
+            }
+        }
+        advance(parser);
+        expr = ir_call_expr_cast(ir_new_call_expr_with_var(var, args));
+    }
+    return expr;
+}
+
 static struct ExprIr* parse_cast_expression(struct Parser* parser);
 
 static struct ExprIr* parse_unary_expression(struct Parser* parser) {
@@ -143,7 +175,7 @@ static struct ExprIr* parse_unary_expression(struct Parser* parser) {
         struct ExprIr* expr = parse_cast_expression(parser);
         return ir_load_expr_cast(ir_new_load_expr(expr));
     } else
-        return parse_primary_expression(parser);
+        return parse_postfix_expression(parser);
 }
 
 static struct ExprIr* parse_cast_expression(struct Parser* parser) {
@@ -363,6 +395,8 @@ static struct FunctionIr* parse_function_definition(struct Parser* parser) {
 
     // ToDo: this function must be registered to call recursively
     strtable_id name_index = func_decl->name_index;
+    struct VarIr* var_for_func = ir_new_var_for_func(name_index);
+    context_register_var_for_func(parser->context, name_index, var_for_func);
 
     struct BlockIr* body = ir_new_block();
 

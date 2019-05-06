@@ -35,6 +35,8 @@ struct ExprIr* visitor2_visit_expr(struct Visitor2* visitor,
             return visitor->visit_load_expr(visitor, ir_expr_as_load(ir));
         case ExprIrTag_Store:
             return visitor->visit_store_expr(visitor, ir_expr_as_store(ir));
+        case ExprIrTag_Call:
+            return visitor->visit_call_expr(visitor, ir_expr_as_call(ir));
         default:
             assert(false);
     }
@@ -71,6 +73,7 @@ void visitor2_initialize(struct Visitor2* visitor) {
     register_visitor(*visitor, visit_addrof_expr, NULL);
     register_visitor(*visitor, visit_load_expr, NULL);
     register_visitor(*visitor, visit_store_expr, NULL);
+    register_visitor(*visitor, visit_call_expr, NULL);
     register_visitor(*visitor, visit_block, NULL);
     register_visitor(*visitor, visit_function, NULL);
     register_visitor(*visitor, visit_branch_cf, NULL);

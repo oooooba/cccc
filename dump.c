@@ -80,6 +80,35 @@ static struct ExprIr* visit_store_expr2(struct DumpVisitor* visitor,
     return NULL;
 }
 
+static struct ExprIr* visit_call_expr2(struct DumpVisitor* visitor,
+                                       struct CallExprIr* ir) {
+    assert(ir_call_expr_tag(ir) == AddrTag_Var);
+
+    for (struct ListHeader *it = list_begin(ir_call_expr_args(ir)),
+                           *eit = list_end(ir_call_expr_args(ir));
+         it != eit; it = list_next(it)) {
+        struct ExprIr* arg = ((struct ListItem*)it)->item;
+        visitor2_visit_expr(as_visitor(visitor), arg);
+    }
+
+    strtable_id name_id = ir_var_index(ir_call_expr_var(ir));
+    const char* name = strtable_at(&visitor->context->strtable, name_id);
+    fprintf(visitor->stream, "v%p = call %s (", ir, name);
+    bool first = true;
+    for (struct ListHeader *it = list_begin(ir_call_expr_args(ir)),
+                           *eit = list_end(ir_call_expr_args(ir));
+         it != eit; it = list_next(it)) {
+        struct ExprIr* arg = ((struct ListItem*)it)->item;
+        if (first)
+            first = false;
+        else
+            fprintf(visitor->stream, ", ");
+        fprintf(visitor->stream, "v%p", arg);
+    }
+    fprintf(visitor->stream, ")\n");
+    return NULL;
+}
+
 static struct BlockIr* visit_block2(struct DumpVisitor* visitor,
                                     struct BlockIr* ir) {
     fprintf(visitor->stream, "[@%p]{\n", ir);
@@ -143,6 +172,7 @@ struct DumpVisitor* new_dump_visitor(struct Context* context, FILE* stream) {
                      visit_addrof_expr2);
     register_visitor(visitor->as_visitor, visit_load_expr, visit_load_expr2);
     register_visitor(visitor->as_visitor, visit_store_expr, visit_store_expr2);
+    register_visitor(visitor->as_visitor, visit_call_expr, visit_call_expr2);
     register_visitor(visitor->as_visitor, visit_block, visit_block2);
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf2);

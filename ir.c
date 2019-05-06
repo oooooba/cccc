@@ -168,6 +168,17 @@ static struct VarIr* ir_new_var(struct BlockIr* block, strtable_id index,
     return ir;
 }
 
+// only for function declaration, ToDo: fix
+struct VarIr* ir_new_var_for_func(strtable_id index) {
+    struct VarIr* ir = malloc(sizeof(struct VarIr));
+    initialize_ir(ir_var_cast(ir), IrTag_Var);
+    ir->index = index;
+    ir->region_offset = (size_t)-1;
+    ir->block = NULL;
+    ir->type = NULL;
+    return ir;
+}
+
 struct VarIr* ir_block_new_var(struct BlockIr* ir, strtable_id index,
                                struct TypeIr* type) {
     assert(ir->region_base == (size_t)-1);
@@ -349,6 +360,10 @@ struct LoadExprIr* ir_expr_as_load(struct ExprIr* ir) {
 
 struct StoreExprIr* ir_expr_as_store(struct ExprIr* ir) {
     return ir->tag == ExprIrTag_Store ? (struct StoreExprIr*)ir : NULL;
+}
+
+struct CallExprIr* ir_expr_as_call(struct ExprIr* ir) {
+    return ir->tag == ExprIrTag_Call ? (struct CallExprIr*)ir : NULL;
 }
 
 enum ExprIrTag ir_expr_tag(struct ExprIr* ir) { return ir->tag; }
@@ -535,4 +550,38 @@ struct ExprIr* ir_store_expr_value(struct StoreExprIr* ir) {
 
 void ir_store_expr_set_value(struct StoreExprIr* ir, struct ExprIr* value) {
     ir->value = value;
+}
+
+struct CallExprIr {
+    struct ExprIr as_expr;
+    struct List* args;  // ExprIr* list
+    enum AddrTag tag;
+    union {
+        struct ExprIr* expr;
+        struct VarIr* var;
+    };
+};
+
+struct CallExprIr* ir_new_call_expr_with_var(struct VarIr* var,
+                                             struct List* args) {
+    struct CallExprIr* ir = malloc(sizeof(struct CallExprIr));
+    initialize_expr(ir_call_expr_cast(ir), ExprIrTag_Call);
+    ir->tag = AddrTag_Var;
+    ir->args = args;
+    ir->var = var;
+    return ir;
+}
+
+struct ExprIr* ir_call_expr_cast(struct CallExprIr* ir) {
+    return &ir->as_expr;
+}
+
+struct List* ir_call_expr_args(struct CallExprIr* ir) {
+    return ir->args;
+}
+
+enum AddrTag ir_call_expr_tag(struct CallExprIr* ir) { return ir->tag; }
+
+struct VarIr* ir_call_expr_var(struct CallExprIr* ir) {
+    return ir->var;
 }
