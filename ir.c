@@ -133,10 +133,14 @@ struct Ir* ir_block_iterator_swap_at(struct BlockIterator* it,
     return prev_statement;
 }
 
-void ir_block_insert_expr_at(struct BlockIterator* it, struct ExprIr* expr) {
+void ir_block_insert_at(struct BlockIterator* it, struct Ir* statement) {
     struct ListItem* item = malloc(sizeof(struct ListItem));
-    item->item = expr;
+    item->item = statement;
     list_insert_at(&it->block->statemetnts, it->current, &item->header);
+}
+
+void ir_block_insert_expr_at(struct BlockIterator* it, struct ExprIr* expr) {
+    ir_block_insert_at(it, ir_expr_cast(expr));
 }
 
 void ir_block_insert_at_end(struct BlockIr* ir, struct Ir* statement) {
@@ -228,6 +232,14 @@ struct BranchCfIr* ir_cf_as_branch(struct CfIr* ir) {
     return ir->tag == CfIrTag_Branch ? (struct BranchCfIr*)ir : NULL;
 }
 
+struct PushCfIr* ir_cf_as_push(struct CfIr* ir) {
+    return ir->tag == CfIrTag_Push ? (struct PushCfIr*)ir : NULL;
+}
+
+struct PopCfIr* ir_cf_as_pop(struct CfIr* ir) {
+    return ir->tag == CfIrTag_Pop ? (struct PopCfIr*)ir : NULL;
+}
+
 struct BranchCfIr {
     struct CfIr as_cf;
     struct ExprIr* cond_expr;
@@ -266,6 +278,42 @@ struct BlockIr* ir_branch_cf_true_block(struct BranchCfIr* ir) {
 struct BlockIr* ir_branch_cf_false_block(struct BranchCfIr* ir) {
     return ir->false_block;
 }
+
+struct PushCfIr {
+    struct CfIr as_cf;
+    strtable_id reg_id;
+};
+
+struct PushCfIr* ir_new_push_cf(strtable_id reg_id) {
+    struct PushCfIr* ir = malloc(sizeof(struct PushCfIr));
+    initialize_cf(ir_push_cf_cast(ir), CfIrTag_Push);
+    ir->reg_id = reg_id;
+    return ir;
+}
+
+struct CfIr* ir_push_cf_cast(struct PushCfIr* ir) {
+    return &ir->as_cf;
+}
+
+strtable_id ir_push_cf_reg_id(struct PushCfIr* ir) { return ir->reg_id; }
+
+struct PopCfIr {
+    struct CfIr as_cf;
+    strtable_id reg_id;
+};
+
+struct PopCfIr* ir_new_pop_cf(strtable_id reg_id) {
+    struct PopCfIr* ir = malloc(sizeof(struct PopCfIr));
+    initialize_cf(ir_pop_cf_cast(ir), CfIrTag_Pop);
+    ir->reg_id = reg_id;
+    return ir;
+}
+
+struct CfIr* ir_pop_cf_cast(struct PopCfIr* ir) {
+    return &ir->as_cf;
+}
+
+strtable_id ir_pop_cf_reg_id(struct PopCfIr* ir) { return ir->reg_id; }
 
 struct ExprIr {
     struct Ir as_ir;

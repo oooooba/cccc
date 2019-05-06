@@ -20,6 +20,9 @@ struct Visitor2 {
                                          struct FunctionIr* ir);
     struct CfIr* (*visit_branch_cf)(struct Visitor2* visitor,
                                     struct BranchCfIr* ir);
+    struct CfIr* (*visit_push_cf)(struct Visitor2* visitor,
+                                  struct PushCfIr* ir);
+    struct CfIr* (*visit_pop_cf)(struct Visitor2* visitor, struct PopCfIr* ir);
 };
 
 struct Ir* visitor2_visit_ir(struct Visitor2* visitor, struct Ir* ir);

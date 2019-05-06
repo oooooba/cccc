@@ -18,6 +18,8 @@ struct VarIr;
 
 struct CfIr;
 struct BranchCfIr;
+struct PushCfIr;
+struct PopCfIr;
 
 struct ExprIr;
 struct ConstExprIr;
@@ -36,6 +38,8 @@ enum IrTag {
 
 enum CfIrTag {
     CfIrTag_Branch,
+    CfIrTag_Push,
+    CfIrTag_Pop,
 };
 
 enum ExprIrTag {
@@ -83,6 +87,7 @@ struct BlockIterator* ir_block_new_iterator(struct BlockIr* ir);
 struct Ir* ir_block_iterator_next(struct BlockIterator* it);
 struct Ir* ir_block_iterator_swap_at(struct BlockIterator* it,
                                      struct Ir* statement);
+void ir_block_insert_at(struct BlockIterator* it, struct Ir* statement);
 void ir_block_insert_expr_at(struct BlockIterator* it, struct ExprIr* expr);
 void ir_block_insert_at_end(struct BlockIr* ir, struct Ir* statement);
 void ir_block_insert_expr_at_end(struct BlockIr* ir, struct ExprIr* expr);
@@ -98,6 +103,8 @@ size_t ir_var_offset(struct VarIr* ir);
 
 struct Ir* ir_cf_cast(struct CfIr* ir);
 struct BranchCfIr* ir_cf_as_branch(struct CfIr* ir);
+struct PushCfIr* ir_cf_as_push(struct CfIr* ir);
+struct PopCfIr* ir_cf_as_pop(struct CfIr* ir);
 enum CfIrTag ir_cf_tag(struct CfIr* ir);
 
 struct BranchCfIr* ir_new_branch_cf(struct ExprIr* cond_expr,
@@ -109,6 +116,14 @@ void ir_branch_cf_set_cond_expr(struct BranchCfIr* ir,
                                 struct ExprIr* cond_expr);
 struct BlockIr* ir_branch_cf_true_block(struct BranchCfIr* ir);
 struct BlockIr* ir_branch_cf_false_block(struct BranchCfIr* ir);
+
+struct PushCfIr* ir_new_push_cf(strtable_id reg_id);
+struct CfIr* ir_push_cf_cast(struct PushCfIr* ir);
+strtable_id ir_push_cf_reg_id(struct PushCfIr* ir);
+
+struct PopCfIr* ir_new_pop_cf(strtable_id reg_id);
+struct CfIr* ir_pop_cf_cast(struct PopCfIr* ir);
+strtable_id ir_pop_cf_reg_id(struct PopCfIr* ir);
 
 struct Ir* ir_expr_cast(struct ExprIr* ir);
 struct ConstExprIr* ir_expr_as_const(struct ExprIr* ir);

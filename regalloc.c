@@ -194,6 +194,9 @@ static struct FunctionIr* visit_function2_post_process(
 
     // insert saving base pointer register code
     {
+        struct PushCfIr* push = ir_new_push_cf(bp_reg_id);
+        ir_block_insert_at(insert_point, ir_cf_cast(ir_push_cf_cast(push)));
+
         struct ConstExprIr* mov = ir_new_register_const_expr(sp_reg_id);
         ir_expr_set_reg_id(ir_const_expr_cast(mov), bp_reg_id);
         ir_block_insert_expr_at(insert_point, ir_const_expr_cast(mov));
@@ -242,6 +245,9 @@ static struct FunctionIr* visit_function2_post_process(
         struct ConstExprIr* mov = ir_new_register_const_expr(bp_reg_id);
         ir_expr_set_reg_id(ir_const_expr_cast(mov), sp_reg_id);
         ir_block_insert_expr_at_end(body, ir_const_expr_cast(mov));
+
+        struct PopCfIr* pop = ir_new_pop_cf(bp_reg_id);
+        ir_block_insert_at_end(body, ir_cf_cast(ir_pop_cf_cast(pop)));
     }
 
     return NULL;

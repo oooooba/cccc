@@ -1,5 +1,4 @@
 #include "visitor.h"
-//#include "ast.h"
 #include "ir.h"
 
 #include <assert.h>
@@ -56,6 +55,10 @@ struct CfIr* visitor2_visit_cf(struct Visitor2* visitor, struct CfIr* ir) {
     switch (ir_cf_tag(ir)) {
         case CfIrTag_Branch:
             return visitor->visit_branch_cf(visitor, ir_cf_as_branch(ir));
+        case CfIrTag_Push:
+            return visitor->visit_push_cf(visitor, ir_cf_as_push(ir));
+        case CfIrTag_Pop:
+            return visitor->visit_pop_cf(visitor, ir_cf_as_pop(ir));
         default:
             assert(false);
     }
@@ -71,4 +74,6 @@ void visitor2_initialize(struct Visitor2* visitor) {
     register_visitor(*visitor, visit_block, NULL);
     register_visitor(*visitor, visit_function, NULL);
     register_visitor(*visitor, visit_branch_cf, NULL);
+    register_visitor(*visitor, visit_push_cf, NULL);
+    register_visitor(*visitor, visit_pop_cf, NULL);
 }
