@@ -124,6 +124,34 @@ static struct ExprIr* visit_store_expr2(struct CodegenVisitor2* visitor,
     return NULL;
 }
 
+static struct ExprIr* visit_call_expr2(struct CodegenVisitor2* visitor,
+                                       struct CallExprIr* ir) {
+    assert(ir_call_expr_tag(ir) == AddrTag_Var);
+
+    strtable_id name_id = ir_var_index(ir_call_expr_var(ir));
+    const char* name = strtable_at(&visitor->context->strtable, name_id);
+    fprintf(visitor->stream, "\tcall\t%s", name);
+
+    // debug code
+    {
+        fprintf(visitor->stream, "\t# ( ");
+        for (struct ListHeader *it = list_begin(ir_call_expr_args(ir)),
+                               *eit = list_end(ir_call_expr_args(ir));
+             it != eit; it = list_next(it)) {
+            struct ExprIr* arg = ((struct ListItem*)it)->item;
+            fprintf(
+                visitor->stream, "%s ",
+                strtable_at(&visitor->context->strtable, ir_expr_reg_id(arg)));
+        }
+        fprintf(visitor->stream, ") => %s",
+                strtable_at(&visitor->context->strtable,
+                            ir_expr_reg_id(ir_call_expr_cast(ir))));
+        fprintf(visitor->stream, "\n");
+    }
+
+    return NULL;
+}
+
 static struct BlockIr* visit_block2(struct CodegenVisitor2* visitor,
                                     struct BlockIr* ir) {
     fprintf(visitor->stream, "lab_%p:\n", ir);
@@ -201,6 +229,7 @@ struct CodegenVisitor2* new_codegen_visitor(struct Context* context,
                      visit_addrof_expr2);
     register_visitor(visitor->as_visitor, visit_load_expr, visit_load_expr2);
     register_visitor(visitor->as_visitor, visit_store_expr, visit_store_expr2);
+    register_visitor(visitor->as_visitor, visit_call_expr, visit_call_expr2);
     register_visitor(visitor->as_visitor, visit_block, visit_block2);
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf2);
