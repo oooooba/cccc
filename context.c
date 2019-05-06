@@ -3,6 +3,7 @@
 #include "strtable.h"
 #include "vector.h"
 
+#include <assert.h>
 #include <stddef.h>
 #include <stdlib.h>
 
@@ -31,12 +32,16 @@ void context_register_registers(struct Context* context) {
     reg(r8);
     reg(r9);
 
+    reg(rsp);
+
 #undef reg
 
     context->func_call_arg_reg_offset = 3;
+    context->special_purpose_reg_offset = 9;
 }
 
 strtable_id context_nth_reg(struct Context* context, size_t n) {
+    assert(n < context->special_purpose_reg_offset);
     return *((strtable_id*)vector_at(&context->register_ids, n));
 }
 
@@ -46,4 +51,9 @@ strtable_id context_nth_func_call_arg_reg(struct Context* context, size_t n) {
 
 strtable_id context_func_call_result_reg(struct Context* context) {
     return context_nth_reg(context, 0);
+}
+
+strtable_id context_stack_pointer_reg(struct Context* context) {
+    return *((strtable_id*)vector_at(&context->register_ids,
+                                     context->special_purpose_reg_offset + 0));
 }

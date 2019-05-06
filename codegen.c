@@ -137,7 +137,6 @@ static struct FunctionIr* visit_function2(struct CodegenVisitor2* visitor,
 
     fprintf(visitor->stream, "\tpush\trbp\n");
     fprintf(visitor->stream, "\tmov\trbp, rsp\n");
-    fprintf(visitor->stream, "\tsub\trsp, %ld\n", ir_function_region_size(ir));
 
     struct BlockIr* body = ir_function_body(ir);
     visitor2_visit_block(as_visitor(visitor), body);
