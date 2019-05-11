@@ -555,6 +555,8 @@ void ir_store_expr_set_value(struct StoreExprIr* ir, struct ExprIr* value) {
 struct CallExprIr {
     struct ExprIr as_expr;
     struct List* args;  // ExprIr* list
+    struct BlockIr* pre_expr_block;
+    struct BlockIr* post_expr_block;
     enum AddrTag tag;
     union {
         struct ExprIr* expr;
@@ -569,6 +571,8 @@ struct CallExprIr* ir_new_call_expr_with_var(struct VarIr* var,
     ir->tag = AddrTag_Var;
     ir->args = args;
     ir->var = var;
+    ir->pre_expr_block = ir_new_block();
+    ir->post_expr_block = ir_new_block();
     return ir;
 }
 
@@ -584,4 +588,12 @@ enum AddrTag ir_call_expr_tag(struct CallExprIr* ir) { return ir->tag; }
 
 struct VarIr* ir_call_expr_var(struct CallExprIr* ir) {
     return ir->var;
+}
+
+struct BlockIr* ir_call_expr_pre_expr_block(struct CallExprIr* ir) {
+    return ir->pre_expr_block;
+}
+
+struct BlockIr* ir_call_expr_post_expr_block(struct CallExprIr* ir) {
+    return ir->post_expr_block;
 }

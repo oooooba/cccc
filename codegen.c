@@ -128,6 +128,15 @@ static struct ExprIr* visit_call_expr2(struct CodegenVisitor2* visitor,
                                        struct CallExprIr* ir) {
     assert(ir_call_expr_tag(ir) == AddrTag_Var);
 
+    for (struct ListHeader *it = list_begin(ir_call_expr_args(ir)),
+                           *eit = list_end(ir_call_expr_args(ir));
+         it != eit; it = list_next(it)) {
+        struct ExprIr* arg = ((struct ListItem*)it)->item;
+        visitor2_visit_expr(as_visitor(visitor), arg);
+    }
+
+    visitor2_visit_block(as_visitor(visitor), ir_call_expr_pre_expr_block(ir));
+
     strtable_id name_id = ir_var_index(ir_call_expr_var(ir));
     const char* name = strtable_at(&visitor->context->strtable, name_id);
     fprintf(visitor->stream, "\tcall\t%s", name);
@@ -148,6 +157,8 @@ static struct ExprIr* visit_call_expr2(struct CodegenVisitor2* visitor,
                             ir_expr_reg_id(ir_call_expr_cast(ir))));
         fprintf(visitor->stream, "\n");
     }
+
+    visitor2_visit_block(as_visitor(visitor), ir_call_expr_post_expr_block(ir));
 
     return NULL;
 }

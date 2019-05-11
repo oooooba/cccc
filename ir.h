@@ -181,5 +181,7 @@ struct ExprIr* ir_call_expr_cast(struct CallExprIr* ir);
 struct List* ir_call_expr_args(struct CallExprIr* ir);
 enum AddrTag ir_call_expr_tag(struct CallExprIr* ir);
 struct VarIr* ir_call_expr_var(struct CallExprIr* ir);
+struct BlockIr* ir_call_expr_pre_expr_block(struct CallExprIr* ir);
+struct BlockIr* ir_call_expr_post_expr_block(struct CallExprIr* ir);
 
 #endif
