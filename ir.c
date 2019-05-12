@@ -243,6 +243,14 @@ struct BranchCfIr* ir_cf_as_branch(struct CfIr* ir) {
     return ir->tag == CfIrTag_Branch ? (struct BranchCfIr*)ir : NULL;
 }
 
+struct ReturnCfIr* ir_cf_as_return(struct CfIr* ir) {
+    return ir->tag == CfIrTag_Return ? (struct ReturnCfIr*)ir : NULL;
+}
+
+struct LabelCfIr* ir_cf_as_label(struct CfIr* ir) {
+    return ir->tag == CfIrTag_Label ? (struct LabelCfIr*)ir : NULL;
+}
+
 struct PushCfIr* ir_cf_as_push(struct CfIr* ir) {
     return ir->tag == CfIrTag_Push ? (struct PushCfIr*)ir : NULL;
 }
@@ -289,6 +297,48 @@ struct BlockIr* ir_branch_cf_true_block(struct BranchCfIr* ir) {
 struct BlockIr* ir_branch_cf_false_block(struct BranchCfIr* ir) {
     return ir->false_block;
 }
+
+struct ReturnCfIr {
+    struct CfIr as_cf;
+    struct ExprIr* expr;
+};
+
+struct ReturnCfIr* ir_new_return_cf(struct ExprIr* expr) {
+    struct ReturnCfIr* ir = malloc(sizeof(struct ReturnCfIr));
+    initialize_cf(ir_return_cf_cast(ir), CfIrTag_Return);
+    ir->expr = expr;
+    return ir;
+}
+
+struct CfIr* ir_return_cf_cast(struct ReturnCfIr* ir) {
+    return &ir->as_cf;
+}
+
+struct ExprIr* ir_return_cf_expr(struct ReturnCfIr* ir) {
+    return ir->expr;
+}
+
+void ir_return_cf_set_expr(struct ReturnCfIr* ir, struct ExprIr* expr) {
+    ir->expr = expr;
+}
+
+struct LabelCfIr {
+    struct CfIr as_cf;
+    strtable_id index;
+};
+
+struct LabelCfIr* ir_new_label_cf(strtable_id index) {
+    struct LabelCfIr* ir = malloc(sizeof(struct LabelCfIr));
+    initialize_cf(ir_label_cf_cast(ir), CfIrTag_Label);
+    ir->index = index;
+    return ir;
+}
+
+struct CfIr* ir_label_cf_cast(struct LabelCfIr* ir) {
+    return &ir->as_cf;
+}
+
+strtable_id ir_label_cf_index(struct LabelCfIr* ir) { return ir->index; }
 
 struct PushCfIr {
     struct CfIr as_cf;

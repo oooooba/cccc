@@ -171,6 +171,16 @@ static struct CfIr* visit_branch_cf2(struct RegallocVisitor2* visitor,
     return NULL;
 }
 
+static struct CfIr* visit_return_cf2(struct RegallocVisitor2* visitor,
+                                     struct ReturnCfIr* ir) {
+    struct ExprIr* expr = ir_return_cf_expr(ir);
+    if (expr) {
+        visitor2_visit_expr(as_visitor(visitor), expr);
+        release_register(visitor);
+    }
+    return NULL;
+}
+
 struct RegallocVisitor2* new_regalloc_visitor(struct Context* context) {
     struct RegallocVisitor2* visitor = malloc(sizeof(struct RegallocVisitor2));
     visitor2_initialize(as_visitor(visitor));
@@ -185,6 +195,7 @@ struct RegallocVisitor2* new_regalloc_visitor(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_block, visit_block2);
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf2);
+    register_visitor(visitor->as_visitor, visit_return_cf, visit_return_cf2);
 
     visitor->context = context;
     visitor->free_register_index = 0;
@@ -307,6 +318,13 @@ static struct FunctionIr* visit_function2_post_process(
         struct PushCfIr* push =
             ir_new_push_cf(context_nth_reg(visitor->context, 1));
         ir_block_insert_at(insert_point, ir_cf_cast(ir_push_cf_cast(push)));
+    }
+
+    // insert label for early returns
+    {
+        // this value means epilogue of current function, ToDo: fix
+        struct LabelCfIr* label = ir_new_label_cf(STRTABLE_INVALID_ID);
+        ir_block_insert_at_end(body, ir_cf_cast(ir_label_cf_cast(label)));
     }
 
     // insert restoring general registers code

@@ -162,6 +162,18 @@ static struct CfIr* visit_branch_cf2(struct DumpVisitor* visitor,
     return NULL;
 }
 
+static struct CfIr* visit_return_cf2(struct DumpVisitor* visitor,
+                                     struct ReturnCfIr* ir) {
+    struct ExprIr* expr = ir_return_cf_expr(ir);
+    if (expr) {
+        visitor2_visit_expr(as_visitor(visitor), expr);
+        fprintf(visitor->stream, "return v%p", expr);
+    } else
+        fprintf(visitor->stream, "return");
+    fprintf(visitor->stream, "\n");
+    return NULL;
+}
+
 struct DumpVisitor* new_dump_visitor(struct Context* context, FILE* stream) {
     struct DumpVisitor* visitor = malloc(sizeof(struct DumpVisitor));
     visitor2_initialize(as_visitor(visitor));
@@ -176,6 +188,7 @@ struct DumpVisitor* new_dump_visitor(struct Context* context, FILE* stream) {
     register_visitor(visitor->as_visitor, visit_block, visit_block2);
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf2);
+    register_visitor(visitor->as_visitor, visit_return_cf, visit_return_cf2);
 
     visitor->context = context;
     visitor->stream = stream;

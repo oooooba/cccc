@@ -22,6 +22,10 @@ struct Visitor2 {
                                          struct FunctionIr* ir);
     struct CfIr* (*visit_branch_cf)(struct Visitor2* visitor,
                                     struct BranchCfIr* ir);
+    struct CfIr* (*visit_return_cf)(struct Visitor2* visitor,
+                                    struct ReturnCfIr* ir);
+    struct CfIr* (*visit_label_cf)(struct Visitor2* visitor,
+                                   struct LabelCfIr* ir);
     struct CfIr* (*visit_push_cf)(struct Visitor2* visitor,
                                   struct PushCfIr* ir);
     struct CfIr* (*visit_pop_cf)(struct Visitor2* visitor, struct PopCfIr* ir);

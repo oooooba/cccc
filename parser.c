@@ -371,11 +371,26 @@ static struct CfIr* parse_selection_statement(struct Parser* parser) {
     assert(false);
 }
 
+static struct CfIr* parse_jump_statement(struct Parser* parser) {
+    if (acceptable(parser, Token_KeywordReturn)) {
+        advance(parser);
+        struct ExprIr* expr = NULL;
+        if (!acceptable(parser, Token_Semicolon)) {
+            expr = parse_expression(parser);
+            expect(parser, Token_Semicolon);
+        }
+        return ir_return_cf_cast(ir_new_return_cf(expr));
+    }
+    assert(false);
+}
+
 static struct Ir* parse_statement(struct Parser* parser) {
     if (acceptable(parser, Token_LeftCurry))
         return ir_block_cast(parse_compound_statement(parser, NULL));
     else if (acceptable(parser, Token_KeywordIf))
         return ir_cf_cast(parse_selection_statement(parser));
+    else if (acceptable(parser, Token_KeywordReturn))
+        return ir_cf_cast(parse_jump_statement(parser));
     else
         return ir_expr_cast(parse_expression_statement(parser));
 }

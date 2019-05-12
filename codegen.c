@@ -11,6 +11,7 @@ struct CodegenVisitor2 {
     struct Visitor2 as_visitor;
     struct Context* context;
     FILE* stream;
+    struct FunctionIr* function;
 };
 
 static struct Visitor2* as_visitor(struct CodegenVisitor2* visitor) {
@@ -179,6 +180,7 @@ static struct BlockIr* visit_block2(struct CodegenVisitor2* visitor,
 static struct FunctionIr* visit_function2(struct CodegenVisitor2* visitor,
                                           struct FunctionIr* ir) {
     fprintf(visitor->stream, "\n");
+    visitor->function = ir;
 
     const char* name =
         strtable_at(&visitor->context->strtable, ir_function_name_index(ir));
@@ -213,6 +215,26 @@ static struct CfIr* visit_branch_cf2(struct CodegenVisitor2* visitor,
     return NULL;
 }
 
+static struct CfIr* visit_return_cf2(struct CodegenVisitor2* visitor,
+                                     struct ReturnCfIr* ir) {
+    struct ExprIr* expr = ir_return_cf_expr(ir);
+    if (expr) {
+        visitor2_visit_expr(as_visitor(visitor), expr);
+    }
+    fprintf(visitor->stream, "\tjmp\tlab_%p_end\n", visitor->function);
+    return NULL;
+}
+
+static struct CfIr* visit_label_cf2(struct CodegenVisitor2* visitor,
+                                    struct LabelCfIr* ir) {
+    strtable_id index = ir_label_cf_index(ir);
+    if (index == STRTABLE_INVALID_ID)
+        fprintf(visitor->stream, "lab_%p_end:\n", visitor->function);
+    else
+        assert(false);
+    return NULL;
+}
+
 static struct CfIr* visit_push_cf2(struct CodegenVisitor2* visitor,
                                    struct PushCfIr* ir) {
     strtable_id reg_id = ir_push_cf_reg_id(ir);
@@ -244,6 +266,8 @@ struct CodegenVisitor2* new_codegen_visitor(struct Context* context,
     register_visitor(visitor->as_visitor, visit_block, visit_block2);
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf2);
+    register_visitor(visitor->as_visitor, visit_return_cf, visit_return_cf2);
+    register_visitor(visitor->as_visitor, visit_label_cf, visit_label_cf2);
     register_visitor(visitor->as_visitor, visit_push_cf, visit_push_cf2);
     register_visitor(visitor->as_visitor, visit_pop_cf, visit_pop_cf2);
 
