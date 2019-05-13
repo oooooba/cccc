@@ -98,14 +98,11 @@ static struct ExprIr* parse_integer_constant(struct Parser* parser) {
     return ir_const_expr_cast(ir);
 }
 
-static struct VarIr* parse_identifier(struct Parser* parser) {
+static strtable_id parse_identifier(struct Parser* parser) {
     assert(acceptable(parser, Token_Id));
     strtable_id index = peek(parser)->strtable_index;
-    struct VarIr* var = env_find(parser->current_env, index);
-    if (!var) var = context_find_var_for_func(parser->context, index);
-    assert(var);
     advance(parser);
-    return var;
+    return index;
 }
 
 static struct ExprIr* parse_constant(struct Parser* parser) {
@@ -120,7 +117,10 @@ static struct ExprIr* parse_primary_expression(struct Parser* parser) {
         case Token_Integer:
             return parse_constant(parser);
         case Token_Id: {
-            struct VarIr* var = parse_identifier(parser);
+            strtable_id index = parse_identifier(parser);
+            struct VarIr* var = env_find(parser->current_env, index);
+            if (!var) var = context_find_var_for_func(parser->context, index);
+            assert(var);
             struct AddrofExprIr* addrof_var = ir_new_addrof_expr_with_var(var);
             struct LoadExprIr* load_addrof_var =
                 ir_new_load_expr(ir_addrof_expr_cast(addrof_var));
