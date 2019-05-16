@@ -416,6 +416,18 @@ struct CallExprIr* ir_expr_as_call(struct ExprIr* ir) {
     return ir->tag == ExprIrTag_Call ? (struct CallExprIr*)ir : NULL;
 }
 
+struct VarExprIr* ir_expr_as_var(struct ExprIr* ir) {
+    return ir->tag == ExprIrTag_Var ? (struct VarExprIr*)ir : NULL;
+}
+
+struct UnopExprIr* ir_expr_as_unop(struct ExprIr* ir) {
+    return ir->tag == ExprIrTag_Unop ? (struct UnopExprIr*)ir : NULL;
+}
+
+struct SubstExprIr* ir_expr_as_subst(struct ExprIr* ir) {
+    return ir->tag == ExprIrTag_Subst ? (struct SubstExprIr*)ir : NULL;
+}
+
 enum ExprIrTag ir_expr_tag(struct ExprIr* ir) { return ir->tag; }
 
 strtable_id ir_expr_reg_id(struct ExprIr* ir) { return ir->reg_id; }
@@ -646,4 +658,88 @@ struct BlockIr* ir_call_expr_pre_expr_block(struct CallExprIr* ir) {
 
 struct BlockIr* ir_call_expr_post_expr_block(struct CallExprIr* ir) {
     return ir->post_expr_block;
+}
+
+struct VarExprIr {
+    struct ExprIr as_expr;
+    strtable_id index;
+    size_t region_offset;
+    struct BlockIr* block;
+    struct TypeIr* type;
+};
+
+// ToDo: to prevent compiler error
+/*static*/ struct VarExprIr* ir_new_var_expr(struct BlockIr* block,
+                                             strtable_id index,
+                                             struct TypeIr* type,
+                                             size_t region_offset) {
+    struct VarExprIr* ir = malloc(sizeof(struct VarExprIr));
+    initialize_expr(ir_var_expr_cast(ir), ExprIrTag_Var);
+    ir->index = index;
+    ir->region_offset = region_offset;
+    ir->block = block;
+    ir->type = type;
+    return ir;
+}
+
+struct ExprIr* ir_var_expr_cast(struct VarExprIr* ir) {
+    return &ir->as_expr;
+}
+
+size_t ir_var_expr_offset(struct VarExprIr* ir) {
+    return ir_block_region_base(ir->block) + ir->region_offset;
+}
+
+strtable_id ir_var_expr_index(struct VarIr* ir) { return ir->index; }
+
+struct UnopExprIr {
+    struct ExprIr as_expr;
+    enum UnopExprIrTag op;
+    struct ExprIr* operand;
+};
+
+struct UnopExprIr* ir_new_unop_expr(enum UnopExprIrTag op,
+                                    struct ExprIr* operand) {
+    struct UnopExprIr* ir = malloc(sizeof(struct UnopExprIr));
+    initialize_expr(ir_unop_expr_cast(ir), ExprIrTag_Unop);
+    ir->op = op;
+    ir->operand = operand;
+    return ir;
+}
+
+struct ExprIr* ir_unop_expr_cast(struct UnopExprIr* ir) {
+    return &ir->as_expr;
+}
+
+enum UnopExprIrTag ir_unop_expr_op(struct UnopExprIr* ir) { return ir->op; }
+
+struct ExprIr* ir_unop_expr_operand(struct UnopExprIr* ir) {
+    return ir->operand;
+}
+
+struct SubstExprIr {
+    struct ExprIr as_expr;
+    struct ExprIr* addr;
+    struct ExprIr* value;
+};
+
+struct SubstExprIr* ir_new_subst_expr(struct ExprIr* addr,
+                                      struct ExprIr* value) {
+    struct SubstExprIr* ir = malloc(sizeof(struct SubstExprIr));
+    initialize_expr(ir_subst_expr_cast(ir), ExprIrTag_Subst);
+    ir->addr = addr;
+    ir->value = value;
+    return ir;
+}
+
+struct ExprIr* ir_subst_expr_cast(struct SubstExprIr* ir) {
+    return &ir->as_expr;
+}
+
+struct ExprIr* ir_subst_expr_addr(struct SubstExprIr* ir) {
+    return ir->addr;
+}
+
+struct ExprIr* ir_subst_expr_value(struct SubstExprIr* ir) {
+    return ir->value;
 }

@@ -164,6 +164,69 @@ static struct ExprIr* visit_call_expr2(struct CodegenVisitor2* visitor,
     return NULL;
 }
 
+static struct ExprIr* visit_var_expr2(struct CodegenVisitor2* visitor,
+                                      struct VarExprIr* ir) {
+    size_t offset = ir_var_expr_offset(ir);
+    strtable_id reg_id = ir_expr_reg_id(ir_var_expr_cast(ir));
+    const char* reg = register_name(visitor, reg_id);
+    fprintf(visitor->stream, "\tmov\t%s, [rbp - %ld]\n", reg, offset);
+    return NULL;
+}
+
+static struct ExprIr* visit_unop_expr2(struct CodegenVisitor2* visitor,
+                                       struct UnopExprIr* ir) {
+    strtable_id result_reg_id = ir_expr_reg_id(ir_unop_expr_cast(ir));
+    const char* result_reg = register_name(visitor, result_reg_id);
+    struct ExprIr* operand = ir_unop_expr_operand(ir);
+    enum UnopExprIrTag op = ir_unop_expr_op(ir);
+
+    if (op == UnopExprIrTag_Addrof) {
+        struct VarExprIr* var = ir_expr_as_var(operand);
+        size_t offset = ir_var_expr_offset(var);
+        fprintf(visitor->stream, "\tlea\t%s, [rbp - %ld]\n", result_reg,
+                offset);
+        return NULL;
+    }
+
+    visitor2_visit_expr(as_visitor(visitor), operand);
+
+    strtable_id operand_reg_id = ir_expr_reg_id(operand);
+    assert(operand_reg_id == result_reg_id);
+    const char* operand_reg = register_name(visitor, operand_reg_id);
+
+    switch (op) {
+        case UnopExprIrTag_Deref:
+            fprintf(visitor->stream, "\tmov\t%s, [%s]\n", result_reg,
+                    operand_reg);
+            break;
+        case UnopExprIrTag_Addrof:
+            assert(false);
+            break;
+        default:
+            assert(false);
+    }
+
+    return NULL;
+}
+
+static struct ExprIr* visit_subst_expr2(struct CodegenVisitor2* visitor,
+                                        struct SubstExprIr* ir) {
+    struct ExprIr* value = ir_subst_expr_value(ir);
+    visitor2_visit_expr(as_visitor(visitor), value);
+    struct ExprIr* addr = ir_subst_expr_addr(ir);
+    visitor2_visit_expr(as_visitor(visitor), addr);
+
+    strtable_id value_reg_id = ir_expr_reg_id(value);
+    strtable_id addr_reg_id = ir_expr_reg_id(addr);
+    assert(ir_expr_reg_id(ir_subst_expr_cast(ir)) == value_reg_id);
+
+    const char* value_reg = register_name(visitor, value_reg_id);
+    const char* addr_reg = register_name(visitor, addr_reg_id);
+    fprintf(visitor->stream, "\tmov\t[%s], %s\n", addr_reg, value_reg);
+
+    return NULL;
+}
+
 static struct BlockIr* visit_block2(struct CodegenVisitor2* visitor,
                                     struct BlockIr* ir) {
     fprintf(visitor->stream, "lab_%p:\n", ir);
@@ -263,6 +326,9 @@ struct CodegenVisitor2* new_codegen_visitor(struct Context* context,
     register_visitor(visitor->as_visitor, visit_load_expr, visit_load_expr2);
     register_visitor(visitor->as_visitor, visit_store_expr, visit_store_expr2);
     register_visitor(visitor->as_visitor, visit_call_expr, visit_call_expr2);
+    register_visitor(visitor->as_visitor, visit_var_expr, visit_var_expr2);
+    register_visitor(visitor->as_visitor, visit_unop_expr, visit_unop_expr2);
+    register_visitor(visitor->as_visitor, visit_subst_expr, visit_subst_expr2);
     register_visitor(visitor->as_visitor, visit_block, visit_block2);
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf2);

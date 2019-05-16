@@ -16,6 +16,12 @@ struct Visitor2 {
                                        struct StoreExprIr* ir);
     struct ExprIr* (*visit_call_expr)(struct Visitor2* visitor,
                                       struct CallExprIr* ir);
+    struct ExprIr* (*visit_var_expr)(struct Visitor2* visitor,
+                                     struct VarExprIr* ir);
+    struct ExprIr* (*visit_unop_expr)(struct Visitor2* visitor,
+                                      struct UnopExprIr* ir);
+    struct ExprIr* (*visit_subst_expr)(struct Visitor2* visitor,
+                                       struct SubstExprIr* ir);
     struct BlockIr* (*visit_block)(struct Visitor2* visitor,
                                    struct BlockIr* ir);
     struct FunctionIr* (*visit_function)(struct Visitor2* visitor,

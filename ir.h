@@ -30,6 +30,9 @@ struct AddrofExprIr;
 struct LoadExprIr;
 struct StoreExprIr;
 struct CallExprIr;
+struct VarExprIr;
+struct UnopExprIr;
+struct SubstExprIr;
 
 enum IrTag {
     IrTag_Block,
@@ -54,6 +57,9 @@ enum ExprIrTag {
     ExprIrTag_Load,
     ExprIrTag_Store,
     ExprIrTag_Call,
+    ExprIrTag_Var,
+    ExprIrTag_Unop,
+    ExprIrTag_Subst,
 };
 
 enum ConstExprIrTag {
@@ -65,6 +71,11 @@ enum BinopExprIrTag {
     BinopExprIrTag_Add,
     BinopExprIrTag_Sub,
     BinopExprIrTag_Mul,
+};
+
+enum UnopExprIrTag {
+    UnopExprIrTag_Deref,
+    UnopExprIrTag_Addrof,
 };
 
 enum AddrTag {
@@ -149,7 +160,10 @@ struct BinopExprIr* ir_expr_as_binop(struct ExprIr* ir);
 struct AddrofExprIr* ir_expr_as_addrof(struct ExprIr* ir);
 struct LoadExprIr* ir_expr_as_load(struct ExprIr* ir);
 struct StoreExprIr* ir_expr_as_store(struct ExprIr* ir);
+struct VarExprIr* ir_expr_as_var(struct ExprIr* ir);
 struct CallExprIr* ir_expr_as_call(struct ExprIr* ir);
+struct UnopExprIr* ir_expr_as_unop(struct ExprIr* ir);
+struct SubstExprIr* ir_expr_as_subst(struct ExprIr* ir);
 enum ExprIrTag ir_expr_tag(struct ExprIr* ir);
 strtable_id ir_expr_reg_id(struct ExprIr* ir);
 void ir_expr_set_reg_id(struct ExprIr* ir, strtable_id id);
@@ -198,5 +212,21 @@ enum AddrTag ir_call_expr_tag(struct CallExprIr* ir);
 struct VarIr* ir_call_expr_var(struct CallExprIr* ir);
 struct BlockIr* ir_call_expr_pre_expr_block(struct CallExprIr* ir);
 struct BlockIr* ir_call_expr_post_expr_block(struct CallExprIr* ir);
+
+struct ExprIr* ir_var_expr_cast(struct VarExprIr* ir);
+size_t ir_var_expr_offset(struct VarExprIr* ir);
+strtable_id ir_var_expr_index(struct VarIr* ir);
+
+struct UnopExprIr* ir_new_unop_expr(enum UnopExprIrTag op,
+                                    struct ExprIr* operand);
+struct ExprIr* ir_unop_expr_cast(struct UnopExprIr* ir);
+enum UnopExprIrTag ir_unop_expr_op(struct UnopExprIr* ir);
+struct ExprIr* ir_unop_expr_operand(struct UnopExprIr* ir);
+
+struct SubstExprIr* ir_new_subst_expr(struct ExprIr* addr,
+                                      struct ExprIr* value);
+struct ExprIr* ir_subst_expr_cast(struct SubstExprIr* ir);
+struct ExprIr* ir_subst_expr_addr(struct SubstExprIr* ir);
+struct ExprIr* ir_subst_expr_value(struct SubstExprIr* ir);
 
 #endif
