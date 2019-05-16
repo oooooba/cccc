@@ -213,6 +213,10 @@ struct VarIr* ir_call_expr_var(struct CallExprIr* ir);
 struct BlockIr* ir_call_expr_pre_expr_block(struct CallExprIr* ir);
 struct BlockIr* ir_call_expr_post_expr_block(struct CallExprIr* ir);
 
+// ToDo: for test, remove
+struct VarExprIr* ir_new_var_expr(struct BlockIr* block, strtable_id index,
+                                  struct TypeIr* type, size_t region_offset);
+
 struct ExprIr* ir_var_expr_cast(struct VarExprIr* ir);
 size_t ir_var_expr_offset(struct VarExprIr* ir);
 strtable_id ir_var_expr_index(struct VarIr* ir);

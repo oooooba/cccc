@@ -140,6 +140,35 @@ static struct ExprIr* visit_call_expr2(struct RegallocVisitor2* visitor,
     return NULL;
 }
 
+static struct ExprIr* visit_var_expr2(struct RegallocVisitor2* visitor,
+                                      struct VarExprIr* ir) {
+    strtable_id reg_id = acquire_register(visitor);
+    ir_expr_set_reg_id(ir_var_expr_cast(ir), reg_id);
+    return NULL;
+}
+
+static struct ExprIr* visit_unop_expr2(struct RegallocVisitor2* visitor,
+                                       struct UnopExprIr* ir) {
+    if (ir_unop_expr_op(ir) != UnopExprIrTag_Addrof) {
+        visitor2_visit_expr(as_visitor(visitor), ir_unop_expr_operand(ir));
+        release_register(visitor);
+    }
+    strtable_id reg_id = acquire_register(visitor);
+    ir_expr_set_reg_id(ir_unop_expr_cast(ir), reg_id);
+    return NULL;
+}
+
+static struct ExprIr* visit_subst_expr2(struct RegallocVisitor2* visitor,
+                                        struct SubstExprIr* ir) {
+    visitor2_visit_expr(as_visitor(visitor), ir_subst_expr_value(ir));
+    visitor2_visit_expr(as_visitor(visitor), ir_subst_expr_addr(ir));
+    release_register(visitor);
+    release_register(visitor);
+    strtable_id reg_id = acquire_register(visitor);
+    ir_expr_set_reg_id(ir_subst_expr_cast(ir), reg_id);
+    return NULL;
+}
+
 static struct BlockIr* visit_block2(struct RegallocVisitor2* visitor,
                                     struct BlockIr* ir) {
     struct BlockIterator* it = ir_block_new_iterator(ir);
@@ -192,6 +221,9 @@ struct RegallocVisitor2* new_regalloc_visitor(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_load_expr, visit_load_expr2);
     register_visitor(visitor->as_visitor, visit_store_expr, visit_store_expr2);
     register_visitor(visitor->as_visitor, visit_call_expr, visit_call_expr2);
+    register_visitor(visitor->as_visitor, visit_var_expr, visit_var_expr2);
+    register_visitor(visitor->as_visitor, visit_unop_expr, visit_unop_expr2);
+    register_visitor(visitor->as_visitor, visit_subst_expr, visit_subst_expr2);
     register_visitor(visitor->as_visitor, visit_block, visit_block2);
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf2);
