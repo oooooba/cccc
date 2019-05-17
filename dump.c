@@ -109,6 +109,54 @@ static struct ExprIr* visit_call_expr2(struct DumpVisitor* visitor,
     return NULL;
 }
 
+static struct ExprIr* visit_var_expr2(struct DumpVisitor* visitor,
+                                      struct VarExprIr* ir) {
+    strtable_id index = ir_var_expr_index(ir);
+    const char* name = strtable_at(&visitor->context->strtable, index);
+    fprintf(visitor->stream, "v%p = %s\n", ir, name);
+    return NULL;
+}
+
+static struct ExprIr* visit_unop_expr2(struct DumpVisitor* visitor,
+                                       struct UnopExprIr* ir) {
+    struct ExprIr* operand = ir_unop_expr_operand(ir);
+    enum UnopExprIrTag op = ir_unop_expr_op(ir);
+
+    if (op == UnopExprIrTag_Addrof) {
+        struct VarExprIr* var = ir_expr_as_var(operand);
+        strtable_id index = ir_var_expr_index(var);
+        const char* name = strtable_at(&visitor->context->strtable, index);
+        fprintf(visitor->stream, "v%p = &%s\n", ir, name);
+        return NULL;
+    }
+
+    visitor2_visit_expr(as_visitor(visitor), operand);
+
+    const char* ope;
+    switch (op) {
+        case UnopExprIrTag_Deref:
+            ope = "*";
+            break;
+        case UnopExprIrTag_Addrof:
+            assert(false);
+        default:
+            assert(false);
+    }
+    fprintf(visitor->stream, "v%p = %s v%p\n", ir, ope, operand);
+
+    return NULL;
+}
+
+static struct ExprIr* visit_subst_expr2(struct DumpVisitor* visitor,
+                                        struct SubstExprIr* ir) {
+    struct ExprIr* value = ir_subst_expr_value(ir);
+    visitor2_visit_expr(as_visitor(visitor), value);
+    struct ExprIr* addr = ir_subst_expr_addr(ir);
+    visitor2_visit_expr(as_visitor(visitor), addr);
+    fprintf(visitor->stream, "v%p = (* v%p = v%p)\n", ir, addr, value);
+    return NULL;
+}
+
 static struct BlockIr* visit_block2(struct DumpVisitor* visitor,
                                     struct BlockIr* ir) {
     fprintf(visitor->stream, "[@%p]{\n", ir);
@@ -185,6 +233,9 @@ struct DumpVisitor* new_dump_visitor(struct Context* context, FILE* stream) {
     register_visitor(visitor->as_visitor, visit_load_expr, visit_load_expr2);
     register_visitor(visitor->as_visitor, visit_store_expr, visit_store_expr2);
     register_visitor(visitor->as_visitor, visit_call_expr, visit_call_expr2);
+    register_visitor(visitor->as_visitor, visit_var_expr, visit_var_expr2);
+    register_visitor(visitor->as_visitor, visit_unop_expr, visit_unop_expr2);
+    register_visitor(visitor->as_visitor, visit_subst_expr, visit_subst_expr2);
     register_visitor(visitor->as_visitor, visit_block, visit_block2);
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf2);

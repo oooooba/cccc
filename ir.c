@@ -86,6 +86,24 @@ struct VarIr {
     struct TypeIr* type;
 };
 
+struct Location {
+    struct BlockIr* block;
+    strtable_id index;
+    struct TypeIr* type;
+    size_t region_offset;
+};
+
+static struct Location* ir_new_location(struct BlockIr* block,
+                                        strtable_id index, struct TypeIr* type,
+                                        size_t region_offset) {
+    struct Location* ir = malloc(sizeof(struct Location));
+    ir->block = block;
+    ir->index = index;
+    ir->type = type;
+    ir->region_offset = region_offset;
+    return ir;
+}
+
 struct BlockIr {
     struct Ir as_ir;
     struct List statemetnts;
@@ -193,6 +211,21 @@ struct VarIr* ir_block_new_var(struct BlockIr* ir, strtable_id index,
     return ir_new_var(ir, index, type, region_offset);
 }
 
+struct Location* ir_block_allocate_location(struct BlockIr* ir,
+                                            strtable_id index,
+                                            struct TypeIr* type) {
+    assert(ir->region_base == (size_t)-1);
+    size_t var_size = sizeof(void*);  // ToDo: fix to refer size of type
+    size_t region_offset = ir->region_size;
+    if (region_offset % var_size) {
+        ir->region_size =
+            (ir->region_size + var_size - 1) / var_size * var_size;
+        region_offset = ir->region_size;
+    }
+    ir->region_size += var_size;
+    return ir_new_location(ir, index, type, region_offset);
+}
+
 static size_t ir_block_region_base(struct BlockIr* ir) {
     assert(ir->region_base != (size_t)-1);
     return ir->region_base;
@@ -222,6 +255,14 @@ size_t ir_var_offset(struct VarIr* ir) {
 }
 
 strtable_id ir_var_index(struct VarIr* ir) { return ir->index; }
+
+static size_t ir_location_offset(struct Location* loc) {
+    return ir_block_region_base(loc->block) + loc->region_offset;
+}
+
+static strtable_id ir_location_index(struct Location* loc) {
+    return loc->index;
+}
 
 struct CfIr {
     struct Ir as_ir;
@@ -662,23 +703,13 @@ struct BlockIr* ir_call_expr_post_expr_block(struct CallExprIr* ir) {
 
 struct VarExprIr {
     struct ExprIr as_expr;
-    strtable_id index;
-    size_t region_offset;
-    struct BlockIr* block;
-    struct TypeIr* type;
+    struct Location* location;
 };
 
-// ToDo: to prevent compiler error
-/*static*/ struct VarExprIr* ir_new_var_expr(struct BlockIr* block,
-                                             strtable_id index,
-                                             struct TypeIr* type,
-                                             size_t region_offset) {
+struct VarExprIr* ir_new_var_expr(struct Location* location) {
     struct VarExprIr* ir = malloc(sizeof(struct VarExprIr));
     initialize_expr(ir_var_expr_cast(ir), ExprIrTag_Var);
-    ir->index = index;
-    ir->region_offset = region_offset;
-    ir->block = block;
-    ir->type = type;
+    ir->location = location;
     return ir;
 }
 
@@ -687,10 +718,12 @@ struct ExprIr* ir_var_expr_cast(struct VarExprIr* ir) {
 }
 
 size_t ir_var_expr_offset(struct VarExprIr* ir) {
-    return ir_block_region_base(ir->block) + ir->region_offset;
+    return ir_location_offset(ir->location);
 }
 
-strtable_id ir_var_expr_index(struct VarIr* ir) { return ir->index; }
+strtable_id ir_var_expr_index(struct VarExprIr* ir) {
+    return ir_location_index(ir->location);
+}
 
 struct UnopExprIr {
     struct ExprIr as_expr;

@@ -34,6 +34,8 @@ struct VarExprIr;
 struct UnopExprIr;
 struct SubstExprIr;
 
+struct Location;
+
 enum IrTag {
     IrTag_Block,
     IrTag_Expr,
@@ -112,6 +114,9 @@ void ir_block_insert_block_at_end(struct BlockIr* ir, struct BlockIr* block);
 struct VarIr* ir_new_var_for_func(strtable_id index);
 struct VarIr* ir_block_new_var(struct BlockIr* ir, strtable_id index,
                                struct TypeIr* type);
+struct Location* ir_block_allocate_location(struct BlockIr* ir,
+                                            strtable_id index,
+                                            struct TypeIr* type);
 void ir_block_commit_region_status(struct BlockIr* ir, size_t region_base);
 size_t ir_block_region_size(struct BlockIr* ir);
 
@@ -213,13 +218,10 @@ struct VarIr* ir_call_expr_var(struct CallExprIr* ir);
 struct BlockIr* ir_call_expr_pre_expr_block(struct CallExprIr* ir);
 struct BlockIr* ir_call_expr_post_expr_block(struct CallExprIr* ir);
 
-// ToDo: for test, remove
-struct VarExprIr* ir_new_var_expr(struct BlockIr* block, strtable_id index,
-                                  struct TypeIr* type, size_t region_offset);
-
+struct VarExprIr* ir_new_var_expr(struct Location* location);
 struct ExprIr* ir_var_expr_cast(struct VarExprIr* ir);
 size_t ir_var_expr_offset(struct VarExprIr* ir);
-strtable_id ir_var_expr_index(struct VarIr* ir);
+strtable_id ir_var_expr_index(struct VarExprIr* ir);
 
 struct UnopExprIr* ir_new_unop_expr(enum UnopExprIrTag op,
                                     struct ExprIr* operand);
