@@ -31,19 +31,19 @@ struct Visitor {
     struct CfIr* (*visit_pop_cf)(struct Visitor* visitor, struct PopCfIr* ir);
 };
 
-struct Ir* visitor2_visit_ir(struct Visitor* visitor, struct Ir* ir);
+struct Ir* visitor_visit_ir(struct Visitor* visitor, struct Ir* ir);
 
-struct ExprIr* visitor2_visit_expr(struct Visitor* visitor, struct ExprIr* ir);
+struct ExprIr* visitor_visit_expr(struct Visitor* visitor, struct ExprIr* ir);
 
-struct BlockIr* visitor2_visit_block(struct Visitor* visitor,
+struct BlockIr* visitor_visit_block(struct Visitor* visitor,
                                      struct BlockIr* ir);
 
-struct FunctionIr* visitor2_visit_function(struct Visitor* visitor,
+struct FunctionIr* visitor_visit_function(struct Visitor* visitor,
                                            struct FunctionIr* ir);
 
-struct CfIr* visitor2_visit_cf(struct Visitor* visitor, struct CfIr* ir);
+struct CfIr* visitor_visit_cf(struct Visitor* visitor, struct CfIr* ir);
 
-void visitor2_initialize(struct Visitor* visitor);
+void visitor_initialize(struct Visitor* visitor);
 
 #define register_visitor(obj, member, proc) \
     do {                                    \

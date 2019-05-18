@@ -42,8 +42,8 @@ static struct ExprIr* visit_const_expr2(struct RegallocVisitor* visitor,
 
 static struct ExprIr* visit_binop_expr2(struct RegallocVisitor* visitor,
                                         struct BinopExprIr* ir) {
-    visitor2_visit_expr(as_visitor(visitor), ir_binop_expr_lhs(ir));
-    visitor2_visit_expr(as_visitor(visitor), ir_binop_expr_rhs(ir));
+    visitor_visit_expr(as_visitor(visitor), ir_binop_expr_lhs(ir));
+    visitor_visit_expr(as_visitor(visitor), ir_binop_expr_rhs(ir));
     release_register(visitor);
     release_register(visitor);
     strtable_id reg_id = acquire_register(visitor);
@@ -60,7 +60,7 @@ static struct ExprIr* visit_call_expr2(struct RegallocVisitor* visitor,
                            *eit = list_end(ir_call_expr_args(ir));
          it != eit; it = list_next(it)) {
         struct ExprIr* arg = ((struct ListItem*)it)->item;
-        visitor2_visit_expr(as_visitor(visitor), arg);
+        visitor_visit_expr(as_visitor(visitor), arg);
     }
 
     for (struct ListHeader *it = list_begin(ir_call_expr_args(ir)),
@@ -123,7 +123,7 @@ static struct ExprIr* visit_var_expr2(struct RegallocVisitor* visitor,
 static struct ExprIr* visit_unop_expr2(struct RegallocVisitor* visitor,
                                        struct UnopExprIr* ir) {
     if (ir_unop_expr_op(ir) != UnopExprIrTag_Addrof) {
-        visitor2_visit_expr(as_visitor(visitor), ir_unop_expr_operand(ir));
+        visitor_visit_expr(as_visitor(visitor), ir_unop_expr_operand(ir));
         release_register(visitor);
     }
     strtable_id reg_id = acquire_register(visitor);
@@ -133,8 +133,8 @@ static struct ExprIr* visit_unop_expr2(struct RegallocVisitor* visitor,
 
 static struct ExprIr* visit_subst_expr2(struct RegallocVisitor* visitor,
                                         struct SubstExprIr* ir) {
-    visitor2_visit_expr(as_visitor(visitor), ir_subst_expr_value(ir));
-    visitor2_visit_expr(as_visitor(visitor), ir_subst_expr_addr(ir));
+    visitor_visit_expr(as_visitor(visitor), ir_subst_expr_value(ir));
+    visitor_visit_expr(as_visitor(visitor), ir_subst_expr_addr(ir));
     release_register(visitor);
     release_register(visitor);
     strtable_id reg_id = acquire_register(visitor);
@@ -149,7 +149,7 @@ static struct BlockIr* visit_block2(struct RegallocVisitor* visitor,
         struct Ir* stmt = ir_block_iterator_next(it);
         if (!stmt) break;
 
-        visitor2_visit_ir(as_visitor(visitor), stmt);
+        visitor_visit_ir(as_visitor(visitor), stmt);
         if (ir_as_expr(stmt)) release_register(visitor);
     }
     return NULL;
@@ -158,17 +158,17 @@ static struct BlockIr* visit_block2(struct RegallocVisitor* visitor,
 static struct FunctionIr* visit_function2(struct RegallocVisitor* visitor,
                                           struct FunctionIr* ir) {
     struct BlockIr* body = ir_function_body(ir);
-    visitor2_visit_block(as_visitor(visitor), body);
+    visitor_visit_block(as_visitor(visitor), body);
     return NULL;
 }
 
 static struct CfIr* visit_branch_cf2(struct RegallocVisitor* visitor,
                                      struct BranchCfIr* ir) {
-    visitor2_visit_expr(as_visitor(visitor), ir_branch_cf_cond_expr(ir));
+    visitor_visit_expr(as_visitor(visitor), ir_branch_cf_cond_expr(ir));
     release_register(visitor);
 
-    visitor2_visit_block(as_visitor(visitor), ir_branch_cf_true_block(ir));
-    visitor2_visit_block(as_visitor(visitor), ir_branch_cf_false_block(ir));
+    visitor_visit_block(as_visitor(visitor), ir_branch_cf_true_block(ir));
+    visitor_visit_block(as_visitor(visitor), ir_branch_cf_false_block(ir));
 
     return NULL;
 }
@@ -177,7 +177,7 @@ static struct CfIr* visit_return_cf2(struct RegallocVisitor* visitor,
                                      struct ReturnCfIr* ir) {
     struct ExprIr* expr = ir_return_cf_expr(ir);
     if (expr) {
-        visitor2_visit_expr(as_visitor(visitor), expr);
+        visitor_visit_expr(as_visitor(visitor), expr);
         release_register(visitor);
     }
     return NULL;
@@ -185,7 +185,7 @@ static struct CfIr* visit_return_cf2(struct RegallocVisitor* visitor,
 
 struct RegallocVisitor* new_regalloc_visitor(struct Context* context) {
     struct RegallocVisitor* visitor = malloc(sizeof(struct RegallocVisitor));
-    visitor2_initialize(as_visitor(visitor));
+    visitor_initialize(as_visitor(visitor));
 
     register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr2);
     register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr2);
@@ -204,7 +204,7 @@ struct RegallocVisitor* new_regalloc_visitor(struct Context* context) {
 }
 
 void regalloc_apply(struct RegallocVisitor* visitor, struct BlockIr* ir) {
-    visitor2_visit_block(as_visitor(visitor), ir);
+    visitor_visit_block(as_visitor(visitor), ir);
 }
 
 struct PostRegallocVisitor {
@@ -237,13 +237,13 @@ static struct BlockIr* visit_block2_post_process(
         struct BlockIr* block = ir_as_block(stmt);
         if (block) {
             visitor->parent_region_end = new_region_end;
-            visitor2_visit_block(as_visitor_post_process(visitor), block);
+            visitor_visit_block(as_visitor_post_process(visitor), block);
         }
 
         // FunctionIr-s are stored in BlockIr (translation unit)
         struct FunctionIr* function = ir_as_function(stmt);
         if (function) {
-            visitor2_visit_function(as_visitor_post_process(visitor), function);
+            visitor_visit_function(as_visitor_post_process(visitor), function);
         }
     }
     return NULL;
@@ -255,7 +255,7 @@ static struct FunctionIr* visit_function2_post_process(
     visitor->max_region_end = sizeof(void*);
 
     struct BlockIr* body = ir_function_body(ir);
-    visitor2_visit_block(as_visitor_post_process(visitor), body);
+    visitor_visit_block(as_visitor_post_process(visitor), body);
 
     ir_function_set_region_size(ir, visitor->max_region_end);
 
@@ -354,7 +354,7 @@ struct PostRegallocVisitor* new_post_regalloc_visitor(
     struct Context* context) {
     struct PostRegallocVisitor* visitor =
         malloc(sizeof(struct PostRegallocVisitor));
-    visitor2_initialize(as_visitor_post_process(visitor));
+    visitor_initialize(as_visitor_post_process(visitor));
 
     register_visitor(visitor->as_visitor, visit_block,
                      visit_block2_post_process);
@@ -367,5 +367,5 @@ struct PostRegallocVisitor* new_post_regalloc_visitor(
 
 void regalloc_apply_post_process(struct PostRegallocVisitor* visitor,
                                  struct BlockIr* ir) {
-    visitor2_visit_block(as_visitor_post_process(visitor), ir);
+    visitor_visit_block(as_visitor_post_process(visitor), ir);
 }

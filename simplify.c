@@ -25,14 +25,14 @@ static struct ExprIr* visit_const_expr(struct SimplifyVisitor* visitor,
 static struct ExprIr* visit_binop_expr(struct SimplifyVisitor* visitor,
                                        struct BinopExprIr* ir) {
     struct ExprIr* lhs = ir_binop_expr_lhs(ir);
-    struct ExprIr* new_lhs = visitor2_visit_expr(as_visitor(visitor), lhs);
+    struct ExprIr* new_lhs = visitor_visit_expr(as_visitor(visitor), lhs);
     if (new_lhs) {
         ir_binop_expr_set_lhs(ir, new_lhs);
         lhs = new_lhs;
     }
 
     struct ExprIr* rhs = ir_binop_expr_rhs(ir);
-    struct ExprIr* new_rhs = visitor2_visit_expr(as_visitor(visitor), rhs);
+    struct ExprIr* new_rhs = visitor_visit_expr(as_visitor(visitor), rhs);
     if (new_rhs) {
         ir_binop_expr_set_rhs(ir, new_rhs);
         rhs = new_rhs;
@@ -73,7 +73,7 @@ static struct ExprIr* visit_call_expr(struct SimplifyVisitor* visitor,
          it != eit; it = list_next(it)) {
         struct ListItem* item = (struct ListItem*)it;
         struct ExprIr* arg = item->item;
-        struct ExprIr* new_arg = visitor2_visit_expr(as_visitor(visitor), arg);
+        struct ExprIr* new_arg = visitor_visit_expr(as_visitor(visitor), arg);
         if (new_arg) item->item = new_arg;
     }
     return NULL;
@@ -93,14 +93,14 @@ static struct ExprIr* visit_unop_expr(struct SimplifyVisitor* visitor,
         if (operand && ir_unop_expr_op(operand) == UnopExprIrTag_Deref) {
             struct ExprIr* expr = ir_unop_expr_operand(operand);
             struct ExprIr* new_expr =
-                visitor2_visit_expr(as_visitor(visitor), expr);
+                visitor_visit_expr(as_visitor(visitor), expr);
             return new_expr ? new_expr : expr;
         }
     }
 
     struct ExprIr* operand = ir_unop_expr_operand(ir);
     struct ExprIr* new_operand =
-        visitor2_visit_expr(as_visitor(visitor), operand);
+        visitor_visit_expr(as_visitor(visitor), operand);
     if (new_operand) {
         ir_unop_expr_set_operand(ir, new_operand);
     }
@@ -111,13 +111,13 @@ static struct ExprIr* visit_unop_expr(struct SimplifyVisitor* visitor,
 static struct ExprIr* visit_subst_expr(struct SimplifyVisitor* visitor,
                                        struct SubstExprIr* ir) {
     struct ExprIr* addr = ir_subst_expr_addr(ir);
-    struct ExprIr* new_addr = visitor2_visit_expr(as_visitor(visitor), addr);
+    struct ExprIr* new_addr = visitor_visit_expr(as_visitor(visitor), addr);
     if (new_addr) {
         ir_subst_expr_set_addr(ir, new_addr);
     }
 
     struct ExprIr* value = ir_subst_expr_value(ir);
-    struct ExprIr* new_value = visitor2_visit_expr(as_visitor(visitor), value);
+    struct ExprIr* new_value = visitor_visit_expr(as_visitor(visitor), value);
     if (new_value) {
         ir_subst_expr_set_value(ir, new_value);
     }
@@ -132,7 +132,7 @@ static struct BlockIr* visit_block(struct SimplifyVisitor* visitor,
         struct Ir* stmt = ir_block_iterator_next(it);
         if (!stmt) break;
 
-        struct Ir* new_stmt = visitor2_visit_ir(as_visitor(visitor), stmt);
+        struct Ir* new_stmt = visitor_visit_ir(as_visitor(visitor), stmt);
         if (new_stmt) ir_block_iterator_swap_at(it, new_stmt);
     }
     return NULL;
@@ -141,20 +141,20 @@ static struct BlockIr* visit_block(struct SimplifyVisitor* visitor,
 static struct FunctionIr* visit_function(struct SimplifyVisitor* visitor,
                                          struct FunctionIr* ir) {
     struct BlockIr* body = ir_function_body(ir);
-    visitor2_visit_block(as_visitor(visitor), body);
+    visitor_visit_block(as_visitor(visitor), body);
     return NULL;
 }
 
 static struct CfIr* visit_branch_cf(struct SimplifyVisitor* visitor,
                                     struct BranchCfIr* ir) {
     struct ExprIr* cond_expr =
-        visitor2_visit_expr(as_visitor(visitor), ir_branch_cf_cond_expr(ir));
+        visitor_visit_expr(as_visitor(visitor), ir_branch_cf_cond_expr(ir));
     if (cond_expr) {
         ir_branch_cf_set_cond_expr(ir, cond_expr);
     }
 
-    visitor2_visit_block(as_visitor(visitor), ir_branch_cf_true_block(ir));
-    visitor2_visit_block(as_visitor(visitor), ir_branch_cf_false_block(ir));
+    visitor_visit_block(as_visitor(visitor), ir_branch_cf_true_block(ir));
+    visitor_visit_block(as_visitor(visitor), ir_branch_cf_false_block(ir));
 
     return NULL;
 }
@@ -164,7 +164,7 @@ static struct CfIr* visit_return_cf(struct SimplifyVisitor* visitor,
     struct ExprIr* expr = ir_return_cf_expr(ir);
     if (expr) {
         struct ExprIr* new_expr =
-            visitor2_visit_expr(as_visitor(visitor), expr);
+            visitor_visit_expr(as_visitor(visitor), expr);
         if (new_expr) ir_return_cf_set_expr(ir, new_expr);
     }
     return NULL;
@@ -172,7 +172,7 @@ static struct CfIr* visit_return_cf(struct SimplifyVisitor* visitor,
 
 struct SimplifyVisitor* new_simplify_visitor(struct Context* context) {
     struct SimplifyVisitor* visitor = malloc(sizeof(struct SimplifyVisitor));
-    visitor2_initialize(as_visitor(visitor));
+    visitor_initialize(as_visitor(visitor));
 
     register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr);
     register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr);
@@ -190,5 +190,5 @@ struct SimplifyVisitor* new_simplify_visitor(struct Context* context) {
 }
 
 void simplify_apply(struct SimplifyVisitor* visitor, struct BlockIr* ir) {
-    visitor2_visit_block(as_visitor(visitor), ir);
+    visitor_visit_block(as_visitor(visitor), ir);
 }

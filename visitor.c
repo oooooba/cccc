@@ -4,25 +4,25 @@
 #include <assert.h>
 #include <stdbool.h>
 
-struct Ir* visitor2_visit_ir(struct Visitor* visitor, struct Ir* ir) {
+struct Ir* visitor_visit_ir(struct Visitor* visitor, struct Ir* ir) {
     switch (ir_tag(ir)) {
         case IrTag_Expr:
-            return ir_expr_cast(visitor2_visit_expr(visitor, ir_as_expr(ir)));
+            return ir_expr_cast(visitor_visit_expr(visitor, ir_as_expr(ir)));
         case IrTag_Block:
             return ir_block_cast(
-                visitor2_visit_block(visitor, ir_as_block(ir)));
+                visitor_visit_block(visitor, ir_as_block(ir)));
         case IrTag_Function:
             return ir_function_cast(
-                visitor2_visit_function(visitor, ir_as_function(ir)));
+                visitor_visit_function(visitor, ir_as_function(ir)));
         case IrTag_Cf:
-            return ir_cf_cast(visitor2_visit_cf(visitor, ir_as_cf(ir)));
+            return ir_cf_cast(visitor_visit_cf(visitor, ir_as_cf(ir)));
         default:
             assert(false);
     }
     return NULL;
 }
 
-struct ExprIr* visitor2_visit_expr(struct Visitor* visitor,
+struct ExprIr* visitor_visit_expr(struct Visitor* visitor,
                                    struct ExprIr* ir) {
     switch (ir_expr_tag(ir)) {
         case ExprIrTag_Const:
@@ -43,17 +43,17 @@ struct ExprIr* visitor2_visit_expr(struct Visitor* visitor,
     return NULL;
 }
 
-struct BlockIr* visitor2_visit_block(struct Visitor* visitor,
+struct BlockIr* visitor_visit_block(struct Visitor* visitor,
                                      struct BlockIr* ir) {
     return visitor->visit_block(visitor, ir);
 }
 
-struct FunctionIr* visitor2_visit_function(struct Visitor* visitor,
+struct FunctionIr* visitor_visit_function(struct Visitor* visitor,
                                            struct FunctionIr* ir) {
     return visitor->visit_function(visitor, ir);
 }
 
-struct CfIr* visitor2_visit_cf(struct Visitor* visitor, struct CfIr* ir) {
+struct CfIr* visitor_visit_cf(struct Visitor* visitor, struct CfIr* ir) {
     switch (ir_cf_tag(ir)) {
         case CfIrTag_Branch:
             return visitor->visit_branch_cf(visitor, ir_cf_as_branch(ir));
@@ -71,7 +71,7 @@ struct CfIr* visitor2_visit_cf(struct Visitor* visitor, struct CfIr* ir) {
     return NULL;
 }
 
-void visitor2_initialize(struct Visitor* visitor) {
+void visitor_initialize(struct Visitor* visitor) {
     register_visitor(*visitor, visit_const_expr, NULL);
     register_visitor(*visitor, visit_binop_expr, NULL);
     register_visitor(*visitor, visit_call_expr, NULL);
