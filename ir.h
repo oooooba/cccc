@@ -14,7 +14,7 @@ struct FunctionIr;
 
 struct BlockIr;
 struct BlockIterator;
-struct VarIr;
+struct Location;
 
 struct CfIr;
 struct BranchCfIr;
@@ -33,8 +33,6 @@ struct CallExprIr;
 struct VarExprIr;
 struct UnopExprIr;
 struct SubstExprIr;
-
-struct Location;
 
 enum IrTag {
     IrTag_Block,
@@ -55,9 +53,6 @@ enum CfIrTag {
 enum ExprIrTag {
     ExprIrTag_Const,
     ExprIrTag_Binop,
-    ExprIrTag_Addrof,
-    ExprIrTag_Load,
-    ExprIrTag_Store,
     ExprIrTag_Call,
     ExprIrTag_Var,
     ExprIrTag_Unop,
@@ -78,11 +73,6 @@ enum BinopExprIrTag {
 enum UnopExprIrTag {
     UnopExprIrTag_Deref,
     UnopExprIrTag_Addrof,
-};
-
-enum AddrTag {
-    AddrTag_Var,
-    AddrTag_Expr,
 };
 
 struct ExprIr* ir_as_expr(struct Ir* ir);
@@ -111,18 +101,13 @@ void ir_block_insert_expr_at(struct BlockIterator* it, struct ExprIr* expr);
 void ir_block_insert_at_end(struct BlockIr* ir, struct Ir* statement);
 void ir_block_insert_expr_at_end(struct BlockIr* ir, struct ExprIr* expr);
 void ir_block_insert_block_at_end(struct BlockIr* ir, struct BlockIr* block);
-struct VarIr* ir_new_var_for_func(strtable_id index);
-struct VarIr* ir_block_new_var(struct BlockIr* ir, strtable_id index,
-                               struct TypeIr* type);
 struct Location* ir_block_allocate_location(struct BlockIr* ir,
-                                            strtable_id index,
+                                            strtable_id name_index,
                                             struct TypeIr* type);
+struct Location* ir_declare_function(strtable_id name_index);
 void ir_block_commit_region_status(struct BlockIr* ir, size_t region_base);
 size_t ir_block_region_size(struct BlockIr* ir);
-
-struct Ir* ir_var_cast(struct VarIr* ir);
-strtable_id ir_var_index(struct VarIr* ir);
-size_t ir_var_offset(struct VarIr* ir);
+strtable_id ir_location_name_index(struct Location* loc);
 
 struct Ir* ir_cf_cast(struct CfIr* ir);
 struct BranchCfIr* ir_cf_as_branch(struct CfIr* ir);
@@ -189,37 +174,16 @@ struct ExprIr* ir_binop_expr_rhs(struct BinopExprIr* ir);
 void ir_binop_expr_set_lhs(struct BinopExprIr* ir, struct ExprIr* lhs);
 void ir_binop_expr_set_rhs(struct BinopExprIr* ir, struct ExprIr* rhs);
 
-struct AddrofExprIr* ir_new_addrof_expr_with_expr(struct ExprIr* expr);
-struct AddrofExprIr* ir_new_addrof_expr_with_var(struct VarIr* var);
-struct ExprIr* ir_addrof_expr_cast(struct AddrofExprIr* ir);
-enum AddrTag ir_addrof_expr_tag(struct AddrofExprIr* ir);
-struct VarIr* ir_addrof_expr_operand_as_var(struct AddrofExprIr* ir);
-struct ExprIr* ir_addrof_expr_operand_as_expr(struct AddrofExprIr* ir);
-
-struct LoadExprIr* ir_new_load_expr(struct ExprIr* addr);
-struct ExprIr* ir_load_expr_cast(struct LoadExprIr* ir);
-struct ExprIr* ir_load_expr_addr(struct LoadExprIr* ir);
-void ir_load_expr_set_addr(struct LoadExprIr* ir, struct ExprIr* addr);
-
-struct StoreExprIr* ir_new_store_expr(struct ExprIr* addr,
-                                      struct ExprIr* value);
-struct ExprIr* ir_store_expr_cast(struct StoreExprIr* ir);
-struct ExprIr* ir_store_expr_addr(struct StoreExprIr* ir);
-void ir_store_expr_set_addr(struct StoreExprIr* ir, struct ExprIr* addr);
-struct ExprIr* ir_store_expr_value(struct StoreExprIr* ir);
-void ir_store_expr_set_value(struct StoreExprIr* ir, struct ExprIr* value);
-
-struct CallExprIr* ir_new_call_expr_with_var(struct VarIr* var,
-                                             struct List* args);
+struct CallExprIr* ir_new_call_expr(struct ExprIr* function, struct List* args);
 struct ExprIr* ir_call_expr_cast(struct CallExprIr* ir);
+struct ExprIr* ir_call_expr_function(struct CallExprIr* ir);
 struct List* ir_call_expr_args(struct CallExprIr* ir);
-enum AddrTag ir_call_expr_tag(struct CallExprIr* ir);
-struct VarIr* ir_call_expr_var(struct CallExprIr* ir);
 struct BlockIr* ir_call_expr_pre_expr_block(struct CallExprIr* ir);
 struct BlockIr* ir_call_expr_post_expr_block(struct CallExprIr* ir);
 
 struct VarExprIr* ir_new_var_expr(struct Location* location);
 struct ExprIr* ir_var_expr_cast(struct VarExprIr* ir);
+struct Location* ir_var_expr_location(struct VarExprIr* ir);
 size_t ir_var_expr_offset(struct VarExprIr* ir);
 strtable_id ir_var_expr_index(struct VarExprIr* ir);
 

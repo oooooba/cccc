@@ -8,12 +8,6 @@ struct Visitor2 {
                                        struct ConstExprIr* ir);
     struct ExprIr* (*visit_binop_expr)(struct Visitor2* visitor,
                                        struct BinopExprIr* ir);
-    struct ExprIr* (*visit_addrof_expr)(struct Visitor2* visitor,
-                                        struct AddrofExprIr* ir);
-    struct ExprIr* (*visit_load_expr)(struct Visitor2* visitor,
-                                      struct LoadExprIr* ir);
-    struct ExprIr* (*visit_store_expr)(struct Visitor2* visitor,
-                                       struct StoreExprIr* ir);
     struct ExprIr* (*visit_call_expr)(struct Visitor2* visitor,
                                       struct CallExprIr* ir);
     struct ExprIr* (*visit_var_expr)(struct Visitor2* visitor,

@@ -29,12 +29,6 @@ struct ExprIr* visitor2_visit_expr(struct Visitor2* visitor,
             return visitor->visit_const_expr(visitor, ir_expr_as_const(ir));
         case ExprIrTag_Binop:
             return visitor->visit_binop_expr(visitor, ir_expr_as_binop(ir));
-        case ExprIrTag_Addrof:
-            return visitor->visit_addrof_expr(visitor, ir_expr_as_addrof(ir));
-        case ExprIrTag_Load:
-            return visitor->visit_load_expr(visitor, ir_expr_as_load(ir));
-        case ExprIrTag_Store:
-            return visitor->visit_store_expr(visitor, ir_expr_as_store(ir));
         case ExprIrTag_Call:
             return visitor->visit_call_expr(visitor, ir_expr_as_call(ir));
         case ExprIrTag_Var:
@@ -80,9 +74,6 @@ struct CfIr* visitor2_visit_cf(struct Visitor2* visitor, struct CfIr* ir) {
 void visitor2_initialize(struct Visitor2* visitor) {
     register_visitor(*visitor, visit_const_expr, NULL);
     register_visitor(*visitor, visit_binop_expr, NULL);
-    register_visitor(*visitor, visit_addrof_expr, NULL);
-    register_visitor(*visitor, visit_load_expr, NULL);
-    register_visitor(*visitor, visit_store_expr, NULL);
     register_visitor(*visitor, visit_call_expr, NULL);
     register_visitor(*visitor, visit_var_expr, NULL);
     register_visitor(*visitor, visit_unop_expr, NULL);

@@ -63,51 +63,10 @@ static struct ExprIr* visit_binop_expr(struct SimplifyVisitor* visitor,
     return ir_const_expr_cast(ir_new_integer_const_expr(value));
 }
 
-static struct ExprIr* visit_addrof_expr(struct SimplifyVisitor* visitor,
-                                        struct AddrofExprIr* ir) {
-    struct ExprIr* addrof_operand = ir_addrof_expr_operand_as_expr(ir);
-    if (!addrof_operand) return NULL;
-
-    struct LoadExprIr* load_expr = ir_expr_as_load(addrof_operand);
-    if (!load_expr)
-        assert(false);  // ToDo: maybe, this is invalid situation (?)
-
-    struct ExprIr* load_addr = ir_load_expr_addr(load_expr);
-    struct ExprIr* new_load_addr =
-        visitor2_visit_expr(as_visitor(visitor), load_addr);
-    return new_load_addr ? new_load_addr : load_addr;
-}
-
-static struct ExprIr* visit_load_expr(struct SimplifyVisitor* visitor,
-                                      struct LoadExprIr* ir) {
-    struct ExprIr* addr = ir_load_expr_addr(ir);
-    struct ExprIr* new_addr = visitor2_visit_expr(as_visitor(visitor), addr);
-    if (new_addr) {
-        ir_load_expr_set_addr(ir, new_addr);
-    }
-    return NULL;
-}
-
-static struct ExprIr* visit_store_expr(struct SimplifyVisitor* visitor,
-                                       struct StoreExprIr* ir) {
-    struct ExprIr* addr = ir_store_expr_addr(ir);
-    struct ExprIr* new_addr = visitor2_visit_expr(as_visitor(visitor), addr);
-    if (new_addr) {
-        ir_store_expr_set_addr(ir, new_addr);
-    }
-
-    struct ExprIr* value = ir_store_expr_value(ir);
-    struct ExprIr* new_value = visitor2_visit_expr(as_visitor(visitor), value);
-    if (new_value) {
-        ir_store_expr_set_value(ir, new_value);
-    }
-
-    return NULL;
-}
-
 static struct ExprIr* visit_call_expr(struct SimplifyVisitor* visitor,
                                       struct CallExprIr* ir) {
-    assert(ir_call_expr_tag(ir) == AddrTag_Var);
+    struct VarExprIr* func_name = ir_expr_as_var(ir_call_expr_function(ir));
+    assert(func_name);
 
     for (struct ListHeader *it = list_begin(ir_call_expr_args(ir)),
                            *eit = list_end(ir_call_expr_args(ir));
@@ -217,9 +176,6 @@ struct SimplifyVisitor* new_simplify_visitor(struct Context* context) {
 
     register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr);
     register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr);
-    register_visitor(visitor->as_visitor, visit_addrof_expr, visit_addrof_expr);
-    register_visitor(visitor->as_visitor, visit_load_expr, visit_load_expr);
-    register_visitor(visitor->as_visitor, visit_store_expr, visit_store_expr);
     register_visitor(visitor->as_visitor, visit_call_expr, visit_call_expr);
     register_visitor(visitor->as_visitor, visit_var_expr, visit_var_expr);
     register_visitor(visitor->as_visitor, visit_unop_expr, visit_unop_expr);

@@ -10,18 +10,19 @@
 
 void context_initialize(struct Context* context) {
     strtable_initialize(&context->strtable);
-    map_initialize(&context->var_for_func_map);
+    map_initialize(&context->function_declaration_map);
     vector_initialize(&context->register_ids, sizeof(strtable_id));
 }
 
-void context_register_var_for_func(struct Context* context, strtable_id index,
-                                   struct VarIr* var_for_func) {
-    map_insert(&context->var_for_func_map, (void*)index, var_for_func);
+void context_insert_function_declaration(struct Context* context,
+                                         strtable_id index,
+                                         struct Location* func_loc) {
+    map_insert(&context->function_declaration_map, (void*)index, func_loc);
 }
 
-struct VarIr* context_find_var_for_func(struct Context* context,
-                                        strtable_id index) {
-    return map_find(&context->var_for_func_map, (void*)index);
+struct Location* context_find_function_declaration(struct Context* context,
+                                                   strtable_id index) {
+    return map_find(&context->function_declaration_map, (void*)index);
 }
 
 void context_register_registers(struct Context* context) {

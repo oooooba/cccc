@@ -48,41 +48,10 @@ static struct ExprIr* visit_binop_expr2(struct DumpVisitor* visitor,
     return NULL;
 }
 
-static struct ExprIr* visit_addrof_expr2(struct DumpVisitor* visitor,
-                                         struct AddrofExprIr* ir) {
-    if (ir_addrof_expr_tag(ir) == AddrTag_Var) {
-        fprintf(visitor->stream, "v%p = addrof [%s]\n", ir,
-                strtable_at(&visitor->context->strtable,
-                            ir_var_index(ir_addrof_expr_operand_as_var(ir))));
-    } else {
-        struct ExprIr* expr = ir_addrof_expr_operand_as_expr(ir);
-        visitor2_visit_expr(as_visitor(visitor), expr);
-        fprintf(visitor->stream, "v%p = addrof [v%p]\n", ir, expr);
-    }
-    return NULL;
-}
-
-static struct ExprIr* visit_load_expr2(struct DumpVisitor* visitor,
-                                       struct LoadExprIr* ir) {
-    struct ExprIr* addr = ir_load_expr_addr(ir);
-    visitor2_visit_expr(as_visitor(visitor), addr);
-    fprintf(visitor->stream, "v%p = load [v%p]\n", ir, addr);
-    return NULL;
-}
-
-static struct ExprIr* visit_store_expr2(struct DumpVisitor* visitor,
-                                        struct StoreExprIr* ir) {
-    struct ExprIr* addr = ir_store_expr_addr(ir);
-    struct ExprIr* value = ir_store_expr_value(ir);
-    visitor2_visit_expr(as_visitor(visitor), addr);
-    visitor2_visit_expr(as_visitor(visitor), value);
-    fprintf(visitor->stream, "v%p = store [v%p] v%p\n", ir, addr, value);
-    return NULL;
-}
-
 static struct ExprIr* visit_call_expr2(struct DumpVisitor* visitor,
                                        struct CallExprIr* ir) {
-    assert(ir_call_expr_tag(ir) == AddrTag_Var);
+    struct VarExprIr* func_name = ir_expr_as_var(ir_call_expr_function(ir));
+    assert(func_name);
 
     for (struct ListHeader *it = list_begin(ir_call_expr_args(ir)),
                            *eit = list_end(ir_call_expr_args(ir));
@@ -91,7 +60,7 @@ static struct ExprIr* visit_call_expr2(struct DumpVisitor* visitor,
         visitor2_visit_expr(as_visitor(visitor), arg);
     }
 
-    strtable_id name_id = ir_var_index(ir_call_expr_var(ir));
+    strtable_id name_id = ir_var_expr_index(func_name);
     const char* name = strtable_at(&visitor->context->strtable, name_id);
     fprintf(visitor->stream, "v%p = call %s (", ir, name);
     bool first = true;
@@ -127,7 +96,7 @@ static struct ExprIr* visit_unop_expr2(struct DumpVisitor* visitor,
         if (var) {
             strtable_id index = ir_var_expr_index(var);
             const char* name = strtable_at(&visitor->context->strtable, index);
-            fprintf(visitor->stream, "v%p = &%s\n", ir, name);
+            fprintf(visitor->stream, "v%p = addrof %s\n", ir, name);
             return NULL;
         }
     }
@@ -137,10 +106,10 @@ static struct ExprIr* visit_unop_expr2(struct DumpVisitor* visitor,
     const char* ope;
     switch (op) {
         case UnopExprIrTag_Deref:
-            ope = "*";
+            ope = "deref";
             break;
         case UnopExprIrTag_Addrof:
-            ope = "&";
+            ope = "addrof";
             break;
         default:
             assert(false);
@@ -156,7 +125,7 @@ static struct ExprIr* visit_subst_expr2(struct DumpVisitor* visitor,
     visitor2_visit_expr(as_visitor(visitor), value);
     struct ExprIr* addr = ir_subst_expr_addr(ir);
     visitor2_visit_expr(as_visitor(visitor), addr);
-    fprintf(visitor->stream, "v%p = (* v%p = v%p)\n", ir, addr, value);
+    fprintf(visitor->stream, "v%p = subst v%p, v%p\n", ir, addr, value);
     return NULL;
 }
 
@@ -184,9 +153,9 @@ static struct FunctionIr* visit_function2(struct DumpVisitor* visitor,
     for (struct ListHeader *it = list_begin(ir_function_params(ir)),
                            *eit = list_end(ir_function_params(ir));
          it != eit; it = list_next(it)) {
-        struct VarIr* var = ((struct ListItem*)it)->item;
+        struct VarExprIr* var = ((struct ListItem*)it)->item;
         const char* var_name =
-            strtable_at(&visitor->context->strtable, ir_var_index(var));
+            strtable_at(&visitor->context->strtable, ir_var_expr_index(var));
         if (first)
             first = false;
         else
@@ -231,10 +200,6 @@ struct DumpVisitor* new_dump_visitor(struct Context* context, FILE* stream) {
 
     register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr2);
     register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr2);
-    register_visitor(visitor->as_visitor, visit_addrof_expr,
-                     visit_addrof_expr2);
-    register_visitor(visitor->as_visitor, visit_load_expr, visit_load_expr2);
-    register_visitor(visitor->as_visitor, visit_store_expr, visit_store_expr2);
     register_visitor(visitor->as_visitor, visit_call_expr, visit_call_expr2);
     register_visitor(visitor->as_visitor, visit_var_expr, visit_var_expr2);
     register_visitor(visitor->as_visitor, visit_unop_expr, visit_unop_expr2);

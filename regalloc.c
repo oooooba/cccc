@@ -51,37 +51,10 @@ static struct ExprIr* visit_binop_expr2(struct RegallocVisitor2* visitor,
     return NULL;
 }
 
-static struct ExprIr* visit_addrof_expr2(struct RegallocVisitor2* visitor,
-                                         struct AddrofExprIr* ir) {
-    assert(ir_addrof_expr_tag(ir) == AddrTag_Var);
-    strtable_id reg_id = acquire_register(visitor);
-    ir_expr_set_reg_id(ir_addrof_expr_cast(ir), reg_id);
-    return NULL;
-}
-
-static struct ExprIr* visit_load_expr2(struct RegallocVisitor2* visitor,
-                                       struct LoadExprIr* ir) {
-    visitor2_visit_expr(as_visitor(visitor), ir_load_expr_addr(ir));
-    release_register(visitor);
-    strtable_id reg_id = acquire_register(visitor);
-    ir_expr_set_reg_id(ir_load_expr_cast(ir), reg_id);
-    return NULL;
-}
-
-static struct ExprIr* visit_store_expr2(struct RegallocVisitor2* visitor,
-                                        struct StoreExprIr* ir) {
-    visitor2_visit_expr(as_visitor(visitor), ir_store_expr_addr(ir));
-    visitor2_visit_expr(as_visitor(visitor), ir_store_expr_value(ir));
-    release_register(visitor);
-    release_register(visitor);
-    strtable_id reg_id = acquire_register(visitor);
-    ir_expr_set_reg_id(ir_store_expr_cast(ir), reg_id);
-    return NULL;
-}
-
 static struct ExprIr* visit_call_expr2(struct RegallocVisitor2* visitor,
                                        struct CallExprIr* ir) {
-    assert(ir_call_expr_tag(ir) == AddrTag_Var);
+    struct VarExprIr* func_name = ir_expr_as_var(ir_call_expr_function(ir));
+    assert(func_name);
 
     for (struct ListHeader *it = list_begin(ir_call_expr_args(ir)),
                            *eit = list_end(ir_call_expr_args(ir));
@@ -216,10 +189,6 @@ struct RegallocVisitor2* new_regalloc_visitor(struct Context* context) {
 
     register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr2);
     register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr2);
-    register_visitor(visitor->as_visitor, visit_addrof_expr,
-                     visit_addrof_expr2);
-    register_visitor(visitor->as_visitor, visit_load_expr, visit_load_expr2);
-    register_visitor(visitor->as_visitor, visit_store_expr, visit_store_expr2);
     register_visitor(visitor->as_visitor, visit_call_expr, visit_call_expr2);
     register_visitor(visitor->as_visitor, visit_var_expr, visit_var_expr2);
     register_visitor(visitor->as_visitor, visit_unop_expr, visit_unop_expr2);
@@ -328,19 +297,21 @@ static struct FunctionIr* visit_function2_post_process(
     for (struct ListHeader *it = list_begin(ir_function_params(ir)),
                            *eit = list_end(ir_function_params(ir));
          it != eit; it = list_next(it)) {
-        struct VarIr* dst_var = ((struct ListItem*)it)->item;
-        struct AddrofExprIr* addrof_var = ir_new_addrof_expr_with_var(dst_var);
+        struct VarExprIr* dst_var = ((struct ListItem*)it)->item;
+        struct UnopExprIr* addrof_var =
+            ir_new_unop_expr(UnopExprIrTag_Addrof, ir_var_expr_cast(dst_var));
         strtable_id tmp_reg_id = context_func_call_result_reg(visitor->context);
-        ir_expr_set_reg_id(ir_addrof_expr_cast(addrof_var), tmp_reg_id);
+        ir_expr_set_reg_id(ir_unop_expr_cast(addrof_var), tmp_reg_id);
 
         strtable_id param_reg_id =
             context_nth_func_call_arg_reg(visitor->context, i);
         struct ConstExprIr* src_reg = ir_new_register_const_expr(param_reg_id);
         ir_expr_set_reg_id(ir_const_expr_cast(src_reg), param_reg_id);
 
-        struct StoreExprIr* subst = ir_new_store_expr(
-            ir_addrof_expr_cast(addrof_var), ir_const_expr_cast(src_reg));
-        ir_block_insert_expr_at(insert_point, ir_store_expr_cast(subst));
+        struct SubstExprIr* subst = ir_new_subst_expr(
+            ir_unop_expr_cast(addrof_var), ir_const_expr_cast(src_reg));
+        ir_expr_set_reg_id(ir_subst_expr_cast(subst), param_reg_id);
+        ir_block_insert_expr_at(insert_point, ir_subst_expr_cast(subst));
 
         ++i;
     }

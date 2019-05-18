@@ -10,17 +10,18 @@
 
 struct Context {
     struct Strtable strtable;
-    struct Map var_for_func_map;  // key: strtable_id, value: VarIr*
-    struct Vector register_ids;   // strtable_id vector
+    struct Map function_declaration_map;  // key: strtable_id, value: Location*
+    struct Vector register_ids;           // strtable_id vector
     size_t func_call_arg_reg_offset;
     size_t special_purpose_reg_offset;
 };
 
 void context_initialize(struct Context* context);
-void context_register_var_for_func(struct Context* context, strtable_id index,
-                                   struct VarIr* var_for_func);
-struct VarIr* context_find_var_for_func(struct Context* context,
-                                        strtable_id index);
+void context_insert_function_declaration(struct Context* context,
+                                         strtable_id index,
+                                         struct Location* func_loc);
+struct Location* context_find_function_declaration(struct Context* context,
+                                                   strtable_id index);
 void context_register_registers(struct Context* context);
 strtable_id context_nth_reg(struct Context* context, size_t n);
 strtable_id context_nth_func_call_arg_reg(struct Context* context, size_t n);
