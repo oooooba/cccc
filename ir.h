@@ -228,11 +228,14 @@ struct UnopExprIr* ir_new_unop_expr(enum UnopExprIrTag op,
 struct ExprIr* ir_unop_expr_cast(struct UnopExprIr* ir);
 enum UnopExprIrTag ir_unop_expr_op(struct UnopExprIr* ir);
 struct ExprIr* ir_unop_expr_operand(struct UnopExprIr* ir);
+void ir_unop_expr_set_operand(struct UnopExprIr* ir, struct ExprIr* operand);
 
 struct SubstExprIr* ir_new_subst_expr(struct ExprIr* addr,
                                       struct ExprIr* value);
 struct ExprIr* ir_subst_expr_cast(struct SubstExprIr* ir);
 struct ExprIr* ir_subst_expr_addr(struct SubstExprIr* ir);
+void ir_subst_expr_set_addr(struct SubstExprIr* ir, struct ExprIr* addr);
 struct ExprIr* ir_subst_expr_value(struct SubstExprIr* ir);
+void ir_subst_expr_set_value(struct SubstExprIr* ir, struct ExprIr* value);
 
 #endif

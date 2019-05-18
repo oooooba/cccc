@@ -120,6 +120,52 @@ static struct ExprIr* visit_call_expr(struct SimplifyVisitor* visitor,
     return NULL;
 }
 
+static struct ExprIr* visit_var_expr(struct SimplifyVisitor* visitor,
+                                     struct VarExprIr* ir) {
+    (void)visitor;
+    (void)ir;
+    return NULL;
+}
+
+static struct ExprIr* visit_unop_expr(struct SimplifyVisitor* visitor,
+                                      struct UnopExprIr* ir) {
+    if (ir_unop_expr_op(ir) == UnopExprIrTag_Addrof) {
+        struct UnopExprIr* operand = ir_expr_as_unop(ir_unop_expr_operand(ir));
+        if (operand && ir_unop_expr_op(operand) == UnopExprIrTag_Deref) {
+            struct ExprIr* expr = ir_unop_expr_operand(operand);
+            struct ExprIr* new_expr =
+                visitor2_visit_expr(as_visitor(visitor), expr);
+            return new_expr ? new_expr : expr;
+        }
+    }
+
+    struct ExprIr* operand = ir_unop_expr_operand(ir);
+    struct ExprIr* new_operand =
+        visitor2_visit_expr(as_visitor(visitor), operand);
+    if (new_operand) {
+        ir_unop_expr_set_operand(ir, new_operand);
+    }
+
+    return NULL;
+}
+
+static struct ExprIr* visit_subst_expr(struct SimplifyVisitor* visitor,
+                                       struct SubstExprIr* ir) {
+    struct ExprIr* addr = ir_subst_expr_addr(ir);
+    struct ExprIr* new_addr = visitor2_visit_expr(as_visitor(visitor), addr);
+    if (new_addr) {
+        ir_subst_expr_set_addr(ir, new_addr);
+    }
+
+    struct ExprIr* value = ir_subst_expr_value(ir);
+    struct ExprIr* new_value = visitor2_visit_expr(as_visitor(visitor), value);
+    if (new_value) {
+        ir_subst_expr_set_value(ir, new_value);
+    }
+
+    return NULL;
+}
+
 static struct BlockIr* visit_block(struct SimplifyVisitor* visitor,
                                    struct BlockIr* ir) {
     struct BlockIterator* it = ir_block_new_iterator(ir);
@@ -175,6 +221,9 @@ struct SimplifyVisitor* new_simplify_visitor(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_load_expr, visit_load_expr);
     register_visitor(visitor->as_visitor, visit_store_expr, visit_store_expr);
     register_visitor(visitor->as_visitor, visit_call_expr, visit_call_expr);
+    register_visitor(visitor->as_visitor, visit_var_expr, visit_var_expr);
+    register_visitor(visitor->as_visitor, visit_unop_expr, visit_unop_expr);
+    register_visitor(visitor->as_visitor, visit_subst_expr, visit_subst_expr);
     register_visitor(visitor->as_visitor, visit_block, visit_block);
     register_visitor(visitor->as_visitor, visit_function, visit_function);
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf);

@@ -750,6 +750,10 @@ struct ExprIr* ir_unop_expr_operand(struct UnopExprIr* ir) {
     return ir->operand;
 }
 
+void ir_unop_expr_set_operand(struct UnopExprIr* ir, struct ExprIr* operand) {
+    ir->operand = operand;
+}
+
 struct SubstExprIr {
     struct ExprIr as_expr;
     struct ExprIr* addr;
@@ -773,6 +777,14 @@ struct ExprIr* ir_subst_expr_addr(struct SubstExprIr* ir) {
     return ir->addr;
 }
 
+void ir_subst_expr_set_addr(struct SubstExprIr* ir, struct ExprIr* addr) {
+    ir->addr = addr;
+}
+
 struct ExprIr* ir_subst_expr_value(struct SubstExprIr* ir) {
     return ir->value;
+}
+
+void ir_subst_expr_set_value(struct SubstExprIr* ir, struct ExprIr* value) {
+    ir->value = value;
 }

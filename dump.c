@@ -124,10 +124,12 @@ static struct ExprIr* visit_unop_expr2(struct DumpVisitor* visitor,
 
     if (op == UnopExprIrTag_Addrof) {
         struct VarExprIr* var = ir_expr_as_var(operand);
-        strtable_id index = ir_var_expr_index(var);
-        const char* name = strtable_at(&visitor->context->strtable, index);
-        fprintf(visitor->stream, "v%p = &%s\n", ir, name);
-        return NULL;
+        if (var) {
+            strtable_id index = ir_var_expr_index(var);
+            const char* name = strtable_at(&visitor->context->strtable, index);
+            fprintf(visitor->stream, "v%p = &%s\n", ir, name);
+            return NULL;
+        }
     }
 
     visitor2_visit_expr(as_visitor(visitor), operand);
@@ -138,7 +140,8 @@ static struct ExprIr* visit_unop_expr2(struct DumpVisitor* visitor,
             ope = "*";
             break;
         case UnopExprIrTag_Addrof:
-            assert(false);
+            ope = "&";
+            break;
         default:
             assert(false);
     }
