@@ -7,25 +7,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct CodegenVisitor2 {
-    struct Visitor2 as_visitor;
+struct CodegenVisitor {
+    struct Visitor as_visitor;
     struct Context* context;
     FILE* stream;
     struct FunctionIr* function;
 };
 
-static struct Visitor2* as_visitor(struct CodegenVisitor2* visitor) {
+static struct Visitor* as_visitor(struct CodegenVisitor* visitor) {
     return &visitor->as_visitor;
 }
 
-static const char* register_name(struct CodegenVisitor2* visitor,
+static const char* register_name(struct CodegenVisitor* visitor,
                                  strtable_id index) {
     const char* reg = strtable_at(&visitor->context->strtable, index);
     assert(reg[0] == '%');
     return reg + 1;
 }
 
-static struct ExprIr* visit_const_expr2(struct CodegenVisitor2* visitor,
+static struct ExprIr* visit_const_expr2(struct CodegenVisitor* visitor,
                                         struct ConstExprIr* ir) {
     strtable_id dst_reg_id = ir_expr_reg_id(ir_const_expr_cast(ir));
     const char* dst_reg = register_name(visitor, dst_reg_id);
@@ -48,7 +48,7 @@ static struct ExprIr* visit_const_expr2(struct CodegenVisitor2* visitor,
     return NULL;
 }
 
-static struct ExprIr* visit_binop_expr2(struct CodegenVisitor2* visitor,
+static struct ExprIr* visit_binop_expr2(struct CodegenVisitor* visitor,
                                         struct BinopExprIr* ir) {
     struct ExprIr* lhs = ir_binop_expr_lhs(ir);
     struct ExprIr* rhs = ir_binop_expr_rhs(ir);
@@ -82,7 +82,7 @@ static struct ExprIr* visit_binop_expr2(struct CodegenVisitor2* visitor,
     return NULL;
 }
 
-static struct ExprIr* visit_call_expr2(struct CodegenVisitor2* visitor,
+static struct ExprIr* visit_call_expr2(struct CodegenVisitor* visitor,
                                        struct CallExprIr* ir) {
     struct VarExprIr* func_name = ir_expr_as_var(ir_call_expr_function(ir));
     assert(func_name);
@@ -122,7 +122,7 @@ static struct ExprIr* visit_call_expr2(struct CodegenVisitor2* visitor,
     return NULL;
 }
 
-static struct ExprIr* visit_var_expr2(struct CodegenVisitor2* visitor,
+static struct ExprIr* visit_var_expr2(struct CodegenVisitor* visitor,
                                       struct VarExprIr* ir) {
     size_t offset = ir_var_expr_offset(ir);
     strtable_id reg_id = ir_expr_reg_id(ir_var_expr_cast(ir));
@@ -131,7 +131,7 @@ static struct ExprIr* visit_var_expr2(struct CodegenVisitor2* visitor,
     return NULL;
 }
 
-static struct ExprIr* visit_unop_expr2(struct CodegenVisitor2* visitor,
+static struct ExprIr* visit_unop_expr2(struct CodegenVisitor* visitor,
                                        struct UnopExprIr* ir) {
     strtable_id result_reg_id = ir_expr_reg_id(ir_unop_expr_cast(ir));
     const char* result_reg = register_name(visitor, result_reg_id);
@@ -167,7 +167,7 @@ static struct ExprIr* visit_unop_expr2(struct CodegenVisitor2* visitor,
     return NULL;
 }
 
-static struct ExprIr* visit_subst_expr2(struct CodegenVisitor2* visitor,
+static struct ExprIr* visit_subst_expr2(struct CodegenVisitor* visitor,
                                         struct SubstExprIr* ir) {
     struct ExprIr* value = ir_subst_expr_value(ir);
     visitor2_visit_expr(as_visitor(visitor), value);
@@ -185,7 +185,7 @@ static struct ExprIr* visit_subst_expr2(struct CodegenVisitor2* visitor,
     return NULL;
 }
 
-static struct BlockIr* visit_block2(struct CodegenVisitor2* visitor,
+static struct BlockIr* visit_block2(struct CodegenVisitor* visitor,
                                     struct BlockIr* ir) {
     fprintf(visitor->stream, "lab_%p:\n", ir);
     struct BlockIterator* it = ir_block_new_iterator(ir);
@@ -198,7 +198,7 @@ static struct BlockIr* visit_block2(struct CodegenVisitor2* visitor,
     return NULL;
 }
 
-static struct FunctionIr* visit_function2(struct CodegenVisitor2* visitor,
+static struct FunctionIr* visit_function2(struct CodegenVisitor* visitor,
                                           struct FunctionIr* ir) {
     fprintf(visitor->stream, "\n");
     visitor->function = ir;
@@ -215,7 +215,7 @@ static struct FunctionIr* visit_function2(struct CodegenVisitor2* visitor,
     return NULL;
 }
 
-static struct CfIr* visit_branch_cf2(struct CodegenVisitor2* visitor,
+static struct CfIr* visit_branch_cf2(struct CodegenVisitor* visitor,
                                      struct BranchCfIr* ir) {
     struct ExprIr* cond_expr = ir_branch_cf_cond_expr(ir);
     visitor2_visit_expr(as_visitor(visitor), cond_expr);
@@ -236,7 +236,7 @@ static struct CfIr* visit_branch_cf2(struct CodegenVisitor2* visitor,
     return NULL;
 }
 
-static struct CfIr* visit_return_cf2(struct CodegenVisitor2* visitor,
+static struct CfIr* visit_return_cf2(struct CodegenVisitor* visitor,
                                      struct ReturnCfIr* ir) {
     struct ExprIr* expr = ir_return_cf_expr(ir);
     if (expr) {
@@ -246,7 +246,7 @@ static struct CfIr* visit_return_cf2(struct CodegenVisitor2* visitor,
     return NULL;
 }
 
-static struct CfIr* visit_label_cf2(struct CodegenVisitor2* visitor,
+static struct CfIr* visit_label_cf2(struct CodegenVisitor* visitor,
                                     struct LabelCfIr* ir) {
     strtable_id index = ir_label_cf_index(ir);
     if (index == STRTABLE_INVALID_ID)
@@ -256,7 +256,7 @@ static struct CfIr* visit_label_cf2(struct CodegenVisitor2* visitor,
     return NULL;
 }
 
-static struct CfIr* visit_push_cf2(struct CodegenVisitor2* visitor,
+static struct CfIr* visit_push_cf2(struct CodegenVisitor* visitor,
                                    struct PushCfIr* ir) {
     strtable_id reg_id = ir_push_cf_reg_id(ir);
     const char* reg = register_name(visitor, reg_id);
@@ -264,7 +264,7 @@ static struct CfIr* visit_push_cf2(struct CodegenVisitor2* visitor,
     return NULL;
 }
 
-static struct CfIr* visit_pop_cf2(struct CodegenVisitor2* visitor,
+static struct CfIr* visit_pop_cf2(struct CodegenVisitor* visitor,
                                   struct PopCfIr* ir) {
     strtable_id reg_id = ir_pop_cf_reg_id(ir);
     const char* reg = register_name(visitor, reg_id);
@@ -272,9 +272,9 @@ static struct CfIr* visit_pop_cf2(struct CodegenVisitor2* visitor,
     return NULL;
 }
 
-struct CodegenVisitor2* new_codegen_visitor(struct Context* context,
+struct CodegenVisitor* new_codegen_visitor(struct Context* context,
                                             FILE* stream) {
-    struct CodegenVisitor2* visitor = malloc(sizeof(struct CodegenVisitor2));
+    struct CodegenVisitor* visitor = malloc(sizeof(struct CodegenVisitor));
     visitor2_initialize(as_visitor(visitor));
 
     register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr2);
@@ -300,6 +300,6 @@ struct CodegenVisitor2* new_codegen_visitor(struct Context* context,
     return visitor;
 }
 
-void codegen_apply(struct CodegenVisitor2* visitor, struct BlockIr* ir) {
+void codegen_apply(struct CodegenVisitor* visitor, struct BlockIr* ir) {
     visitor2_visit_block(as_visitor(visitor), ir);
 }

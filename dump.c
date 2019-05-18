@@ -8,12 +8,12 @@
 #include <stdlib.h>
 
 struct DumpVisitor {
-    struct Visitor2 as_visitor;
+    struct Visitor as_visitor;
     struct Context* context;
     FILE* stream;
 };
 
-static struct Visitor2* as_visitor(struct DumpVisitor* visitor) {
+static struct Visitor* as_visitor(struct DumpVisitor* visitor) {
     return &visitor->as_visitor;
 }
 

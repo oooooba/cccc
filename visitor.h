@@ -3,47 +3,47 @@
 
 #include "ir.h"
 
-struct Visitor2 {
-    struct ExprIr* (*visit_const_expr)(struct Visitor2* visitor,
+struct Visitor {
+    struct ExprIr* (*visit_const_expr)(struct Visitor* visitor,
                                        struct ConstExprIr* ir);
-    struct ExprIr* (*visit_binop_expr)(struct Visitor2* visitor,
+    struct ExprIr* (*visit_binop_expr)(struct Visitor* visitor,
                                        struct BinopExprIr* ir);
-    struct ExprIr* (*visit_call_expr)(struct Visitor2* visitor,
+    struct ExprIr* (*visit_call_expr)(struct Visitor* visitor,
                                       struct CallExprIr* ir);
-    struct ExprIr* (*visit_var_expr)(struct Visitor2* visitor,
+    struct ExprIr* (*visit_var_expr)(struct Visitor* visitor,
                                      struct VarExprIr* ir);
-    struct ExprIr* (*visit_unop_expr)(struct Visitor2* visitor,
+    struct ExprIr* (*visit_unop_expr)(struct Visitor* visitor,
                                       struct UnopExprIr* ir);
-    struct ExprIr* (*visit_subst_expr)(struct Visitor2* visitor,
+    struct ExprIr* (*visit_subst_expr)(struct Visitor* visitor,
                                        struct SubstExprIr* ir);
-    struct BlockIr* (*visit_block)(struct Visitor2* visitor,
+    struct BlockIr* (*visit_block)(struct Visitor* visitor,
                                    struct BlockIr* ir);
-    struct FunctionIr* (*visit_function)(struct Visitor2* visitor,
+    struct FunctionIr* (*visit_function)(struct Visitor* visitor,
                                          struct FunctionIr* ir);
-    struct CfIr* (*visit_branch_cf)(struct Visitor2* visitor,
+    struct CfIr* (*visit_branch_cf)(struct Visitor* visitor,
                                     struct BranchCfIr* ir);
-    struct CfIr* (*visit_return_cf)(struct Visitor2* visitor,
+    struct CfIr* (*visit_return_cf)(struct Visitor* visitor,
                                     struct ReturnCfIr* ir);
-    struct CfIr* (*visit_label_cf)(struct Visitor2* visitor,
+    struct CfIr* (*visit_label_cf)(struct Visitor* visitor,
                                    struct LabelCfIr* ir);
-    struct CfIr* (*visit_push_cf)(struct Visitor2* visitor,
+    struct CfIr* (*visit_push_cf)(struct Visitor* visitor,
                                   struct PushCfIr* ir);
-    struct CfIr* (*visit_pop_cf)(struct Visitor2* visitor, struct PopCfIr* ir);
+    struct CfIr* (*visit_pop_cf)(struct Visitor* visitor, struct PopCfIr* ir);
 };
 
-struct Ir* visitor2_visit_ir(struct Visitor2* visitor, struct Ir* ir);
+struct Ir* visitor2_visit_ir(struct Visitor* visitor, struct Ir* ir);
 
-struct ExprIr* visitor2_visit_expr(struct Visitor2* visitor, struct ExprIr* ir);
+struct ExprIr* visitor2_visit_expr(struct Visitor* visitor, struct ExprIr* ir);
 
-struct BlockIr* visitor2_visit_block(struct Visitor2* visitor,
+struct BlockIr* visitor2_visit_block(struct Visitor* visitor,
                                      struct BlockIr* ir);
 
-struct FunctionIr* visitor2_visit_function(struct Visitor2* visitor,
+struct FunctionIr* visitor2_visit_function(struct Visitor* visitor,
                                            struct FunctionIr* ir);
 
-struct CfIr* visitor2_visit_cf(struct Visitor2* visitor, struct CfIr* ir);
+struct CfIr* visitor2_visit_cf(struct Visitor* visitor, struct CfIr* ir);
 
-void visitor2_initialize(struct Visitor2* visitor);
+void visitor2_initialize(struct Visitor* visitor);
 
 #define register_visitor(obj, member, proc) \
     do {                                    \

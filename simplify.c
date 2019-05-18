@@ -7,11 +7,11 @@
 #include <stdlib.h>
 
 struct SimplifyVisitor {
-    struct Visitor2 as_visitor;
+    struct Visitor as_visitor;
     struct Context* context;
 };
 
-static struct Visitor2* as_visitor(struct SimplifyVisitor* visitor) {
+static struct Visitor* as_visitor(struct SimplifyVisitor* visitor) {
     return &visitor->as_visitor;
 }
 
