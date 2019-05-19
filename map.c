@@ -31,3 +31,14 @@ void* map_find(struct Map* map, void* key) {
     return NULL;
 }
 
+struct ListHeader* map_begin(struct Map* map) {
+    return list_begin(&map->entries);
+}
+
+struct ListHeader* map_end(struct Map* map) {
+    return list_end(&map->entries);
+}
+
+void* map_entry_key(struct MapEntry* map_entry) { return map_entry->key; }
+
+void* map_entry_value(struct MapEntry* map_entry) { return map_entry->value; }

@@ -30,6 +30,9 @@ static const struct ReservedKeywordsEntry reserved_keywords[] = {
     {
         .keyword = "return", .token_tag = Token_KeywordReturn,
     },
+    {
+        .keyword = "struct", .token_tag = Token_KeywordStruct,
+    },
 };
 
 static enum TokenTag find_token_tag(const char* str) {

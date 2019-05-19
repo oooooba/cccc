@@ -1,5 +1,6 @@
 #include "context.h"
 #include "ir.h"
+#include "list.h"
 #include "map.h"
 #include "strtable.h"
 #include "vector.h"
@@ -11,6 +12,7 @@
 void context_initialize(struct Context* context) {
     strtable_initialize(&context->strtable);
     map_initialize(&context->function_declaration_map);
+    map_initialize(&context->user_defined_type_map);
     vector_initialize(&context->register_ids, sizeof(strtable_id));
 }
 
@@ -23,6 +25,24 @@ void context_insert_function_declaration(struct Context* context,
 struct Location* context_find_function_declaration(struct Context* context,
                                                    strtable_id index) {
     return map_find(&context->function_declaration_map, (void*)index);
+}
+
+void context_insert_user_defined_type(struct Context* context,
+                                      strtable_id index, struct TypeIr* type) {
+    map_insert(&context->user_defined_type_map, (void*)index, type);
+}
+
+struct ListHeader* context_user_defined_type_begin(struct Context* context) {
+    return map_begin(&context->user_defined_type_map);
+}
+
+struct ListHeader* context_user_defined_type_end(struct Context* context) {
+    return map_end(&context->user_defined_type_map);
+}
+
+struct TypeIr* context_find_user_defined_type(struct Context* context,
+                                              strtable_id index) {
+    return map_find(&context->user_defined_type_map, (void*)index);
 }
 
 void context_register_registers(struct Context* context) {

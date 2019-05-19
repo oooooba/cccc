@@ -239,14 +239,65 @@ struct Declaration {
     struct ExprIr* initializer;
 };
 
+static strtable_id parse_declarator(struct Parser* parser,
+                                    struct TypeIr* base_type,
+                                    struct TypeIr** result_type);
+static struct TypeIr* parse_type_specifier(struct Parser* parser);
+
 static struct ExprIr* parse_initializer(struct Parser* parser) {
     return parse_expression(parser);
 }
 
+static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser) {
+    expect(parser, Token_KeywordStruct);
+
+    // ToDo: currently, anonymous struct is not supported
+    assert(acceptable(parser, Token_Id));
+    strtable_id name_index = parse_identifier(parser);
+
+    struct TypeIr* type = type_new_struct(name_index, NULL);
+    context_insert_user_defined_type(parser->context, name_index, type);
+
+    if (acceptable(parser, Token_LeftCurry)) {
+        advance(parser);
+
+        struct List* elem_types = malloc(sizeof(struct List));
+        list_initialize(elem_types);
+
+        while (!acceptable(parser, Token_RightCurry)) {
+            struct TypeIr* base_type = parse_type_specifier(parser);
+            struct TypeIr* type;
+            strtable_id member_index =
+                parse_declarator(parser, base_type, &type);
+
+            struct MemberEntry* entry =
+                type_new_member_entry(member_index, type);
+            list_insert_at_end(elem_types,
+                               type_member_entry_as_list_header(entry));
+
+            expect(parser, Token_Semicolon);
+        }
+        expect(parser, Token_RightCurry);
+
+        type_struct_set_elem_types(type_as_struct(type), elem_types);
+    }
+
+    return type;
+}
+
 static struct TypeIr* parse_type_specifier(struct Parser* parser) {
-    assert(acceptable(parser, Token_KeywordInt));
+    struct TypeIr* type;
+    switch (peek(parser)->tag) {
+        case Token_KeywordInt:
+            type = type_new_int2();
+            break;
+        case Token_KeywordStruct:
+            return parse_struct_or_union_specifier(parser);
+        default:
+            assert(false);
+    }
     advance(parser);
-    return type_new_int2();
+    return type;
 }
 
 static strtable_id parse_declarator(struct Parser* parser,
@@ -450,8 +501,15 @@ static struct BlockIr* parse_translation_unit(struct Parser* parser) {
     expect(parser, Token_PseudoFileBegin);
     struct BlockIr* translation_unit = ir_new_block();
     while (!acceptable(parser, Token_PseudoFileEnd)) {
-        struct Ir* item = ir_function_cast(parse_function_definition(parser));
-        ir_block_insert_at_end(translation_unit, item);
+        if (acceptable(parser, Token_KeywordStruct)) {
+            struct TypeIr* type = parse_type_specifier(parser);
+            expect(parser, Token_Semicolon);
+            (void)type;
+        } else {
+            struct Ir* item =
+                ir_function_cast(parse_function_definition(parser));
+            ir_block_insert_at_end(translation_unit, item);
+        }
     }
     expect(parser, Token_PseudoFileEnd);
     return translation_unit;

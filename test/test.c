@@ -52,3 +52,9 @@ int test12(int x, int y) { return x - y; }
 int test13() { return test12(2 + 3, 4); }
 
 int test14() { return 1 + test12(6, 4) + 5; }
+
+struct S {
+    int x;
+    int y;
+};
+struct T;
