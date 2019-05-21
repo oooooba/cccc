@@ -16,8 +16,9 @@ struct Visitor {
                                       struct UnopExprIr* ir);
     struct ExprIr* (*visit_subst_expr)(struct Visitor* visitor,
                                        struct SubstExprIr* ir);
-    struct BlockIr* (*visit_block)(struct Visitor* visitor,
-                                   struct BlockIr* ir);
+    struct ExprIr* (*visit_member_expr)(struct Visitor* visitor,
+                                        struct MemberExprIr* ir);
+    struct BlockIr* (*visit_block)(struct Visitor* visitor, struct BlockIr* ir);
     struct FunctionIr* (*visit_function)(struct Visitor* visitor,
                                          struct FunctionIr* ir);
     struct CfIr* (*visit_branch_cf)(struct Visitor* visitor,
@@ -26,8 +27,7 @@ struct Visitor {
                                     struct ReturnCfIr* ir);
     struct CfIr* (*visit_label_cf)(struct Visitor* visitor,
                                    struct LabelCfIr* ir);
-    struct CfIr* (*visit_push_cf)(struct Visitor* visitor,
-                                  struct PushCfIr* ir);
+    struct CfIr* (*visit_push_cf)(struct Visitor* visitor, struct PushCfIr* ir);
     struct CfIr* (*visit_pop_cf)(struct Visitor* visitor, struct PopCfIr* ir);
 };
 
@@ -36,10 +36,10 @@ struct Ir* visitor_visit_ir(struct Visitor* visitor, struct Ir* ir);
 struct ExprIr* visitor_visit_expr(struct Visitor* visitor, struct ExprIr* ir);
 
 struct BlockIr* visitor_visit_block(struct Visitor* visitor,
-                                     struct BlockIr* ir);
+                                    struct BlockIr* ir);
 
 struct FunctionIr* visitor_visit_function(struct Visitor* visitor,
-                                           struct FunctionIr* ir);
+                                          struct FunctionIr* ir);
 
 struct CfIr* visitor_visit_cf(struct Visitor* visitor, struct CfIr* ir);
 

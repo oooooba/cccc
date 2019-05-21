@@ -75,7 +75,8 @@ static bool acceptable(struct Parser* parser, enum TokenTag expected) {
 }
 
 static bool acceptable_type(struct Parser* parser) {
-    return acceptable(parser, Token_KeywordInt);
+    return acceptable(parser, Token_KeywordInt) ||
+           acceptable(parser, Token_KeywordStruct);
 }
 
 static void expect(struct Parser* parser, enum TokenTag expected) {
@@ -158,6 +159,10 @@ static struct ExprIr* parse_postfix_expression(struct Parser* parser) {
         }
         advance(parser);
         expr = ir_call_expr_cast(ir_new_call_expr(expr, args));
+    } else if (acceptable(parser, Token_Dot)) {
+        advance(parser);
+        strtable_id name_index = parse_identifier(parser);
+        expr = ir_member_expr_cast(ir_new_member_expr(expr, name_index));
     }
     return expr;
 }

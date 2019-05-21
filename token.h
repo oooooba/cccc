@@ -22,6 +22,7 @@ enum TokenTag {
 
     Token_Comma,
     Token_Semicolon,
+    Token_Dot,
 
     Token_Ampersand,
 

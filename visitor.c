@@ -9,8 +9,7 @@ struct Ir* visitor_visit_ir(struct Visitor* visitor, struct Ir* ir) {
         case IrTag_Expr:
             return ir_expr_cast(visitor_visit_expr(visitor, ir_as_expr(ir)));
         case IrTag_Block:
-            return ir_block_cast(
-                visitor_visit_block(visitor, ir_as_block(ir)));
+            return ir_block_cast(visitor_visit_block(visitor, ir_as_block(ir)));
         case IrTag_Function:
             return ir_function_cast(
                 visitor_visit_function(visitor, ir_as_function(ir)));
@@ -22,8 +21,7 @@ struct Ir* visitor_visit_ir(struct Visitor* visitor, struct Ir* ir) {
     return NULL;
 }
 
-struct ExprIr* visitor_visit_expr(struct Visitor* visitor,
-                                   struct ExprIr* ir) {
+struct ExprIr* visitor_visit_expr(struct Visitor* visitor, struct ExprIr* ir) {
     switch (ir_expr_tag(ir)) {
         case ExprIrTag_Const:
             return visitor->visit_const_expr(visitor, ir_expr_as_const(ir));
@@ -37,6 +35,8 @@ struct ExprIr* visitor_visit_expr(struct Visitor* visitor,
             return visitor->visit_unop_expr(visitor, ir_expr_as_unop(ir));
         case ExprIrTag_Subst:
             return visitor->visit_subst_expr(visitor, ir_expr_as_subst(ir));
+        case ExprIrTag_Member:
+            return visitor->visit_member_expr(visitor, ir_expr_as_member(ir));
         default:
             assert(false);
     }
@@ -44,12 +44,12 @@ struct ExprIr* visitor_visit_expr(struct Visitor* visitor,
 }
 
 struct BlockIr* visitor_visit_block(struct Visitor* visitor,
-                                     struct BlockIr* ir) {
+                                    struct BlockIr* ir) {
     return visitor->visit_block(visitor, ir);
 }
 
 struct FunctionIr* visitor_visit_function(struct Visitor* visitor,
-                                           struct FunctionIr* ir) {
+                                          struct FunctionIr* ir) {
     return visitor->visit_function(visitor, ir);
 }
 

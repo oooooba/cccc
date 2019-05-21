@@ -129,6 +129,26 @@ static struct ExprIr* visit_subst_expr2(struct DumpVisitor* visitor,
     return NULL;
 }
 
+static struct ExprIr* visit_member_expr2(struct DumpVisitor* visitor,
+                                         struct MemberExprIr* ir) {
+    strtable_id member_index = ir_member_expr_name_index(ir);
+    const char* member_name =
+        strtable_at(&visitor->context->strtable, member_index);
+    struct ExprIr* base = ir_member_expr_base(ir);
+    struct VarExprIr* var = ir_expr_as_var(base);
+    if (var) {
+        strtable_id var_index = ir_var_expr_index(var);
+        const char* var_name =
+            strtable_at(&visitor->context->strtable, var_index);
+        fprintf(visitor->stream, "v%p = %s . %s\n", ir, member_name, var_name);
+    } else {
+        visitor_visit_expr(as_visitor(visitor), base);
+        fprintf(visitor->stream, "v%p = v%p + offsetof(%s)\n", ir, base,
+                member_name);
+    }
+    return NULL;
+}
+
 static struct BlockIr* visit_block2(struct DumpVisitor* visitor,
                                     struct BlockIr* ir) {
     fprintf(visitor->stream, "[@%p]{\n", ir);
@@ -204,6 +224,8 @@ struct DumpVisitor* new_dump_visitor(struct Context* context, FILE* stream) {
     register_visitor(visitor->as_visitor, visit_var_expr, visit_var_expr2);
     register_visitor(visitor->as_visitor, visit_unop_expr, visit_unop_expr2);
     register_visitor(visitor->as_visitor, visit_subst_expr, visit_subst_expr2);
+    register_visitor(visitor->as_visitor, visit_member_expr,
+                     visit_member_expr2);
     register_visitor(visitor->as_visitor, visit_block, visit_block2);
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf2);

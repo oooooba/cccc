@@ -58,3 +58,9 @@ struct S {
     int y;
 };
 struct T;
+
+int test15() {
+    struct S s;
+    s.x = 1;
+    return s.x;
+}

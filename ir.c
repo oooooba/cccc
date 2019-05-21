@@ -413,6 +413,10 @@ struct SubstExprIr* ir_expr_as_subst(struct ExprIr* ir) {
     return ir->tag == ExprIrTag_Subst ? (struct SubstExprIr*)ir : NULL;
 }
 
+struct MemberExprIr* ir_expr_as_member(struct ExprIr* ir) {
+    return ir->tag == ExprIrTag_Member ? (struct MemberExprIr*)ir : NULL;
+}
+
 enum ExprIrTag ir_expr_tag(struct ExprIr* ir) { return ir->tag; }
 
 strtable_id ir_expr_reg_id(struct ExprIr* ir) { return ir->reg_id; }
@@ -630,4 +634,33 @@ struct ExprIr* ir_subst_expr_value(struct SubstExprIr* ir) {
 
 void ir_subst_expr_set_value(struct SubstExprIr* ir, struct ExprIr* value) {
     ir->value = value;
+}
+
+struct MemberExprIr {
+    struct ExprIr as_expr;
+    struct ExprIr* base;
+    strtable_id name_index;
+    size_t offset;
+};
+
+struct MemberExprIr* ir_new_member_expr(struct ExprIr* base,
+                                        strtable_id name_index) {
+    struct MemberExprIr* ir = malloc(sizeof(struct MemberExprIr));
+    initialize_expr(ir_member_expr_cast(ir), ExprIrTag_Member);
+    ir->base = base;
+    ir->name_index = name_index;
+    ir->offset = (size_t)-1;
+    return ir;
+}
+
+struct ExprIr* ir_member_expr_cast(struct MemberExprIr* ir) {
+    return &ir->as_expr;
+}
+
+struct ExprIr* ir_member_expr_base(struct MemberExprIr* ir) {
+    return ir->base;
+}
+
+strtable_id ir_member_expr_name_index(struct MemberExprIr* ir) {
+    return ir->name_index;
 }

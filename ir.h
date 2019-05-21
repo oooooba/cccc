@@ -33,6 +33,7 @@ struct CallExprIr;
 struct VarExprIr;
 struct UnopExprIr;
 struct SubstExprIr;
+struct MemberExprIr;
 
 enum IrTag {
     IrTag_Block,
@@ -57,6 +58,7 @@ enum ExprIrTag {
     ExprIrTag_Var,
     ExprIrTag_Unop,
     ExprIrTag_Subst,
+    ExprIrTag_Member,
 };
 
 enum ConstExprIrTag {
@@ -154,6 +156,7 @@ struct VarExprIr* ir_expr_as_var(struct ExprIr* ir);
 struct CallExprIr* ir_expr_as_call(struct ExprIr* ir);
 struct UnopExprIr* ir_expr_as_unop(struct ExprIr* ir);
 struct SubstExprIr* ir_expr_as_subst(struct ExprIr* ir);
+struct MemberExprIr* ir_expr_as_member(struct ExprIr* ir);
 enum ExprIrTag ir_expr_tag(struct ExprIr* ir);
 strtable_id ir_expr_reg_id(struct ExprIr* ir);
 void ir_expr_set_reg_id(struct ExprIr* ir, strtable_id id);
@@ -201,5 +204,11 @@ struct ExprIr* ir_subst_expr_addr(struct SubstExprIr* ir);
 void ir_subst_expr_set_addr(struct SubstExprIr* ir, struct ExprIr* addr);
 struct ExprIr* ir_subst_expr_value(struct SubstExprIr* ir);
 void ir_subst_expr_set_value(struct SubstExprIr* ir, struct ExprIr* value);
+
+struct MemberExprIr* ir_new_member_expr(struct ExprIr* base,
+                                        strtable_id name_index);
+struct ExprIr* ir_member_expr_cast(struct MemberExprIr* ir);
+struct ExprIr* ir_member_expr_base(struct MemberExprIr* ir);
+strtable_id ir_member_expr_name_index(struct MemberExprIr* ir);
 
 #endif
