@@ -8,6 +8,7 @@
 #include "vector.h"
 
 #include <stddef.h>
+#include <stdio.h>
 
 struct Context {
     struct Strtable strtable;
@@ -39,5 +40,8 @@ strtable_id context_nth_func_call_arg_reg(struct Context* context, size_t n);
 strtable_id context_func_call_result_reg(struct Context* context);
 strtable_id context_stack_pointer_reg(struct Context* context);
 strtable_id context_base_pointer_reg(struct Context* context);
+
+void context_dump_type(struct Context* context, FILE* stream,
+                       struct TypeIr* type);
 
 #endif

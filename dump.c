@@ -236,45 +236,6 @@ struct DumpVisitor* new_dump_visitor(struct Context* context, FILE* stream) {
     return visitor;
 }
 
-static void dump_type(struct DumpVisitor* visitor, struct TypeIr* type) {
-    switch (type_tag2(type)) {
-        case Type_Int:
-            fprintf(visitor->stream, "int");
-            break;
-        case Type_Pointer: {
-            struct PointerTypeIr* p = type_as_pointer(type);
-            dump_type(visitor, type_pointer_elem_type(p));
-            fprintf(visitor->stream, "*");
-        } break;
-        case Type_Struct: {
-            struct StructTypeIr* s = type_as_struct(type);
-            fprintf(visitor->stream, "struct");
-            strtable_id name_index = type_struct_name_index(s);
-            if (name_index != STRTABLE_INVALID_ID)
-                fprintf(visitor->stream, " %s",
-                        strtable_at(&visitor->context->strtable, name_index));
-            struct List* elem_types = type_struct_elem_types(s);
-            if (!elem_types) break;
-            fprintf(visitor->stream, " { ");
-
-            for (struct ListHeader *it = list_begin(type_struct_elem_types(s)),
-                                   *eit = list_end(type_struct_elem_types(s));
-                 it != eit; it = list_next(it)) {
-                struct MemberEntry* entry = (struct MemberEntry*)it;
-                dump_type(visitor, type_member_entry_type(entry));
-                const char* name =
-                    strtable_at(&visitor->context->strtable,
-                                type_member_entry_name_index(entry));
-                fprintf(visitor->stream, " %s; ", name);
-            }
-
-            fprintf(visitor->stream, "}");
-        } break;
-        default:
-            assert(false);
-    }
-}
-
 static void dump_user_defined_types(struct DumpVisitor* visitor) {
     for (struct ListHeader *
              it = context_user_defined_type_begin(visitor->context),
@@ -282,7 +243,7 @@ static void dump_user_defined_types(struct DumpVisitor* visitor) {
          it != eit; it = list_next(it)) {
         struct MapEntry* map_entry = (struct MapEntry*)it;
         struct TypeIr* type = map_entry_value(map_entry);
-        dump_type(visitor, type);
+        context_dump_type(visitor->context, visitor->stream, type);
         fprintf(visitor->stream, ";\n");
     }
 }

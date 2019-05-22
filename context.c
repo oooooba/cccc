@@ -3,10 +3,13 @@
 #include "list.h"
 #include "map.h"
 #include "strtable.h"
+#include "type.h"
 #include "vector.h"
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 void context_initialize(struct Context* context) {
@@ -95,4 +98,44 @@ strtable_id context_stack_pointer_reg(struct Context* context) {
 strtable_id context_base_pointer_reg(struct Context* context) {
     return *((strtable_id*)vector_at(&context->register_ids,
                                      context->special_purpose_reg_offset + 1));
+}
+
+void context_dump_type(struct Context* context, FILE* stream,
+                       struct TypeIr* type) {
+    switch (type_tag2(type)) {
+        case Type_Int:
+            fprintf(stream, "int");
+            break;
+        case Type_Pointer: {
+            struct PointerTypeIr* p = type_as_pointer(type);
+            context_dump_type(context, stream, type_pointer_elem_type(p));
+            fprintf(stream, "*");
+        } break;
+        case Type_Struct: {
+            struct StructTypeIr* s = type_as_struct(type);
+            fprintf(stream, "struct");
+            strtable_id name_index = type_struct_name_index(s);
+            if (name_index != STRTABLE_INVALID_ID)
+                fprintf(stream, " %s",
+                        strtable_at(&context->strtable, name_index));
+            struct List* elem_types = type_struct_elem_types(s);
+            if (!elem_types) break;
+            fprintf(stream, " { ");
+
+            for (struct ListHeader *it = list_begin(type_struct_elem_types(s)),
+                                   *eit = list_end(type_struct_elem_types(s));
+                 it != eit; it = list_next(it)) {
+                struct MemberEntry* entry = (struct MemberEntry*)it;
+                context_dump_type(context, stream,
+                                  type_member_entry_type(entry));
+                const char* name = strtable_at(
+                    &context->strtable, type_member_entry_name_index(entry));
+                fprintf(stream, " %s; ", name);
+            }
+
+            fprintf(stream, "}");
+        } break;
+        default:
+            assert(false);
+    }
 }
