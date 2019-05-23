@@ -158,6 +158,8 @@ struct UnopExprIr* ir_expr_as_unop(struct ExprIr* ir);
 struct SubstExprIr* ir_expr_as_subst(struct ExprIr* ir);
 struct MemberExprIr* ir_expr_as_member(struct ExprIr* ir);
 enum ExprIrTag ir_expr_tag(struct ExprIr* ir);
+struct TypeIr* ir_expr_type(struct ExprIr* ir);
+void ir_expr_set_type(struct ExprIr* ir, struct TypeIr* type);
 strtable_id ir_expr_reg_id(struct ExprIr* ir);
 void ir_expr_set_reg_id(struct ExprIr* ir, strtable_id id);
 
@@ -209,6 +211,8 @@ struct MemberExprIr* ir_new_member_expr(struct ExprIr* base,
                                         strtable_id name_index);
 struct ExprIr* ir_member_expr_cast(struct MemberExprIr* ir);
 struct ExprIr* ir_member_expr_base(struct MemberExprIr* ir);
+void ir_member_expr_set_base(struct MemberExprIr* ir, struct ExprIr* base);
 strtable_id ir_member_expr_name_index(struct MemberExprIr* ir);
+size_t ir_member_expr_offset(struct MemberExprIr* ir);
 
 #endif

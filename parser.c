@@ -284,7 +284,7 @@ static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser) {
         }
         expect(parser, Token_RightCurry);
 
-        type_struct_set_elem_types(type_as_struct(type), elem_types);
+        type_set_elem_types_as_struct(type, elem_types);
     }
 
     return type;

@@ -181,13 +181,9 @@ struct Location* ir_block_allocate_location(struct BlockIr* ir,
                                             strtable_id name_index,
                                             struct TypeIr* type) {
     assert(ir->region_base == (size_t)-1);
-    size_t var_size = sizeof(void*);  // ToDo: fix to refer size of type
+    size_t var_size = type_size(type);
+    ir->region_size = (ir->region_size + var_size - 1) / var_size * var_size;
     size_t region_offset = ir->region_size;
-    if (region_offset % var_size) {
-        ir->region_size =
-            (ir->region_size + var_size - 1) / var_size * var_size;
-        region_offset = ir->region_size;
-    }
     ir->region_size += var_size;
     return ir_new_location(ir, name_index, type, region_offset);
 }
@@ -201,9 +197,7 @@ void ir_block_commit_region_status(struct BlockIr* ir, size_t region_base) {
     assert(ir->region_base == (size_t)-1);
     size_t alignment = sizeof(void*);
     assert(region_base % alignment == 0);
-    if (ir->region_size % alignment)
-        ir->region_size =
-            (ir->region_size + alignment - 1) / alignment * alignment;
+    ir->region_size = (ir->region_size + alignment - 1) / alignment * alignment;
     ir->region_base = region_base;
 }
 
@@ -376,12 +370,14 @@ strtable_id ir_pop_cf_reg_id(struct PopCfIr* ir) { return ir->reg_id; }
 struct ExprIr {
     struct Ir as_ir;
     enum ExprIrTag tag;
+    struct TypeIr* type;
     strtable_id reg_id;
 };
 
 static void initialize_expr(struct ExprIr* ir, enum ExprIrTag tag) {
     initialize_ir(ir_expr_cast(ir), IrTag_Expr);
     ir->tag = tag;
+    ir->type = NULL;
     ir->reg_id = STRTABLE_INVALID_ID;
 }
 
@@ -418,6 +414,14 @@ struct MemberExprIr* ir_expr_as_member(struct ExprIr* ir) {
 }
 
 enum ExprIrTag ir_expr_tag(struct ExprIr* ir) { return ir->tag; }
+
+struct TypeIr* ir_expr_type(struct ExprIr* ir) {
+    return ir->type;
+}
+
+void ir_expr_set_type(struct ExprIr* ir, struct TypeIr* type) {
+    ir->type = type;
+}
 
 strtable_id ir_expr_reg_id(struct ExprIr* ir) { return ir->reg_id; }
 
@@ -661,6 +665,12 @@ struct ExprIr* ir_member_expr_base(struct MemberExprIr* ir) {
     return ir->base;
 }
 
+void ir_member_expr_set_base(struct MemberExprIr* ir, struct ExprIr* base) {
+    ir->base = base;
+}
+
 strtable_id ir_member_expr_name_index(struct MemberExprIr* ir) {
     return ir->name_index;
 }
+
+size_t ir_member_expr_offset(struct MemberExprIr* ir) { return ir->offset; }
