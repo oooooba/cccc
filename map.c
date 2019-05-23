@@ -15,6 +15,16 @@ struct MapEntry {
 void map_initialize(struct Map* map) { list_initialize(&map->entries); }
 
 void map_insert(struct Map* map, void* key, void* value) {
+    struct ListHeader* it = list_begin(&map->entries);
+    struct ListHeader* eit = list_end(&map->entries);
+    for (; it != eit; it = list_next(it)) {
+        struct MapEntry* entry = (struct MapEntry*)it;
+        if (entry->key == key) {
+            entry->value = value;
+            return;
+        }
+    }
+
     struct MapEntry* entry = malloc(sizeof(struct MapEntry));
     entry->key = key;
     entry->value = value;

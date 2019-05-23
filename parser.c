@@ -260,8 +260,12 @@ static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser) {
     assert(acceptable(parser, Token_Id));
     strtable_id name_index = parse_identifier(parser);
 
-    struct TypeIr* type = type_new_struct(name_index, NULL);
-    context_insert_user_defined_type(parser->context, name_index, type);
+    struct TypeIr* type =
+        context_find_user_defined_type(parser->context, name_index);
+    if (!type) {
+        type = type_new_struct(name_index, NULL);
+        context_insert_user_defined_type(parser->context, name_index, type);
+    }
 
     if (acceptable(parser, Token_LeftCurry)) {
         advance(parser);
