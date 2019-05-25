@@ -82,7 +82,7 @@ static struct ExprIr* visit_var_expr2(struct DumpVisitor* visitor,
                                       struct VarExprIr* ir) {
     strtable_id index = ir_var_expr_index(ir);
     const char* name = strtable_at(&visitor->context->strtable, index);
-    fprintf(visitor->stream, "v%p = %s\n", ir, name);
+    fprintf(visitor->stream, "v%p = address of %s\n", ir, name);
     return NULL;
 }
 
@@ -106,21 +106,13 @@ static struct ExprIr* visit_subst_expr2(struct DumpVisitor* visitor,
 
 static struct ExprIr* visit_member_expr2(struct DumpVisitor* visitor,
                                          struct MemberExprIr* ir) {
+    struct ExprIr* base = ir_member_expr_base(ir);
+    visitor_visit_expr(as_visitor(visitor), base);
     strtable_id member_index = ir_member_expr_name_index(ir);
     const char* member_name =
         strtable_at(&visitor->context->strtable, member_index);
-    struct ExprIr* base = ir_member_expr_base(ir);
-    struct VarExprIr* var = ir_expr_as_var(base);
-    if (var) {
-        strtable_id var_index = ir_var_expr_index(var);
-        const char* var_name =
-            strtable_at(&visitor->context->strtable, var_index);
-        fprintf(visitor->stream, "v%p = %s . %s\n", ir, member_name, var_name);
-    } else {
-        visitor_visit_expr(as_visitor(visitor), base);
-        fprintf(visitor->stream, "v%p = v%p + offsetof(%s)\n", ir, base,
-                member_name);
-    }
+    fprintf(visitor->stream, "v%p = member <v%p + offset(%s)>\n", ir, base,
+            member_name);
     return NULL;
 }
 
