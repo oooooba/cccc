@@ -125,6 +125,16 @@ static struct ExprIr* visit_subst_expr(struct SimplifyVisitor* visitor,
     return NULL;
 }
 
+static struct ExprIr* visit_member_expr(struct SimplifyVisitor* visitor,
+                                        struct MemberExprIr* ir) {
+    struct ExprIr* base = ir_member_expr_base(ir);
+    struct ExprIr* new_base = visitor_visit_expr(as_visitor(visitor), base);
+    if (new_base) {
+        ir_member_expr_set_base(ir, new_base);
+    }
+    return NULL;
+}
+
 static struct BlockIr* visit_block(struct SimplifyVisitor* visitor,
                                    struct BlockIr* ir) {
     struct BlockIterator* it = ir_block_new_iterator(ir);
@@ -163,8 +173,7 @@ static struct CfIr* visit_return_cf(struct SimplifyVisitor* visitor,
                                     struct ReturnCfIr* ir) {
     struct ExprIr* expr = ir_return_cf_expr(ir);
     if (expr) {
-        struct ExprIr* new_expr =
-            visitor_visit_expr(as_visitor(visitor), expr);
+        struct ExprIr* new_expr = visitor_visit_expr(as_visitor(visitor), expr);
         if (new_expr) ir_return_cf_set_expr(ir, new_expr);
     }
     return NULL;
@@ -180,6 +189,7 @@ struct SimplifyVisitor* new_simplify_visitor(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_var_expr, visit_var_expr);
     register_visitor(visitor->as_visitor, visit_unop_expr, visit_unop_expr);
     register_visitor(visitor->as_visitor, visit_subst_expr, visit_subst_expr);
+    register_visitor(visitor->as_visitor, visit_member_expr, visit_member_expr);
     register_visitor(visitor->as_visitor, visit_block, visit_block);
     register_visitor(visitor->as_visitor, visit_function, visit_function);
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf);

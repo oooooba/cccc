@@ -26,7 +26,7 @@ void regalloc_apply_post_process(struct PostRegallocVisitor* visitor,
 
 struct CodegenVisitor;
 struct CodegenVisitor* new_codegen_visitor(struct Context* context,
-                                            FILE* stream);
+                                           FILE* stream);
 void codegen_apply(struct CodegenVisitor* visitor, struct BlockIr* ir);
 
 int main(void) {

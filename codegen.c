@@ -139,10 +139,21 @@ static struct ExprIr* visit_unop_expr2(struct CodegenVisitor* visitor,
     enum UnopExprIrTag op = ir_unop_expr_op(ir);
 
     if (op == UnopExprIrTag_Addrof) {
-        struct VarExprIr* var = ir_expr_as_var(operand);
-        size_t offset = ir_var_expr_offset(var);
-        fprintf(visitor->stream, "\tlea\t%s, [rbp - %ld]\n", result_reg,
-                offset);
+        enum ExprIrTag tag = ir_expr_tag(operand);
+        if (tag == ExprIrTag_Var) {
+            struct VarExprIr* var = ir_expr_as_var(operand);
+            size_t offset = ir_var_expr_offset(var);
+            fprintf(visitor->stream, "\tlea\t%s, [rbp - %ld]\n", result_reg,
+                    offset);
+        } else if (tag == ExprIrTag_Member) {
+            struct MemberExprIr* member = ir_expr_as_member(operand);
+            struct VarExprIr* var = ir_expr_as_var(ir_member_expr_base(member));
+            size_t var_offset = ir_var_expr_offset(var);
+            size_t member_offset = ir_member_expr_offset(member);
+            fprintf(visitor->stream, "\tlea\t%s, [rbp - %ld]\n", result_reg,
+                    var_offset - member_offset);
+        } else
+            assert(false);
         return NULL;
     }
 
@@ -164,6 +175,18 @@ static struct ExprIr* visit_unop_expr2(struct CodegenVisitor* visitor,
             assert(false);
     }
 
+    return NULL;
+}
+
+static struct ExprIr* visit_member_expr2(struct CodegenVisitor* visitor,
+                                         struct MemberExprIr* ir) {
+    struct VarExprIr* var = ir_expr_as_var(ir_member_expr_base(ir));
+    size_t var_offset = ir_var_expr_offset(var);
+    size_t member_offset = ir_member_expr_offset(ir);
+    strtable_id reg_id = ir_expr_reg_id(ir_member_expr_cast(ir));
+    const char* reg = register_name(visitor, reg_id);
+    fprintf(visitor->stream, "\tmov\t%s, [rbp - %ld]\n", reg,
+            var_offset - member_offset);
     return NULL;
 }
 
@@ -273,7 +296,7 @@ static struct CfIr* visit_pop_cf2(struct CodegenVisitor* visitor,
 }
 
 struct CodegenVisitor* new_codegen_visitor(struct Context* context,
-                                            FILE* stream) {
+                                           FILE* stream) {
     struct CodegenVisitor* visitor = malloc(sizeof(struct CodegenVisitor));
     visitor_initialize(as_visitor(visitor));
 
@@ -283,6 +306,8 @@ struct CodegenVisitor* new_codegen_visitor(struct Context* context,
     register_visitor(visitor->as_visitor, visit_var_expr, visit_var_expr2);
     register_visitor(visitor->as_visitor, visit_unop_expr, visit_unop_expr2);
     register_visitor(visitor->as_visitor, visit_subst_expr, visit_subst_expr2);
+    register_visitor(visitor->as_visitor, visit_member_expr,
+                     visit_member_expr2);
     register_visitor(visitor->as_visitor, visit_block, visit_block2);
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf2);
