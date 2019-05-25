@@ -151,6 +151,15 @@ static struct ExprIr* visit_member_expr2(struct RegallocVisitor* visitor,
     return NULL;
 }
 
+static struct ExprIr* visit_deref_expr2(struct RegallocVisitor* visitor,
+                                        struct DerefExprIr* ir) {
+    visitor_visit_expr(as_visitor(visitor), ir_deref_expr_operand(ir));
+    release_register(visitor);
+    strtable_id reg_id = acquire_register(visitor);
+    ir_expr_set_reg_id(ir_deref_expr_cast(ir), reg_id);
+    return NULL;
+}
+
 static struct BlockIr* visit_block2(struct RegallocVisitor* visitor,
                                     struct BlockIr* ir) {
     struct BlockIterator* it = ir_block_new_iterator(ir);
@@ -204,6 +213,7 @@ struct RegallocVisitor* new_regalloc_visitor(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_subst_expr, visit_subst_expr2);
     register_visitor(visitor->as_visitor, visit_member_expr,
                      visit_member_expr2);
+    register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr2);
     register_visitor(visitor->as_visitor, visit_block, visit_block2);
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf2);

@@ -105,9 +105,6 @@ static struct ExprIr* visit_unop_expr2(struct DumpVisitor* visitor,
 
     const char* ope;
     switch (op) {
-        case UnopExprIrTag_Deref:
-            ope = "deref";
-            break;
         case UnopExprIrTag_Addrof:
             ope = "addrof";
             break;
@@ -146,6 +143,14 @@ static struct ExprIr* visit_member_expr2(struct DumpVisitor* visitor,
         fprintf(visitor->stream, "v%p = v%p + offsetof(%s)\n", ir, base,
                 member_name);
     }
+    return NULL;
+}
+
+static struct ExprIr* visit_deref_expr2(struct DumpVisitor* visitor,
+                                        struct DerefExprIr* ir) {
+    struct ExprIr* operand = ir_deref_expr_operand(ir);
+    visitor_visit_expr(as_visitor(visitor), operand);
+    fprintf(visitor->stream, "v%p = deref v%p\n", ir, operand);
     return NULL;
 }
 
@@ -226,6 +231,7 @@ struct DumpVisitor* new_dump_visitor(struct Context* context, FILE* stream) {
     register_visitor(visitor->as_visitor, visit_subst_expr, visit_subst_expr2);
     register_visitor(visitor->as_visitor, visit_member_expr,
                      visit_member_expr2);
+    register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr2);
     register_visitor(visitor->as_visitor, visit_block, visit_block2);
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf2);

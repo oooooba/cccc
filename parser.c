@@ -174,7 +174,9 @@ static struct ExprIr* parse_unary_expression(struct Parser* parser) {
     if (acceptable(parser, Token_Ampersand)) {
         op = UnopExprIrTag_Addrof;
     } else if (acceptable(parser, Token_Asterisk)) {
-        op = UnopExprIrTag_Deref;
+        advance(parser);
+        struct ExprIr* operand = parse_cast_expression(parser);
+        return ir_deref_expr_cast(ir_new_deref_expr(operand));
     } else
         return parse_postfix_expression(parser);
     advance(parser);

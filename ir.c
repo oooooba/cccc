@@ -698,3 +698,7 @@ struct ExprIr* ir_deref_expr_cast(struct DerefExprIr* ir) {
 struct ExprIr* ir_deref_expr_operand(struct DerefExprIr* ir) {
     return ir->operand;
 }
+
+void ir_deref_expr_set_operand(struct DerefExprIr* ir, struct ExprIr* operand) {
+    ir->operand = operand;
+}

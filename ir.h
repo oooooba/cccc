@@ -72,7 +72,6 @@ enum BinopExprIrTag {
 };
 
 enum UnopExprIrTag {
-    UnopExprIrTag_Deref,
     UnopExprIrTag_Addrof,
 };
 
@@ -218,5 +217,6 @@ size_t ir_member_expr_offset(struct MemberExprIr* ir);
 struct DerefExprIr* ir_new_deref_expr(struct ExprIr* operand);
 struct ExprIr* ir_deref_expr_cast(struct DerefExprIr* ir);
 struct ExprIr* ir_deref_expr_operand(struct DerefExprIr* ir);
+void ir_deref_expr_set_operand(struct DerefExprIr* ir, struct ExprIr* operand);
 
 #endif

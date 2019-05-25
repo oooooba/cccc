@@ -156,25 +156,7 @@ static struct ExprIr* visit_unop_expr2(struct CodegenVisitor* visitor,
             assert(false);
         return NULL;
     }
-
-    visitor_visit_expr(as_visitor(visitor), operand);
-
-    strtable_id operand_reg_id = ir_expr_reg_id(operand);
-    assert(operand_reg_id == result_reg_id);
-    const char* operand_reg = register_name(visitor, operand_reg_id);
-
-    switch (op) {
-        case UnopExprIrTag_Deref:
-            fprintf(visitor->stream, "\tmov\t%s, [%s]\n", result_reg,
-                    operand_reg);
-            break;
-        case UnopExprIrTag_Addrof:
-            assert(false);
-            break;
-        default:
-            assert(false);
-    }
-
+    assert(false);
     return NULL;
 }
 
@@ -204,6 +186,22 @@ static struct ExprIr* visit_subst_expr2(struct CodegenVisitor* visitor,
     const char* value_reg = register_name(visitor, value_reg_id);
     const char* addr_reg = register_name(visitor, addr_reg_id);
     fprintf(visitor->stream, "\tmov\t[%s], %s\n", addr_reg, value_reg);
+
+    return NULL;
+}
+
+static struct ExprIr* visit_deref_expr2(struct CodegenVisitor* visitor,
+                                        struct DerefExprIr* ir) {
+    struct ExprIr* operand = ir_deref_expr_operand(ir);
+    visitor_visit_expr(as_visitor(visitor), operand);
+
+    strtable_id operand_reg_id = ir_expr_reg_id(operand);
+    strtable_id result_reg_id = ir_expr_reg_id(ir_deref_expr_cast(ir));
+    assert(operand_reg_id == result_reg_id);
+
+    const char* operand_reg = register_name(visitor, operand_reg_id);
+    const char* result_reg = register_name(visitor, result_reg_id);
+    fprintf(visitor->stream, "\tmov\t%s, [%s]\n", result_reg, operand_reg);
 
     return NULL;
 }
@@ -308,6 +306,7 @@ struct CodegenVisitor* new_codegen_visitor(struct Context* context,
     register_visitor(visitor->as_visitor, visit_subst_expr, visit_subst_expr2);
     register_visitor(visitor->as_visitor, visit_member_expr,
                      visit_member_expr2);
+    register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr2);
     register_visitor(visitor->as_visitor, visit_block, visit_block2);
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf2);

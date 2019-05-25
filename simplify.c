@@ -89,9 +89,10 @@ static struct ExprIr* visit_var_expr(struct SimplifyVisitor* visitor,
 static struct ExprIr* visit_unop_expr(struct SimplifyVisitor* visitor,
                                       struct UnopExprIr* ir) {
     if (ir_unop_expr_op(ir) == UnopExprIrTag_Addrof) {
-        struct UnopExprIr* operand = ir_expr_as_unop(ir_unop_expr_operand(ir));
-        if (operand && ir_unop_expr_op(operand) == UnopExprIrTag_Deref) {
-            struct ExprIr* expr = ir_unop_expr_operand(operand);
+        struct DerefExprIr* operand =
+            ir_expr_as_deref(ir_unop_expr_operand(ir));
+        if (operand) {
+            struct ExprIr* expr = ir_deref_expr_operand(operand);
             struct ExprIr* new_expr =
                 visitor_visit_expr(as_visitor(visitor), expr);
             return new_expr ? new_expr : expr;
@@ -131,6 +132,16 @@ static struct ExprIr* visit_member_expr(struct SimplifyVisitor* visitor,
     struct ExprIr* new_base = visitor_visit_expr(as_visitor(visitor), base);
     if (new_base) {
         ir_member_expr_set_base(ir, new_base);
+    }
+    return NULL;
+}
+
+static struct ExprIr* visit_deref_expr(struct SimplifyVisitor* visitor,
+                                       struct DerefExprIr* ir) {
+    struct ExprIr* new_operand =
+        visitor_visit_expr(as_visitor(visitor), ir_deref_expr_operand(ir));
+    if (new_operand) {
+        ir_deref_expr_set_operand(ir, new_operand);
     }
     return NULL;
 }
@@ -190,6 +201,7 @@ struct SimplifyVisitor* new_simplify_visitor(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_unop_expr, visit_unop_expr);
     register_visitor(visitor->as_visitor, visit_subst_expr, visit_subst_expr);
     register_visitor(visitor->as_visitor, visit_member_expr, visit_member_expr);
+    register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr);
     register_visitor(visitor->as_visitor, visit_block, visit_block);
     register_visitor(visitor->as_visitor, visit_function, visit_function);
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf);
