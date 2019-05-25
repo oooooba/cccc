@@ -82,6 +82,7 @@ void visitor_initialize(struct Visitor* visitor) {
     register_visitor(*visitor, visit_subst_expr, NULL);
     register_visitor(*visitor, visit_member_expr, NULL);
     register_visitor(*visitor, visit_deref_expr, NULL);
+    register_visitor(*visitor, visit_addrof_expr, NULL);
     register_visitor(*visitor, visit_block, NULL);
     register_visitor(*visitor, visit_function, NULL);
     register_visitor(*visitor, visit_branch_cf, NULL);

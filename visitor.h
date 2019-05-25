@@ -20,6 +20,8 @@ struct Visitor {
                                         struct MemberExprIr* ir);
     struct ExprIr* (*visit_deref_expr)(struct Visitor* visitor,
                                        struct DerefExprIr* ir);
+    struct ExprIr* (*visit_addrof_expr)(struct Visitor* visitor,
+                                        struct AddrofExprIr* ir);
     struct BlockIr* (*visit_block)(struct Visitor* visitor, struct BlockIr* ir);
     struct FunctionIr* (*visit_function)(struct Visitor* visitor,
                                          struct FunctionIr* ir);

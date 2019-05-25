@@ -32,6 +32,7 @@ struct UnopExprIr;
 struct SubstExprIr;
 struct MemberExprIr;
 struct DerefExprIr;
+struct AddrofExprIr;
 
 enum IrTag {
     IrTag_Block,
@@ -58,6 +59,7 @@ enum ExprIrTag {
     ExprIrTag_Subst,
     ExprIrTag_Member,
     ExprIrTag_Deref,
+    ExprIrTag_Addrof,
 };
 
 enum ConstExprIrTag {
@@ -218,5 +220,9 @@ struct DerefExprIr* ir_new_deref_expr(struct ExprIr* operand);
 struct ExprIr* ir_deref_expr_cast(struct DerefExprIr* ir);
 struct ExprIr* ir_deref_expr_operand(struct DerefExprIr* ir);
 void ir_deref_expr_set_operand(struct DerefExprIr* ir, struct ExprIr* operand);
+
+struct AddrofExprIr* ir_new_addrof_expr(struct ExprIr* operand);
+struct ExprIr* ir_addrof_expr_cast(struct AddrofExprIr* ir);
+struct ExprIr* ir_addrof_expr_operand(struct AddrofExprIr* ir);
 
 #endif

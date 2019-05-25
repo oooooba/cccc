@@ -702,3 +702,23 @@ struct ExprIr* ir_deref_expr_operand(struct DerefExprIr* ir) {
 void ir_deref_expr_set_operand(struct DerefExprIr* ir, struct ExprIr* operand) {
     ir->operand = operand;
 }
+
+struct AddrofExprIr {
+    struct ExprIr as_expr;
+    struct ExprIr* operand;
+};
+
+struct AddrofExprIr* ir_new_addrof_expr(struct ExprIr* operand) {
+    struct AddrofExprIr* ir = malloc(sizeof(struct AddrofExprIr));
+    initialize_expr(ir_addrof_expr_cast(ir), ExprIrTag_Addrof);
+    ir->operand = operand;
+    return ir;
+}
+
+struct ExprIr* ir_addrof_expr_cast(struct AddrofExprIr* ir) {
+    return &ir->as_expr;
+}
+
+struct ExprIr* ir_addrof_expr_operand(struct AddrofExprIr* ir) {
+    return ir->operand;
+}
