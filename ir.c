@@ -413,6 +413,10 @@ struct MemberExprIr* ir_expr_as_member(struct ExprIr* ir) {
     return ir->tag == ExprIrTag_Member ? (struct MemberExprIr*)ir : NULL;
 }
 
+struct DerefExprIr* ir_expr_as_deref(struct ExprIr* ir) {
+    return ir->tag == ExprIrTag_Deref ? (struct DerefExprIr*)ir : NULL;
+}
+
 enum ExprIrTag ir_expr_tag(struct ExprIr* ir) { return ir->tag; }
 
 struct TypeIr* ir_expr_type(struct ExprIr* ir) {
@@ -674,3 +678,23 @@ strtable_id ir_member_expr_name_index(struct MemberExprIr* ir) {
 }
 
 size_t ir_member_expr_offset(struct MemberExprIr* ir) { return ir->offset; }
+
+struct DerefExprIr {
+    struct ExprIr as_expr;
+    struct ExprIr* operand;
+};
+
+struct DerefExprIr* ir_new_deref_expr(struct ExprIr* operand) {
+    struct DerefExprIr* ir = malloc(sizeof(struct DerefExprIr));
+    initialize_expr(ir_deref_expr_cast(ir), ExprIrTag_Deref);
+    ir->operand = operand;
+    return ir;
+}
+
+struct ExprIr* ir_deref_expr_cast(struct DerefExprIr* ir) {
+    return &ir->as_expr;
+}
+
+struct ExprIr* ir_deref_expr_operand(struct DerefExprIr* ir) {
+    return ir->operand;
+}

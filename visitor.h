@@ -18,6 +18,8 @@ struct Visitor {
                                        struct SubstExprIr* ir);
     struct ExprIr* (*visit_member_expr)(struct Visitor* visitor,
                                         struct MemberExprIr* ir);
+    struct ExprIr* (*visit_deref_expr)(struct Visitor* visitor,
+                                       struct DerefExprIr* ir);
     struct BlockIr* (*visit_block)(struct Visitor* visitor, struct BlockIr* ir);
     struct FunctionIr* (*visit_function)(struct Visitor* visitor,
                                          struct FunctionIr* ir);

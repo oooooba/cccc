@@ -37,6 +37,8 @@ struct ExprIr* visitor_visit_expr(struct Visitor* visitor, struct ExprIr* ir) {
             return visitor->visit_subst_expr(visitor, ir_expr_as_subst(ir));
         case ExprIrTag_Member:
             return visitor->visit_member_expr(visitor, ir_expr_as_member(ir));
+        case ExprIrTag_Deref:
+            return visitor->visit_deref_expr(visitor, ir_expr_as_deref(ir));
         default:
             assert(false);
     }
@@ -78,6 +80,8 @@ void visitor_initialize(struct Visitor* visitor) {
     register_visitor(*visitor, visit_var_expr, NULL);
     register_visitor(*visitor, visit_unop_expr, NULL);
     register_visitor(*visitor, visit_subst_expr, NULL);
+    register_visitor(*visitor, visit_member_expr, NULL);
+    register_visitor(*visitor, visit_deref_expr, NULL);
     register_visitor(*visitor, visit_block, NULL);
     register_visitor(*visitor, visit_function, NULL);
     register_visitor(*visitor, visit_branch_cf, NULL);
