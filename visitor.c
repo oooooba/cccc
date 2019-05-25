@@ -39,6 +39,8 @@ struct ExprIr* visitor_visit_expr(struct Visitor* visitor, struct ExprIr* ir) {
             return visitor->visit_member_expr(visitor, ir_expr_as_member(ir));
         case ExprIrTag_Deref:
             return visitor->visit_deref_expr(visitor, ir_expr_as_deref(ir));
+        case ExprIrTag_Addrof:
+            return visitor->visit_addrof_expr(visitor, ir_expr_as_addrof(ir));
         default:
             assert(false);
     }

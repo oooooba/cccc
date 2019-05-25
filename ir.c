@@ -417,6 +417,10 @@ struct DerefExprIr* ir_expr_as_deref(struct ExprIr* ir) {
     return ir->tag == ExprIrTag_Deref ? (struct DerefExprIr*)ir : NULL;
 }
 
+struct AddrofExprIr* ir_expr_as_addrof(struct ExprIr* ir) {
+    return ir->tag == ExprIrTag_Addrof ? (struct AddrofExprIr*)ir : NULL;
+}
+
 enum ExprIrTag ir_expr_tag(struct ExprIr* ir) { return ir->tag; }
 
 struct TypeIr* ir_expr_type(struct ExprIr* ir) {

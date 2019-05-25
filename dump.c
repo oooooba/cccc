@@ -88,31 +88,9 @@ static struct ExprIr* visit_var_expr2(struct DumpVisitor* visitor,
 
 static struct ExprIr* visit_unop_expr2(struct DumpVisitor* visitor,
                                        struct UnopExprIr* ir) {
-    struct ExprIr* operand = ir_unop_expr_operand(ir);
-    enum UnopExprIrTag op = ir_unop_expr_op(ir);
-
-    if (op == UnopExprIrTag_Addrof) {
-        struct VarExprIr* var = ir_expr_as_var(operand);
-        if (var) {
-            strtable_id index = ir_var_expr_index(var);
-            const char* name = strtable_at(&visitor->context->strtable, index);
-            fprintf(visitor->stream, "v%p = addrof %s\n", ir, name);
-            return NULL;
-        }
-    }
-
-    visitor_visit_expr(as_visitor(visitor), operand);
-
-    const char* ope;
-    switch (op) {
-        case UnopExprIrTag_Addrof:
-            ope = "addrof";
-            break;
-        default:
-            assert(false);
-    }
-    fprintf(visitor->stream, "v%p = %s v%p\n", ir, ope, operand);
-
+    (void)visitor;
+    (void)ir;
+    assert(false);
     return NULL;
 }
 
@@ -151,6 +129,14 @@ static struct ExprIr* visit_deref_expr2(struct DumpVisitor* visitor,
     struct ExprIr* operand = ir_deref_expr_operand(ir);
     visitor_visit_expr(as_visitor(visitor), operand);
     fprintf(visitor->stream, "v%p = deref v%p\n", ir, operand);
+    return NULL;
+}
+
+static struct ExprIr* visit_addrof_expr2(struct DumpVisitor* visitor,
+                                         struct AddrofExprIr* ir) {
+    struct ExprIr* operand = ir_addrof_expr_operand(ir);
+    visitor_visit_expr(as_visitor(visitor), operand);
+    fprintf(visitor->stream, "v%p = addrof <v%p>\n", ir, operand);
     return NULL;
 }
 
@@ -232,6 +218,8 @@ struct DumpVisitor* new_dump_visitor(struct Context* context, FILE* stream) {
     register_visitor(visitor->as_visitor, visit_member_expr,
                      visit_member_expr2);
     register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr2);
+    register_visitor(visitor->as_visitor, visit_addrof_expr,
+                     visit_addrof_expr2);
     register_visitor(visitor->as_visitor, visit_block, visit_block2);
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf2);

@@ -127,35 +127,14 @@ static struct ExprIr* visit_var_expr2(struct CodegenVisitor* visitor,
     size_t offset = ir_var_expr_offset(ir);
     strtable_id reg_id = ir_expr_reg_id(ir_var_expr_cast(ir));
     const char* reg = register_name(visitor, reg_id);
-    fprintf(visitor->stream, "\tmov\t%s, [rbp - %ld]\n", reg, offset);
+    fprintf(visitor->stream, "\tlea\t%s, [rbp - %ld]\n", reg, offset);
     return NULL;
 }
 
 static struct ExprIr* visit_unop_expr2(struct CodegenVisitor* visitor,
                                        struct UnopExprIr* ir) {
-    strtable_id result_reg_id = ir_expr_reg_id(ir_unop_expr_cast(ir));
-    const char* result_reg = register_name(visitor, result_reg_id);
-    struct ExprIr* operand = ir_unop_expr_operand(ir);
-    enum UnopExprIrTag op = ir_unop_expr_op(ir);
-
-    if (op == UnopExprIrTag_Addrof) {
-        enum ExprIrTag tag = ir_expr_tag(operand);
-        if (tag == ExprIrTag_Var) {
-            struct VarExprIr* var = ir_expr_as_var(operand);
-            size_t offset = ir_var_expr_offset(var);
-            fprintf(visitor->stream, "\tlea\t%s, [rbp - %ld]\n", result_reg,
-                    offset);
-        } else if (tag == ExprIrTag_Member) {
-            struct MemberExprIr* member = ir_expr_as_member(operand);
-            struct VarExprIr* var = ir_expr_as_var(ir_member_expr_base(member));
-            size_t var_offset = ir_var_expr_offset(var);
-            size_t member_offset = ir_member_expr_offset(member);
-            fprintf(visitor->stream, "\tlea\t%s, [rbp - %ld]\n", result_reg,
-                    var_offset - member_offset);
-        } else
-            assert(false);
-        return NULL;
-    }
+    (void)visitor;
+    (void)ir;
     assert(false);
     return NULL;
 }

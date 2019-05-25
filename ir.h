@@ -74,7 +74,7 @@ enum BinopExprIrTag {
 };
 
 enum UnopExprIrTag {
-    UnopExprIrTag_Addrof,
+    UnopExprIrTag_Notused,
 };
 
 struct ExprIr* ir_as_expr(struct Ir* ir);
@@ -158,6 +158,7 @@ struct UnopExprIr* ir_expr_as_unop(struct ExprIr* ir);
 struct SubstExprIr* ir_expr_as_subst(struct ExprIr* ir);
 struct MemberExprIr* ir_expr_as_member(struct ExprIr* ir);
 struct DerefExprIr* ir_expr_as_deref(struct ExprIr* ir);
+struct AddrofExprIr* ir_expr_as_addrof(struct ExprIr* ir);
 enum ExprIrTag ir_expr_tag(struct ExprIr* ir);
 struct TypeIr* ir_expr_type(struct ExprIr* ir);
 void ir_expr_set_type(struct ExprIr* ir, struct TypeIr* type);

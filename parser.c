@@ -128,11 +128,20 @@ static struct ExprIr* parse_primary_expression(struct Parser* parser) {
         case Token_Id: {
             strtable_id index = parse_identifier(parser);
             struct Location* loc = env_find(parser->current_env, index);
-            if (!loc)
+            if (loc) {
+                // reference to memory location (variable)
+                struct VarExprIr* var = ir_new_var_expr(loc);
+                struct DerefExprIr* deref_var =
+                    ir_new_deref_expr(ir_var_expr_cast(var));
+                return ir_deref_expr_cast(deref_var);
+            } else {
+                // reference to function
                 loc = context_find_function_declaration(parser->context, index);
-            assert(loc);
-            return ir_var_expr_cast(ir_new_var_expr(loc));
-        }
+                assert(loc);
+                struct VarExprIr* var = ir_new_var_expr(loc);
+                return ir_var_expr_cast(var);
+            }
+        } break;
         default:
             assert(false);
             return NULL;
@@ -170,18 +179,16 @@ static struct ExprIr* parse_postfix_expression(struct Parser* parser) {
 static struct ExprIr* parse_cast_expression(struct Parser* parser);
 
 static struct ExprIr* parse_unary_expression(struct Parser* parser) {
-    enum UnopExprIrTag op;
     if (acceptable(parser, Token_Ampersand)) {
-        op = UnopExprIrTag_Addrof;
+        advance(parser);
+        struct ExprIr* operand = parse_cast_expression(parser);
+        return ir_addrof_expr_cast(ir_new_addrof_expr(operand));
     } else if (acceptable(parser, Token_Asterisk)) {
         advance(parser);
         struct ExprIr* operand = parse_cast_expression(parser);
         return ir_deref_expr_cast(ir_new_deref_expr(operand));
     } else
         return parse_postfix_expression(parser);
-    advance(parser);
-    struct ExprIr* expr = parse_cast_expression(parser);
-    return ir_unop_expr_cast(ir_new_unop_expr(op, expr));
 }
 
 static struct ExprIr* parse_cast_expression(struct Parser* parser) {
@@ -224,10 +231,10 @@ static struct ExprIr* parse_assignment_expression(struct Parser* parser) {
     struct ExprIr* lhs = parse_additive_expression(parser);
     if (acceptable(parser, Token_Equal)) {
         advance(parser);
-        struct UnopExprIr* addrof = ir_new_unop_expr(UnopExprIrTag_Addrof, lhs);
+        struct AddrofExprIr* addrof = ir_new_addrof_expr(lhs);
         struct ExprIr* rhs = parse_additive_expression(parser);
         struct SubstExprIr* subst =
-            ir_new_subst_expr(ir_unop_expr_cast(addrof), rhs);
+            ir_new_subst_expr(ir_addrof_expr_cast(addrof), rhs);
         lhs = ir_subst_expr_cast(subst);
     }
     return lhs;
@@ -380,10 +387,10 @@ static struct BlockIr* parse_compound_statement(struct Parser* parser,
                 if (!decl->initializer) continue;
 
                 struct VarExprIr* var = ir_new_var_expr(loc);
-                struct UnopExprIr* addrof_var = ir_new_unop_expr(
-                    UnopExprIrTag_Addrof, ir_var_expr_cast(var));
+                struct AddrofExprIr* addrof_var =
+                    ir_new_addrof_expr(ir_var_expr_cast(var));
                 struct SubstExprIr* subst = ir_new_subst_expr(
-                    ir_unop_expr_cast(addrof_var), decl->initializer);
+                    ir_addrof_expr_cast(addrof_var), decl->initializer);
                 ir_block_insert_expr_at_end(block, ir_subst_expr_cast(subst));
             }
         } else {
