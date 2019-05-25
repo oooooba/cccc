@@ -4,6 +4,7 @@
 #include "list.h"
 #include "strtable.h"
 
+#include <stdbool.h>
 #include <stddef.h>
 
 struct TypeIr;
@@ -22,6 +23,7 @@ enum TypeTag {
 
 enum TypeTag type_tag2(struct TypeIr* type);
 size_t type_size(struct TypeIr* type);
+bool type_equal(struct TypeIr* type1, struct TypeIr* type2);
 struct PointerTypeIr* type_as_pointer(struct TypeIr* type);
 struct StructTypeIr* type_as_struct(struct TypeIr* type);
 

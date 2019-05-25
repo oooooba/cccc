@@ -38,6 +38,15 @@ enum TypeTag type_tag2(struct TypeIr* type) { return type->tag; }
 
 size_t type_size(struct TypeIr* type) { return type->size; }
 
+bool type_equal(struct TypeIr* type1, struct TypeIr* type2) {
+    if (type1 == type2)
+        return true;
+    else if (type1->tag == Type_Pointer && type2->tag == Type_Pointer)
+        return type_equal(type1->pointer->elem_type, type2->pointer->elem_type);
+    else
+        return type1->tag == type2->tag;
+}
+
 struct PointerTypeIr* type_as_pointer(struct TypeIr* type) {
     return type->tag == Type_Pointer ? type->pointer : NULL;
 }
