@@ -16,6 +16,11 @@ struct StructTypeIr {
     struct List* elem_types;  // MemberEntry* list
 };
 
+struct FunctionTypeIr {
+    struct TypeIr* result_type;
+    struct List* param_types;  // TypeIr* list
+};
+
 // ToDo: treat above types as subtype of TypeIr
 
 struct TypeIr {
@@ -24,6 +29,7 @@ struct TypeIr {
     union {
         struct PointerTypeIr* pointer;
         struct StructTypeIr* structure;
+        struct FunctionTypeIr* function;
     };
 };
 
@@ -53,6 +59,10 @@ struct PointerTypeIr* type_as_pointer(struct TypeIr* type) {
 
 struct StructTypeIr* type_as_struct(struct TypeIr* type) {
     return type->tag == Type_Struct ? type->structure : NULL;
+}
+
+struct FunctionTypeIr* type_as_function(struct TypeIr* type) {
+    return type->tag == Type_Function ? type->function : NULL;
 }
 
 struct TypeIr* type_new_int2(void) {
@@ -137,4 +147,22 @@ strtable_id type_member_entry_name_index(struct MemberEntry* entry) {
 
 struct TypeIr* type_member_entry_type(struct MemberEntry* entry) {
     return entry->type;
+}
+
+struct TypeIr* type_new_function(struct TypeIr* result_type,
+                                 struct List* param_types) {
+    struct TypeIr* type = malloc(sizeof(struct TypeIr));
+    type->tag = Type_Function;
+    type->function = malloc(sizeof(struct FunctionTypeIr));
+    type->function->result_type = result_type;
+    type->function->param_types = param_types;
+    return type;
+}
+
+struct TypeIr* type_function_result_type(struct FunctionTypeIr* type) {
+    return type->result_type;
+}
+
+struct List* type_function_param_types(struct FunctionTypeIr* type) {
+    return type->param_types;
 }

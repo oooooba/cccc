@@ -83,14 +83,17 @@ struct FunctionIr* ir_as_function(struct Ir* ir);
 struct CfIr* ir_as_cf(struct Ir* ir);
 enum IrTag ir_tag(struct Ir* ir);
 
-struct FunctionIr* ir_new_function(strtable_id name_index, struct List* params,
-                                   struct BlockIr* body);
+struct FunctionIr* ir_new_function(strtable_id name_index,
+                                   struct FunctionTypeIr* type,
+                                   struct List* params, struct BlockIr* body);
 struct Ir* ir_function_cast(struct FunctionIr* ir);
 strtable_id ir_function_name_index(struct FunctionIr* ir);
 struct BlockIr* ir_function_body(struct FunctionIr* ir);
 size_t ir_function_region_size(struct FunctionIr* ir);
 void ir_function_set_region_size(struct FunctionIr* ir, size_t region_size);
 struct List* ir_function_params(struct FunctionIr* ir);
+struct TypeIr* ir_function_result_type(struct FunctionIr* ir);
+struct List* ir_function_param_types(struct FunctionIr* ir);
 
 struct BlockIr* ir_new_block(void);
 struct Ir* ir_block_cast(struct BlockIr* ir);
@@ -193,6 +196,7 @@ struct ExprIr* ir_var_expr_cast(struct VarExprIr* ir);
 struct Location* ir_var_expr_location(struct VarExprIr* ir);
 size_t ir_var_expr_offset(struct VarExprIr* ir);
 strtable_id ir_var_expr_index(struct VarExprIr* ir);
+struct TypeIr* ir_var_expr_type(struct VarExprIr* ir);
 
 struct UnopExprIr* ir_new_unop_expr(enum UnopExprIrTag op,
                                     struct ExprIr* operand);

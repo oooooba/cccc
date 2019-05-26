@@ -38,16 +38,22 @@ struct FunctionIr {
     struct BlockIr* body;
     size_t region_size;
     struct List* params;  // VarExprIr* list
+    struct FunctionTypeIr* type;
 };
 
-struct FunctionIr* ir_new_function(strtable_id name_index, struct List* params,
-                                   struct BlockIr* body) {
+struct FunctionIr* ir_new_function(strtable_id name_index,
+                                   struct FunctionTypeIr* type,
+                                   struct List* params, struct BlockIr* body) {
+    // ToDo: insert assertion code to validate equality between type and type of
+    // params
+
     struct FunctionIr* ir = malloc(sizeof(struct FunctionIr));
     initialize_ir(ir_function_cast(ir), IrTag_Function);
     ir->name_index = name_index;
     ir->body = body;
     ir->region_size = (size_t)-1;
     ir->params = params;
+    ir->type = type;
     return ir;
 }
 
@@ -76,6 +82,14 @@ void ir_function_set_region_size(struct FunctionIr* ir, size_t region_size) {
 
 struct List* ir_function_params(struct FunctionIr* ir) {
     return ir->params;
+}
+
+struct TypeIr* ir_function_result_type(struct FunctionIr* ir) {
+    return type_function_result_type(ir->type);
+}
+
+struct List* ir_function_param_types(struct FunctionIr* ir) {
+    return type_function_param_types(ir->type);
 }
 
 struct Location {
@@ -208,6 +222,10 @@ size_t ir_block_region_size(struct BlockIr* ir) {
 
 strtable_id ir_location_name_index(struct Location* loc) {
     return loc->name_index;
+}
+
+static struct TypeIr* ir_location_type(struct Location* loc) {
+    return loc->type;
 }
 
 static size_t ir_location_offset(struct Location* loc) {
@@ -582,6 +600,10 @@ size_t ir_var_expr_offset(struct VarExprIr* ir) {
 
 strtable_id ir_var_expr_index(struct VarExprIr* ir) {
     return ir_location_name_index(ir->location);
+}
+
+struct TypeIr* ir_var_expr_type(struct VarExprIr* ir) {
+    return ir_location_type(ir->location);
 }
 
 struct UnopExprIr {
