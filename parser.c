@@ -478,12 +478,6 @@ static struct FunctionIr* parse_function_definition(struct Parser* parser) {
     struct Env* env = env_new(parser->current_env);
     parser->current_env = env;
 
-    // ToDo: this function must be registered to call recursively
-    strtable_id name_index = func_decl->name_index;
-    struct Location* func_loc =
-        ir_declare_function(name_index);  // ToDo: pass type
-    context_insert_function_declaration(parser->context, name_index, func_loc);
-
     struct BlockIr* body = ir_new_block();
 
     expect(parser, Token_LeftParen);
@@ -519,15 +513,17 @@ static struct FunctionIr* parse_function_definition(struct Parser* parser) {
     }
     expect(parser, Token_RightParen);
 
-    struct TypeIr* result_type = func_decl->type;
-    struct FunctionTypeIr* func_type =
-        type_as_function(type_new_function(result_type, param_types));
+    struct TypeIr* func_type = type_new_function(func_decl->type, param_types);
+    strtable_id name_index = func_decl->name_index;
+    struct Location* func_loc = ir_declare_function(name_index, func_type);
+    context_insert_function_declaration(parser->context, name_index, func_loc);
 
     body = parse_compound_statement(parser, body);
 
     parser->current_env = env->outer_env;
 
-    return ir_new_function(name_index, func_type, params, body);
+    return ir_new_function(name_index, type_as_function(func_type), params,
+                           body);
 }
 
 static struct BlockIr* parse_translation_unit(struct Parser* parser) {

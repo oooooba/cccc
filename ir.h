@@ -89,6 +89,7 @@ struct FunctionIr* ir_new_function(strtable_id name_index,
 struct Ir* ir_function_cast(struct FunctionIr* ir);
 strtable_id ir_function_name_index(struct FunctionIr* ir);
 struct BlockIr* ir_function_body(struct FunctionIr* ir);
+void ir_function_set_body(struct FunctionIr* ir, struct BlockIr* body);
 size_t ir_function_region_size(struct FunctionIr* ir);
 void ir_function_set_region_size(struct FunctionIr* ir, size_t region_size);
 struct List* ir_function_params(struct FunctionIr* ir);
@@ -109,7 +110,8 @@ void ir_block_insert_block_at_end(struct BlockIr* ir, struct BlockIr* block);
 struct Location* ir_block_allocate_location(struct BlockIr* ir,
                                             strtable_id name_index,
                                             struct TypeIr* type);
-struct Location* ir_declare_function(strtable_id name_index);
+struct Location* ir_declare_function(strtable_id name_index,
+                                     struct TypeIr* type);
 void ir_block_commit_region_status(struct BlockIr* ir, size_t region_base);
 size_t ir_block_region_size(struct BlockIr* ir);
 strtable_id ir_location_name_index(struct Location* loc);
@@ -130,7 +132,11 @@ struct ExprIr* ir_branch_cf_cond_expr(struct BranchCfIr* ir);
 void ir_branch_cf_set_cond_expr(struct BranchCfIr* ir,
                                 struct ExprIr* cond_expr);
 struct BlockIr* ir_branch_cf_true_block(struct BranchCfIr* ir);
+void ir_branch_cf_set_true_block(struct BranchCfIr* ir,
+                                 struct BlockIr* true_block);
 struct BlockIr* ir_branch_cf_false_block(struct BranchCfIr* ir);
+void ir_branch_cf_set_false_block(struct BranchCfIr* ir,
+                                  struct BlockIr* false_block);
 
 struct ReturnCfIr* ir_new_return_cf(struct ExprIr* expr);
 struct CfIr* ir_return_cf_cast(struct ReturnCfIr* ir);
@@ -187,6 +193,7 @@ void ir_binop_expr_set_rhs(struct BinopExprIr* ir, struct ExprIr* rhs);
 struct CallExprIr* ir_new_call_expr(struct ExprIr* function, struct List* args);
 struct ExprIr* ir_call_expr_cast(struct CallExprIr* ir);
 struct ExprIr* ir_call_expr_function(struct CallExprIr* ir);
+void ir_call_expr_set_function(struct CallExprIr* ir, struct ExprIr* function);
 struct List* ir_call_expr_args(struct CallExprIr* ir);
 struct BlockIr* ir_call_expr_pre_expr_block(struct CallExprIr* ir);
 struct BlockIr* ir_call_expr_post_expr_block(struct CallExprIr* ir);
@@ -197,6 +204,7 @@ struct Location* ir_var_expr_location(struct VarExprIr* ir);
 size_t ir_var_expr_offset(struct VarExprIr* ir);
 strtable_id ir_var_expr_index(struct VarExprIr* ir);
 struct TypeIr* ir_var_expr_type(struct VarExprIr* ir);
+bool ir_var_expr_is_function(struct VarExprIr* ir);
 
 struct UnopExprIr* ir_new_unop_expr(enum UnopExprIrTag op,
                                     struct ExprIr* operand);
@@ -229,5 +237,7 @@ void ir_deref_expr_set_operand(struct DerefExprIr* ir, struct ExprIr* operand);
 struct AddrofExprIr* ir_new_addrof_expr(struct ExprIr* operand);
 struct ExprIr* ir_addrof_expr_cast(struct AddrofExprIr* ir);
 struct ExprIr* ir_addrof_expr_operand(struct AddrofExprIr* ir);
+void ir_addrof_expr_set_operand(struct AddrofExprIr* ir,
+                                struct ExprIr* operand);
 
 #endif

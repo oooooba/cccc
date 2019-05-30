@@ -49,7 +49,23 @@ bool type_equal(struct TypeIr* type1, struct TypeIr* type2) {
         return true;
     else if (type1->tag == Type_Pointer && type2->tag == Type_Pointer)
         return type_equal(type1->pointer->elem_type, type2->pointer->elem_type);
-    else
+    else if (type1->tag == Type_Function && type2->tag == Type_Function) {
+        struct FunctionTypeIr* ft1 = type1->function;
+        struct FunctionTypeIr* ft2 = type2->function;
+        if (!type_equal(ft1->result_type, ft2->result_type)) return false;
+        struct ListHeader *it1 = list_begin(ft1->param_types),
+                          *it2 = list_begin(ft2->param_types),
+                          *eit1 = list_end(ft1->param_types),
+                          *eit2 = list_end(ft2->param_types);
+        while (!(it1 == eit1 || it2 == eit2)) {
+            struct TypeIr* t1 = ((struct ListItem*)it1)->item;
+            struct TypeIr* t2 = ((struct ListItem*)it2)->item;
+            if (!type_equal(t1, t2)) return false;
+            it1 = list_next(it1);
+            it2 = list_next(it2);
+        }
+        return (it1 == eit1 && it2 == eit2);
+    } else
         return type1->tag == type2->tag;
 }
 

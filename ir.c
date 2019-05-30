@@ -69,6 +69,10 @@ struct BlockIr* ir_function_body(struct FunctionIr* ir) {
     return ir->body;
 }
 
+void ir_function_set_body(struct FunctionIr* ir, struct BlockIr* body) {
+    ir->body = body;
+}
+
 size_t ir_function_region_size(struct FunctionIr* ir) {
     assert(ir->region_size != (size_t)-1);
     return ir->region_size;
@@ -111,11 +115,12 @@ static struct Location* ir_new_location(struct BlockIr* block,
     return loc;
 }
 
-struct Location* ir_declare_function(strtable_id name_index) {
+struct Location* ir_declare_function(strtable_id name_index,
+                                     struct TypeIr* type) {
     struct Location* loc = malloc(sizeof(struct Location));
     loc->block = NULL;
     loc->name_index = name_index;
-    loc->type = NULL;  // ToDo: fix to store type
+    loc->type = type;
     loc->region_offset = (size_t)-1;
     return loc;
 }
@@ -232,6 +237,10 @@ static size_t ir_location_offset(struct Location* loc) {
     return ir_block_region_base(loc->block) + loc->region_offset;
 }
 
+static bool ir_location_is_function(struct Location* loc) {
+    return loc->block == NULL;
+}
+
 struct CfIr {
     struct Ir as_ir;
     enum CfIrTag tag;
@@ -303,8 +312,18 @@ struct BlockIr* ir_branch_cf_true_block(struct BranchCfIr* ir) {
     return ir->true_block;
 }
 
+void ir_branch_cf_set_true_block(struct BranchCfIr* ir,
+                                 struct BlockIr* true_block) {
+    ir->true_block = true_block;
+}
+
 struct BlockIr* ir_branch_cf_false_block(struct BranchCfIr* ir) {
     return ir->false_block;
+}
+
+void ir_branch_cf_set_false_block(struct BranchCfIr* ir,
+                                  struct BlockIr* false_block) {
+    ir->false_block = false_block;
 }
 
 struct ReturnCfIr {
@@ -562,6 +581,10 @@ struct ExprIr* ir_call_expr_function(struct CallExprIr* ir) {
     return ir->function;
 }
 
+void ir_call_expr_set_function(struct CallExprIr* ir, struct ExprIr* function) {
+    ir->function = function;
+}
+
 struct List* ir_call_expr_args(struct CallExprIr* ir) {
     return ir->args;
 }
@@ -604,6 +627,10 @@ strtable_id ir_var_expr_index(struct VarExprIr* ir) {
 
 struct TypeIr* ir_var_expr_type(struct VarExprIr* ir) {
     return ir_location_type(ir->location);
+}
+
+bool ir_var_expr_is_function(struct VarExprIr* ir) {
+    return ir_location_is_function(ir->location);
 }
 
 struct UnopExprIr {
@@ -747,4 +774,9 @@ struct ExprIr* ir_addrof_expr_cast(struct AddrofExprIr* ir) {
 
 struct ExprIr* ir_addrof_expr_operand(struct AddrofExprIr* ir) {
     return ir->operand;
+}
+
+void ir_addrof_expr_set_operand(struct AddrofExprIr* ir,
+                                struct ExprIr* operand) {
+    ir->operand = operand;
 }
