@@ -102,6 +102,11 @@ strtable_id context_base_pointer_reg(struct Context* context) {
 
 void context_dump_type(struct Context* context, FILE* stream,
                        struct TypeIr* type) {
+    if (!type) {
+        fprintf(stream, "<untyped>");
+        return;
+    }
+
     switch (type_tag2(type)) {
         case Type_Int:
             fprintf(stream, "int");
