@@ -60,7 +60,10 @@ static struct ExprIr* visit_binop_expr(struct SimplifyVisitor* visitor,
             assert(false);
     }
 
-    return ir_const_expr_cast(ir_new_integer_const_expr(value));
+    struct ExprIr* new_ir =
+        ir_const_expr_cast(ir_new_integer_const_expr(value));
+    ir_expr_set_type(new_ir, ir_expr_type(ir_binop_expr_cast(ir)));
+    return new_ir;
 }
 
 static struct ExprIr* visit_call_expr(struct SimplifyVisitor* visitor,

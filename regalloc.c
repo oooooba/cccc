@@ -327,6 +327,9 @@ static struct FunctionIr* visit_function2_post_process(
         struct SubstExprIr* subst = ir_new_subst_expr(
             ir_var_expr_cast(dst_var), ir_const_expr_cast(src_reg));
         ir_expr_set_reg_id(ir_subst_expr_cast(subst), param_reg_id);
+        ir_expr_set_type(
+            ir_subst_expr_cast(subst),
+            type_new_pointer2(type_new_int2()));  // used for codegen
         ir_block_insert_expr_at(insert_point, ir_subst_expr_cast(subst));
 
         ++i;

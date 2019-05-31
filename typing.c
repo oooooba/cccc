@@ -181,9 +181,21 @@ static struct BlockIr* visit_block(struct TypingVisitor* visitor,
 static struct FunctionIr* visit_function(struct TypingVisitor* visitor,
                                          struct FunctionIr* ir) {
     visitor->function = ir;
+
+    for (struct ListHeader *it = list_begin(ir_function_params(ir)),
+                           *eit = list_end(ir_function_params(ir));
+         it != eit; it = list_next(it)) {
+        struct ListItem* item = (struct ListItem*)it;
+        struct VarExprIr* param = item->item;
+        param = ir_expr_as_var(visit_var_expr(visitor, param));
+        assert(param);
+        item->item = param;
+    }
+
     struct BlockIr* body = ir_function_body(ir);
     body = visitor_visit_block(as_visitor(visitor), body);
     ir_function_set_body(ir, body);
+
     return ir;
 }
 
