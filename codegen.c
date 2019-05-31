@@ -141,13 +141,17 @@ static struct ExprIr* visit_unop_expr2(struct CodegenVisitor* visitor,
 
 static struct ExprIr* visit_member_expr2(struct CodegenVisitor* visitor,
                                          struct MemberExprIr* ir) {
-    struct VarExprIr* var = ir_expr_as_var(ir_member_expr_base(ir));
-    size_t var_offset = ir_var_expr_offset(var);
-    size_t member_offset = ir_member_expr_offset(ir);
-    strtable_id reg_id = ir_expr_reg_id(ir_member_expr_cast(ir));
-    const char* reg = register_name(visitor, reg_id);
-    fprintf(visitor->stream, "\tmov\t%s, [rbp - %ld]\n", reg,
-            var_offset - member_offset);
+    struct ExprIr* base = ir_member_expr_base(ir);
+    visitor_visit_expr(as_visitor(visitor), base);
+
+    strtable_id base_reg_id = ir_expr_reg_id(base);
+    strtable_id result_reg_id = ir_expr_reg_id(ir_member_expr_cast(ir));
+    assert(base_reg_id == result_reg_id);
+
+    const char* result_reg = register_name(visitor, result_reg_id);
+    size_t offset = ir_member_expr_offset(ir);
+
+    fprintf(visitor->stream, "\tadd\t%s, %ld\n", result_reg, offset);
     return NULL;
 }
 
