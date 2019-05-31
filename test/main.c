@@ -16,6 +16,7 @@ intptr_t test11(intptr_t);
 intptr_t test12(intptr_t, intptr_t);
 intptr_t test13(void);
 intptr_t test14(void);
+intptr_t test15(void);
 
 static void check(const char* msg, intptr_t expected, intptr_t actual) {
     if (actual == expected) {
@@ -40,5 +41,6 @@ int main(void) {
     check("test12", 4, test12(5, 1));
     check("test13", 1, test13());
     check("test14", 8, test14());
+    check("test15", 1, test15());
     return 0;
 }

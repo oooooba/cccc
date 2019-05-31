@@ -61,6 +61,7 @@ struct T;
 
 int test15() {
     struct S s;
-    s.x = 1;
-    return s.x;
+    s.y = 1;
+    s.x = 2;
+    return s.y;
 }

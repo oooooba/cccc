@@ -11,6 +11,10 @@ struct DumpVisitor;
 struct DumpVisitor* new_dump_visitor(struct Context* context, FILE* stream);
 void dump_apply(struct DumpVisitor* visitor, struct BlockIr* ir);
 
+struct TypingVisitor;
+struct TypingVisitor* new_typing_visitor(struct Context* context);
+void typing_apply(struct TypingVisitor* visitor, struct BlockIr* ir);
+
 struct SimplifyVisitor;
 struct SimplifyVisitor* new_simplify_visitor(struct Context* context);
 void simplify_apply(struct SimplifyVisitor* visitor, struct BlockIr* ir);
@@ -47,6 +51,10 @@ int main(void) {
     fprintf(stderr, "[apply dump (1)]\n");
     struct DumpVisitor* dump_visitor = new_dump_visitor(&context, stderr);
     dump_apply(dump_visitor, translation_unit);
+
+    fprintf(stderr, "[apply typing]\n");
+    struct TypingVisitor* typing_visitor = new_typing_visitor(&context);
+    typing_apply(typing_visitor, translation_unit);
 
     fprintf(stderr, "[apply simplify]\n");
     struct SimplifyVisitor* simplify_visitor = new_simplify_visitor(&context);

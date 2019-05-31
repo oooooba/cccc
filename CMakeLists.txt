@@ -17,5 +17,6 @@ add_executable(cccc
     strtable.c
     simplify.c
     type.c
+    typing.c
     vector.c
     visitor.c)
