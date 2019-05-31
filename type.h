@@ -40,12 +40,15 @@ strtable_id type_struct_name_index(struct StructTypeIr* type);
 struct List* type_struct_elem_types(struct StructTypeIr* type);
 void type_set_elem_types_as_struct(struct TypeIr* type,
                                    struct List* elem_types);
+struct MemberEntry* type_struct_find_member(struct StructTypeIr* type,
+                                            strtable_id name_index);
 
 struct MemberEntry* type_new_member_entry(strtable_id name_index,
                                           struct TypeIr* type);
 struct ListHeader* type_member_entry_as_list_header(struct MemberEntry* entry);
 strtable_id type_member_entry_name_index(struct MemberEntry* entry);
 struct TypeIr* type_member_entry_type(struct MemberEntry* entry);
+size_t type_member_entry_offset(struct MemberEntry* entry);
 
 struct TypeIr* type_new_function(struct TypeIr* result_type,
                                  struct List* param_types);

@@ -228,6 +228,7 @@ struct ExprIr* ir_member_expr_base(struct MemberExprIr* ir);
 void ir_member_expr_set_base(struct MemberExprIr* ir, struct ExprIr* base);
 strtable_id ir_member_expr_name_index(struct MemberExprIr* ir);
 size_t ir_member_expr_offset(struct MemberExprIr* ir);
+void ir_member_expr_set_offset(struct MemberExprIr* ir, size_t offset);
 
 struct DerefExprIr* ir_new_deref_expr(struct ExprIr* operand);
 struct ExprIr* ir_deref_expr_cast(struct DerefExprIr* ir);

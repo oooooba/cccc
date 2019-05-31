@@ -145,6 +145,17 @@ void type_set_elem_types_as_struct(struct TypeIr* type,
     type->size = size;
 }
 
+struct MemberEntry* type_struct_find_member(struct StructTypeIr* type,
+                                            strtable_id name_index) {
+    for (struct ListHeader *it = list_begin(type->elem_types),
+                           *eit = list_end(type->elem_types);
+         it != eit; it = list_next(it)) {
+        struct MemberEntry* entry = (struct MemberEntry*)it;
+        if (entry->name_index == name_index) return entry;
+    }
+    return NULL;
+}
+
 struct MemberEntry* type_new_member_entry(strtable_id name_index,
                                           struct TypeIr* type) {
     struct MemberEntry* entry = malloc(sizeof(struct MemberEntry));
@@ -163,6 +174,10 @@ strtable_id type_member_entry_name_index(struct MemberEntry* entry) {
 
 struct TypeIr* type_member_entry_type(struct MemberEntry* entry) {
     return entry->type;
+}
+
+size_t type_member_entry_offset(struct MemberEntry* entry) {
+    return entry->offset;
 }
 
 struct TypeIr* type_new_function(struct TypeIr* result_type,

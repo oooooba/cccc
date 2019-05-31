@@ -732,6 +732,10 @@ strtable_id ir_member_expr_name_index(struct MemberExprIr* ir) {
 
 size_t ir_member_expr_offset(struct MemberExprIr* ir) { return ir->offset; }
 
+void ir_member_expr_set_offset(struct MemberExprIr* ir, size_t offset) {
+    ir->offset = offset;
+}
+
 struct DerefExprIr {
     struct ExprIr as_expr;
     struct ExprIr* operand;
