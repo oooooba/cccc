@@ -57,47 +57,66 @@ void context_register_registers(struct Context* context) {
         *((strtable_id*)vector_allocate_back(&context->register_ids)) = id; \
     } while (0)
 
+    reg(eax);
     reg(rax);
+    reg(ebx);
     reg(rbx);
+    reg(r10d);
     reg(r10);
 
+    reg(edi);
     reg(rdi);
+    reg(esi);
     reg(rsi);
+    reg(edx);
     reg(rdx);
+    reg(ecx);
     reg(rcx);
+    reg(r8d);
     reg(r8);
+    reg(r9d);
     reg(r9);
 
+    reg(esp);
     reg(rsp);
+    reg(ebp);
     reg(rbp);
 
 #undef reg
-
-    context->func_call_arg_reg_offset = 3;
-    context->special_purpose_reg_offset = 9;
 }
 
-strtable_id context_nth_reg(struct Context* context, size_t n) {
-    assert(n < context->special_purpose_reg_offset);
-    return *((strtable_id*)vector_at(&context->register_ids, n));
+#define OFFSET_INDEX_FUNC_CALL_ARG_REG 3
+#define OFFSET_INDEX_SPECIAL_PURPOSE_REG 9
+
+strtable_id context_nth_reg(struct Context* context, size_t n,
+                            enum RegisterSizeKind kind) {
+    assert(n < OFFSET_INDEX_SPECIAL_PURPOSE_REG);
+    size_t i = n * RegisterSizeKind_Num + kind;
+    return *((strtable_id*)vector_at(&context->register_ids, i));
 }
 
-strtable_id context_nth_func_call_arg_reg(struct Context* context, size_t n) {
-    return context_nth_reg(context, context->func_call_arg_reg_offset + n);
+strtable_id context_nth_func_call_arg_reg(struct Context* context, size_t n,
+                                          enum RegisterSizeKind kind) {
+    return context_nth_reg(context, OFFSET_INDEX_FUNC_CALL_ARG_REG + n, kind);
 }
 
-strtable_id context_func_call_result_reg(struct Context* context) {
-    return context_nth_reg(context, 0);
+strtable_id context_func_call_result_reg(struct Context* context,
+                                         enum RegisterSizeKind kind) {
+    return context_nth_reg(context, 0, kind);
 }
 
-strtable_id context_stack_pointer_reg(struct Context* context) {
-    return *((strtable_id*)vector_at(&context->register_ids,
-                                     context->special_purpose_reg_offset + 0));
+strtable_id context_stack_pointer_reg(struct Context* context,
+                                      enum RegisterSizeKind kind) {
+    size_t i =
+        (OFFSET_INDEX_SPECIAL_PURPOSE_REG + 0) * RegisterSizeKind_Num + kind;
+    return *((strtable_id*)vector_at(&context->register_ids, i));
 }
 
-strtable_id context_base_pointer_reg(struct Context* context) {
-    return *((strtable_id*)vector_at(&context->register_ids,
-                                     context->special_purpose_reg_offset + 1));
+strtable_id context_base_pointer_reg(struct Context* context,
+                                     enum RegisterSizeKind kind) {
+    size_t i =
+        (OFFSET_INDEX_SPECIAL_PURPOSE_REG + 1) * RegisterSizeKind_Num + kind;
+    return *((strtable_id*)vector_at(&context->register_ids, i));
 }
 
 void context_dump_type(struct Context* context, FILE* stream,
@@ -142,5 +161,17 @@ void context_dump_type(struct Context* context, FILE* stream,
         } break;
         default:
             assert(false);
+    }
+}
+
+enum RegisterSizeKind context_type_to_register_size_kind(struct TypeIr* type) {
+    switch (type_size(type)) {
+        case 4:
+            return RegisterSizeKind_32;
+        case 8:
+            return RegisterSizeKind_64;
+        default:
+            assert(false);
+            return -1;
     }
 }
