@@ -1,28 +1,27 @@
 #include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
 
-intptr_t test1(void);
-intptr_t test2(void);
-intptr_t test3(void);
-intptr_t test4(void);
-intptr_t test5(void);
-intptr_t test6(void);
-intptr_t test7(void);
-intptr_t test8(void);
-intptr_t test9(void);
-intptr_t test10(void);
-intptr_t test11(intptr_t);
-intptr_t test12(intptr_t, intptr_t);
-intptr_t test13(void);
-intptr_t test14(void);
-intptr_t test15(void);
+int test1(void);
+int test2(void);
+int test3(void);
+int test4(void);
+int test5(void);
+int test6(void);
+int test7(void);
+int test8(void);
+int test9(void);
+int test10(void);
+int test11(int);
+int test12(int, int);
+int test13(void);
+int test14(void);
+int test15(void);
 
-static void check(const char* msg, intptr_t expected, intptr_t actual) {
+static void check(const char* msg, int expected, int actual) {
     if (actual == expected) {
         printf("%s: pass\n", msg);
     } else {
-        printf("%s: fail (expected=%ld, actual=%ld)\n", msg, expected, actual);
+        printf("%s: fail (expected=%d, actual=%d)\n", msg, expected, actual);
     }
 }
 

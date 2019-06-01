@@ -86,7 +86,7 @@ struct TypeIr* type_new_int2(void) {
     if (!type) {
         type = malloc(sizeof(struct TypeIr));
         type->tag = Type_Int;
-        type->size = sizeof(void*);  // ToDo: fix
+        type->size = sizeof(int);
     }
     return type;
 }

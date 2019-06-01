@@ -180,7 +180,6 @@ static struct ExprIr* visit_deref_expr2(struct CodegenVisitor* visitor,
 
     strtable_id operand_reg_id = ir_expr_reg_id(operand);
     strtable_id result_reg_id = ir_expr_reg_id(ir_deref_expr_cast(ir));
-    assert(operand_reg_id == result_reg_id);
 
     const char* operand_reg = register_name(visitor, operand_reg_id);
     const char* result_reg = register_name(visitor, result_reg_id);

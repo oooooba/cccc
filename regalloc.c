@@ -92,8 +92,6 @@ static struct ExprIr* visit_call_expr2(struct RegallocVisitor* visitor,
 
     struct BlockIr* pre_block = ir_call_expr_pre_expr_block(ir);
     struct BlockIr* post_block = ir_call_expr_post_expr_block(ir);
-    strtable_id result_reg_id =
-        get_func_call_result_register(visitor->context, result_type);
 
     // copy argument registers to parameter ones
     size_t i = 0;
@@ -112,15 +110,21 @@ static struct ExprIr* visit_call_expr2(struct RegallocVisitor* visitor,
         ++i;
     }
 
-    if (reg_id != result_reg_id) {
+    if (reg_id != context_func_call_result_reg(visitor->context,
+                                               RegisterSizeKind_32) &&
+        reg_id != context_func_call_result_reg(visitor->context,
+                                               RegisterSizeKind_64)) {
+        strtable_id result_reg_id =
+            context_func_call_result_reg(visitor->context, RegisterSizeKind_64);
+
         // save result register
         struct PushCfIr* push_instr = ir_new_push_cf(result_reg_id);
         ir_block_insert_at_end(pre_block,
                                ir_cf_cast(ir_push_cf_cast(push_instr)));
 
         // copy result register to expected one
-        struct ConstExprIr* copy_instr =
-            ir_new_register_const_expr(result_reg_id);
+        struct ConstExprIr* copy_instr = ir_new_register_const_expr(
+            get_func_call_result_register(visitor->context, result_type));
         ir_expr_set_reg_id(ir_const_expr_cast(copy_instr), reg_id);
         ir_block_insert_expr_at_end(post_block, ir_const_expr_cast(copy_instr));
 
@@ -343,9 +347,10 @@ static struct FunctionIr* visit_function2_post_process(
          it != eit; it = list_next(it)) {
         struct VarExprIr* dst_var = ((struct ListItem*)it)->item;
         struct TypeIr* dst_var_type = ir_var_expr_type(dst_var);
+        struct TypeIr* dst_ptr_type = ir_expr_type(ir_var_expr_cast(dst_var));
 
         strtable_id tmp_reg_id =
-            get_func_call_result_register(visitor->context, dst_var_type);
+            get_func_call_result_register(visitor->context, dst_ptr_type);
         ir_expr_set_reg_id(ir_var_expr_cast(dst_var), tmp_reg_id);
 
         strtable_id param_reg_id =
