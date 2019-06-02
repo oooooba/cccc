@@ -76,6 +76,7 @@ static bool acceptable(struct Parser* parser, enum TokenTag expected) {
 
 static bool acceptable_type(struct Parser* parser) {
     return acceptable(parser, Token_KeywordInt) ||
+           acceptable(parser, Token_KeywordChar) ||
            acceptable(parser, Token_KeywordStruct);
 }
 
@@ -313,6 +314,9 @@ static struct TypeIr* parse_type_specifier(struct Parser* parser) {
     switch (peek(parser)->tag) {
         case Token_KeywordInt:
             type = type_new_int2();
+            break;
+        case Token_KeywordChar:
+            type = type_new_char();
             break;
         case Token_KeywordStruct:
             return parse_struct_or_union_specifier(parser);

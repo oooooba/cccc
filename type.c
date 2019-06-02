@@ -91,6 +91,16 @@ struct TypeIr* type_new_int2(void) {
     return type;
 }
 
+struct TypeIr* type_new_char(void) {
+    static struct TypeIr* type = NULL;
+    if (!type) {
+        type = malloc(sizeof(struct TypeIr));
+        type->tag = Type_Char;
+        type->size = sizeof(char);
+    }
+    return type;
+}
+
 struct TypeIr* type_new_pointer2(struct TypeIr* elem_type) {
     struct TypeIr* type = malloc(sizeof(struct TypeIr));
     type->tag = Type_Pointer;

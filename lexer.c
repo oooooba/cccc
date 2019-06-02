@@ -19,6 +19,9 @@ struct ReservedKeywordsEntry {
 
 static const struct ReservedKeywordsEntry reserved_keywords[] = {
     {
+        .keyword = "char", .token_tag = Token_KeywordChar,
+    },
+    {
         .keyword = "else", .token_tag = Token_KeywordElse,
     },
     {

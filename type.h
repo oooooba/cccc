@@ -17,6 +17,7 @@ struct MemberEntry;
 
 enum TypeTag {
     Type_Int,
+    Type_Char,
     Type_Pointer,
     Type_Array,
     Type_Struct,
@@ -31,6 +32,7 @@ struct StructTypeIr* type_as_struct(struct TypeIr* type);
 struct FunctionTypeIr* type_as_function(struct TypeIr* type);
 
 struct TypeIr* type_new_int2(void);
+struct TypeIr* type_new_char(void);
 
 struct TypeIr* type_new_pointer2(struct TypeIr* elem_type);
 struct TypeIr* type_pointer_elem_type(struct PointerTypeIr* type);
