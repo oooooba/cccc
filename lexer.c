@@ -18,24 +18,14 @@ struct ReservedKeywordsEntry {
 };
 
 static const struct ReservedKeywordsEntry reserved_keywords[] = {
-    {
-        .keyword = "char", .token_tag = Token_KeywordChar,
-    },
-    {
-        .keyword = "else", .token_tag = Token_KeywordElse,
-    },
-    {
-        .keyword = "if", .token_tag = Token_KeywordIf,
-    },
-    {
-        .keyword = "int", .token_tag = Token_KeywordInt,
-    },
-    {
-        .keyword = "return", .token_tag = Token_KeywordReturn,
-    },
-    {
-        .keyword = "struct", .token_tag = Token_KeywordStruct,
-    },
+#define register_keyword(symbol, tag) \
+    { .keyword = #symbol, .token_tag = Token_Keyword##tag }
+
+    register_keyword(char, Char),     register_keyword(else, Else),
+    register_keyword(if, If),         register_keyword(int, Int),
+    register_keyword(return, Return), register_keyword(struct, Struct),
+
+#undef register_keyword
 };
 
 static enum TokenTag find_token_tag(const char* str) {
