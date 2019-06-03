@@ -18,7 +18,8 @@ struct Context {
 };
 
 enum RegisterSizeKind {
-    RegisterSizeKind_32 = 0,
+    RegisterSizeKind_8 = 0,
+    RegisterSizeKind_32,
     RegisterSizeKind_64,
     RegisterSizeKind_Num,
 };

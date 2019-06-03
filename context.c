@@ -57,28 +57,39 @@ void context_register_registers(struct Context* context) {
         *((strtable_id*)vector_allocate_back(&context->register_ids)) = id; \
     } while (0)
 
+    reg(al);
     reg(eax);
     reg(rax);
+    reg(bl);
     reg(ebx);
     reg(rbx);
+    reg(r10l);
     reg(r10d);
     reg(r10);
 
+    reg(dil);
     reg(edi);
     reg(rdi);
+    reg(sil);
     reg(esi);
     reg(rsi);
+    reg(dl);
     reg(edx);
     reg(rdx);
+    reg(cl);
     reg(ecx);
     reg(rcx);
+    reg(r8l);
     reg(r8d);
     reg(r8);
+    reg(r9l);
     reg(r9d);
     reg(r9);
 
+    reg(spl);
     reg(esp);
     reg(rsp);
+    reg(bpl);
     reg(ebp);
     reg(rbp);
 
@@ -130,6 +141,9 @@ void context_dump_type(struct Context* context, FILE* stream,
         case Type_Int:
             fprintf(stream, "int");
             break;
+        case Type_Char:
+            fprintf(stream, "char");
+            break;
         case Type_Pointer: {
             struct PointerTypeIr* p = type_as_pointer(type);
             context_dump_type(context, stream, type_pointer_elem_type(p));
@@ -166,6 +180,8 @@ void context_dump_type(struct Context* context, FILE* stream,
 
 enum RegisterSizeKind context_type_to_register_size_kind(struct TypeIr* type) {
     switch (type_size(type)) {
+        case 1:
+            return RegisterSizeKind_8;
         case 4:
             return RegisterSizeKind_32;
         case 8:
