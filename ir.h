@@ -33,6 +33,7 @@ struct SubstExprIr;
 struct MemberExprIr;
 struct DerefExprIr;
 struct AddrofExprIr;
+struct CastExprIr;
 
 enum IrTag {
     IrTag_Block,
@@ -60,6 +61,7 @@ enum ExprIrTag {
     ExprIrTag_Member,
     ExprIrTag_Deref,
     ExprIrTag_Addrof,
+    ExprIrTag_Cast,
 };
 
 enum ConstExprIrTag {
@@ -158,9 +160,6 @@ strtable_id ir_pop_cf_reg_id(struct PopCfIr* ir);
 struct Ir* ir_expr_cast(struct ExprIr* ir);
 struct ConstExprIr* ir_expr_as_const(struct ExprIr* ir);
 struct BinopExprIr* ir_expr_as_binop(struct ExprIr* ir);
-struct AddrofExprIr* ir_expr_as_addrof(struct ExprIr* ir);
-struct LoadExprIr* ir_expr_as_load(struct ExprIr* ir);
-struct StoreExprIr* ir_expr_as_store(struct ExprIr* ir);
 struct VarExprIr* ir_expr_as_var(struct ExprIr* ir);
 struct CallExprIr* ir_expr_as_call(struct ExprIr* ir);
 struct UnopExprIr* ir_expr_as_unop(struct ExprIr* ir);
@@ -168,6 +167,8 @@ struct SubstExprIr* ir_expr_as_subst(struct ExprIr* ir);
 struct MemberExprIr* ir_expr_as_member(struct ExprIr* ir);
 struct DerefExprIr* ir_expr_as_deref(struct ExprIr* ir);
 struct AddrofExprIr* ir_expr_as_addrof(struct ExprIr* ir);
+struct CastExprIr* ir_expr_as_cast(struct ExprIr* ir);
+
 enum ExprIrTag ir_expr_tag(struct ExprIr* ir);
 struct TypeIr* ir_expr_type(struct ExprIr* ir);
 void ir_expr_set_type(struct ExprIr* ir, struct TypeIr* type);
@@ -240,5 +241,11 @@ struct ExprIr* ir_addrof_expr_cast(struct AddrofExprIr* ir);
 struct ExprIr* ir_addrof_expr_operand(struct AddrofExprIr* ir);
 void ir_addrof_expr_set_operand(struct AddrofExprIr* ir,
                                 struct ExprIr* operand);
+
+struct CastExprIr* ir_new_cast_expr(struct ExprIr* operand,
+                                    struct TypeIr* type);
+struct ExprIr* ir_cast_expr_cast(struct CastExprIr* ir);
+struct ExprIr* ir_cast_expr_operand(struct CastExprIr* ir);
+void ir_cast_expr_set_operand(struct CastExprIr* ir, struct ExprIr* operand);
 
 #endif

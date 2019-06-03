@@ -458,6 +458,10 @@ struct AddrofExprIr* ir_expr_as_addrof(struct ExprIr* ir) {
     return ir->tag == ExprIrTag_Addrof ? (struct AddrofExprIr*)ir : NULL;
 }
 
+struct CastExprIr* ir_expr_as_cast(struct ExprIr* ir) {
+    return ir->tag == ExprIrTag_Cast ? (struct CastExprIr*)ir : NULL;
+}
+
 enum ExprIrTag ir_expr_tag(struct ExprIr* ir) { return ir->tag; }
 
 struct TypeIr* ir_expr_type(struct ExprIr* ir) {
@@ -782,5 +786,31 @@ struct ExprIr* ir_addrof_expr_operand(struct AddrofExprIr* ir) {
 
 void ir_addrof_expr_set_operand(struct AddrofExprIr* ir,
                                 struct ExprIr* operand) {
+    ir->operand = operand;
+}
+
+struct CastExprIr {
+    struct ExprIr as_expr;
+    struct ExprIr* operand;
+};
+
+struct CastExprIr* ir_new_cast_expr(struct ExprIr* operand,
+                                    struct TypeIr* type) {
+    struct CastExprIr* ir = malloc(sizeof(struct CastExprIr));
+    initialize_expr(ir_cast_expr_cast(ir), ExprIrTag_Cast);
+    ir->operand = operand;
+    ir_expr_set_type(ir_cast_expr_cast(ir), type);
+    return ir;
+}
+
+struct ExprIr* ir_cast_expr_cast(struct CastExprIr* ir) {
+    return &ir->as_expr;
+}
+
+struct ExprIr* ir_cast_expr_operand(struct CastExprIr* ir) {
+    return ir->operand;
+}
+
+void ir_cast_expr_set_operand(struct CastExprIr* ir, struct ExprIr* operand) {
     ir->operand = operand;
 }
