@@ -65,3 +65,9 @@ int test15() {
     s.x = 2;
     return s.y;
 }
+
+int test16() {
+    char c;
+    c = 65;
+    return c + 1;
+}
