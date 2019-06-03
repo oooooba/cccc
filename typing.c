@@ -38,7 +38,19 @@ static struct ExprIr* visit_binop_expr(struct TypingVisitor* visitor,
     struct ExprIr* rhs = ir_binop_expr_rhs(ir);
     rhs = visitor_visit_expr(as_visitor(visitor), rhs);
 
-    check_type(visitor, ir_expr_type(lhs), ir_expr_type(rhs));
+    struct TypeIr* lhs_type = ir_expr_type(lhs);
+    struct TypeIr* rhs_type = ir_expr_type(rhs);
+
+    if (!type_equal(lhs_type, rhs_type)) {
+        if (type_equal(lhs_type, type_new_int2()) &&
+            type_equal(rhs_type, type_new_char())) {
+            rhs = ir_cast_expr_cast(ir_new_cast_expr(rhs, lhs_type));
+        } else if (type_equal(lhs_type, type_new_char()) &&
+                   type_equal(rhs_type, type_new_int2())) {
+            lhs = ir_cast_expr_cast(ir_new_cast_expr(lhs, rhs_type));
+        } else
+            assert(false);
+    }
 
     ir_binop_expr_set_lhs(ir, lhs);
     ir_binop_expr_set_rhs(ir, rhs);
@@ -111,8 +123,15 @@ static struct ExprIr* visit_subst_expr(struct TypingVisitor* visitor,
     struct ExprIr* addr = ir_subst_expr_addr(ir);
     addr = visitor_visit_expr(as_visitor(visitor), addr);
 
-    check_type(visitor, type_new_pointer2(ir_expr_type(value)),
-               ir_expr_type(addr));
+    struct TypeIr* value_type = ir_expr_type(value);
+    struct TypeIr* loc_type =
+        type_pointer_elem_type(type_as_pointer(ir_expr_type(addr)));
+
+    if (!type_equal(value_type, loc_type)) {
+        // apply implicit conversion
+        struct CastExprIr* cast = ir_new_cast_expr(value, loc_type);
+        value = ir_cast_expr_cast(cast);
+    }
 
     ir_subst_expr_set_value(ir, value);
     ir_subst_expr_set_addr(ir, addr);

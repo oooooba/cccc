@@ -188,6 +188,25 @@ static struct ExprIr* visit_deref_expr2(struct CodegenVisitor* visitor,
     return NULL;
 }
 
+static struct ExprIr* visit_cast_expr2(struct CodegenVisitor* visitor,
+                                       struct CastExprIr* ir) {
+    struct ExprIr* operand = ir_cast_expr_operand(ir);
+    visitor_visit_expr(as_visitor(visitor), operand);
+
+    strtable_id operand_reg_id = ir_expr_reg_id(operand);
+    strtable_id result_reg_id = ir_expr_reg_id(ir_cast_expr_cast(ir));
+
+    const char* operand_reg = register_name(visitor, operand_reg_id);
+    const char* result_reg = register_name(visitor, result_reg_id);
+
+    size_t operand_reg_size = type_size(ir_expr_type(operand));
+    size_t result_reg_size = type_size(ir_expr_type(ir_cast_expr_cast(ir)));
+    if (operand_reg_size < result_reg_size)
+        fprintf(visitor->stream, "\tmovsx\t%s, %s\n", result_reg, operand_reg);
+
+    return NULL;
+}
+
 static struct BlockIr* visit_block2(struct CodegenVisitor* visitor,
                                     struct BlockIr* ir) {
     fprintf(visitor->stream, "lab_%p:\n", ir);
@@ -289,6 +308,7 @@ struct CodegenVisitor* new_codegen_visitor(struct Context* context,
     register_visitor(visitor->as_visitor, visit_member_expr,
                      visit_member_expr2);
     register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr2);
+    register_visitor(visitor->as_visitor, visit_cast_expr, visit_cast_expr2);
     register_visitor(visitor->as_visitor, visit_block, visit_block2);
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf2);

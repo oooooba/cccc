@@ -156,6 +156,17 @@ static struct ExprIr* visit_addrof_expr2(struct DumpVisitor* visitor,
     return NULL;
 }
 
+static struct ExprIr* visit_cast_expr2(struct DumpVisitor* visitor,
+                                       struct CastExprIr* ir) {
+    struct ExprIr* operand = ir_cast_expr_operand(ir);
+    visitor_visit_expr(as_visitor(visitor), operand);
+    fprintf(visitor->stream, "v%p = cast v%p :: ", ir, operand);
+    context_dump_type(visitor->context, visitor->stream,
+                      ir_expr_type(ir_cast_expr_cast(ir)));
+    fprintf(visitor->stream, "\n");
+    return NULL;
+}
+
 static struct BlockIr* visit_block2(struct DumpVisitor* visitor,
                                     struct BlockIr* ir) {
     fprintf(visitor->stream, "[@%p]{\n", ir);
@@ -238,6 +249,7 @@ struct DumpVisitor* new_dump_visitor(struct Context* context, FILE* stream) {
     register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr2);
     register_visitor(visitor->as_visitor, visit_addrof_expr,
                      visit_addrof_expr2);
+    register_visitor(visitor->as_visitor, visit_cast_expr, visit_cast_expr2);
     register_visitor(visitor->as_visitor, visit_block, visit_block2);
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf2);

@@ -22,6 +22,8 @@ struct Visitor {
                                        struct DerefExprIr* ir);
     struct ExprIr* (*visit_addrof_expr)(struct Visitor* visitor,
                                         struct AddrofExprIr* ir);
+    struct ExprIr* (*visit_cast_expr)(struct Visitor* visitor,
+                                      struct CastExprIr* ir);
     struct BlockIr* (*visit_block)(struct Visitor* visitor, struct BlockIr* ir);
     struct FunctionIr* (*visit_function)(struct Visitor* visitor,
                                          struct FunctionIr* ir);

@@ -144,6 +144,16 @@ static struct ExprIr* visit_addrof_expr(struct SimplifyVisitor* visitor,
     return new_operand ? new_operand : operand;
 }
 
+static struct ExprIr* visit_cast_expr(struct SimplifyVisitor* visitor,
+                                      struct CastExprIr* ir) {
+    struct ExprIr* new_operand =
+        visitor_visit_expr(as_visitor(visitor), ir_cast_expr_operand(ir));
+    if (new_operand) {
+        ir_cast_expr_set_operand(ir, new_operand);
+    }
+    return NULL;
+}
+
 static struct BlockIr* visit_block(struct SimplifyVisitor* visitor,
                                    struct BlockIr* ir) {
     struct BlockIterator* it = ir_block_new_iterator(ir);
@@ -201,6 +211,7 @@ struct SimplifyVisitor* new_simplify_visitor(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_member_expr, visit_member_expr);
     register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr);
     register_visitor(visitor->as_visitor, visit_addrof_expr, visit_addrof_expr);
+    register_visitor(visitor->as_visitor, visit_cast_expr, visit_cast_expr);
     register_visitor(visitor->as_visitor, visit_block, visit_block);
     register_visitor(visitor->as_visitor, visit_function, visit_function);
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf);
