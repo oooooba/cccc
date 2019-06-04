@@ -27,7 +27,7 @@ static void check_type(struct TypingVisitor* visitor,
 static struct ExprIr* visit_const_expr(struct TypingVisitor* visitor,
                                        struct ConstExprIr* ir) {
     (void)visitor;
-    ir_expr_set_type(ir_const_expr_cast(ir), type_new_int2());
+    ir_expr_set_type(ir_const_expr_cast(ir), type_int_super(type_new_int()));
     return ir_const_expr_cast(ir);
 }
 
@@ -42,13 +42,12 @@ static struct ExprIr* visit_binop_expr(struct TypingVisitor* visitor,
     struct TypeIr* rhs_type = ir_expr_type(rhs);
 
     if (!type_equal(lhs_type, rhs_type)) {
-        if (type_equal(lhs_type, type_new_int2()) &&
-            type_equal(rhs_type, type_new_char())) {
+        if (type_tag(lhs_type) == Type_Int && type_tag(rhs_type) == Type_Char)
             rhs = ir_cast_expr_cast(ir_new_cast_expr(rhs, lhs_type));
-        } else if (type_equal(lhs_type, type_new_char()) &&
-                   type_equal(rhs_type, type_new_int2())) {
+        else if (type_tag(lhs_type) == Type_Char &&
+                 type_tag(rhs_type) == Type_Int)
             lhs = ir_cast_expr_cast(ir_new_cast_expr(lhs, rhs_type));
-        } else
+        else
             assert(false);
     }
 
@@ -103,7 +102,8 @@ static struct ExprIr* visit_var_expr(struct TypingVisitor* visitor,
     if (ir_var_expr_is_function(ir)) {
         ir_expr_set_type(ir_var_expr_cast(ir), type);
     } else {
-        ir_expr_set_type(ir_var_expr_cast(ir), type_new_pointer2(type));
+        ir_expr_set_type(ir_var_expr_cast(ir),
+                         type_pointer_super(type_new_pointer(type)));
     }
     return ir_var_expr_cast(ir);
 }
@@ -158,7 +158,8 @@ static struct ExprIr* visit_member_expr(struct TypingVisitor* visitor,
     struct TypeIr* type = type_member_entry_type(entry);
     ir_member_expr_set_offset(ir, type_member_entry_offset(entry));
 
-    ir_expr_set_type(ir_member_expr_cast(ir), type_new_pointer2(type));
+    ir_expr_set_type(ir_member_expr_cast(ir),
+                     type_pointer_super(type_new_pointer(type)));
     return ir_member_expr_cast(ir);
 }
 
@@ -179,8 +180,9 @@ static struct ExprIr* visit_addrof_expr(struct TypingVisitor* visitor,
     struct ExprIr* operand = ir_addrof_expr_operand(ir);
     operand = visitor_visit_expr(as_visitor(visitor), operand);
     ir_addrof_expr_set_operand(ir, operand);
-    ir_expr_set_type(ir_addrof_expr_cast(ir),
-                     type_new_pointer2(ir_expr_type(operand)));
+    ir_expr_set_type(
+        ir_addrof_expr_cast(ir),
+        type_pointer_super(type_new_pointer(ir_expr_type(operand))));
     return ir_addrof_expr_cast(ir);
 }
 

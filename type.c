@@ -7,164 +7,12 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-struct PointerTypeIr {
-    struct TypeIr* elem_type;
-};
-
-struct StructTypeIr {
-    strtable_id name_index;
-    struct List* elem_types;  // MemberEntry* list
-};
-
-struct FunctionTypeIr {
-    struct TypeIr* result_type;
-    struct List* param_types;  // TypeIr* list
-};
-
-// ToDo: treat above types as subtype of TypeIr
-
-struct TypeIr {
-    enum TypeTag tag;
-    size_t size;
-    union {
-        struct PointerTypeIr* pointer;
-        struct StructTypeIr* structure;
-        struct FunctionTypeIr* function;
-    };
-};
-
 struct MemberEntry {
     struct ListHeader as_list;
     strtable_id name_index;
     struct TypeIr* type;
     size_t offset;
 };
-
-enum TypeTag type_tag2(struct TypeIr* type) { return type->tag; }
-
-size_t type_size(struct TypeIr* type) { return type->size; }
-
-bool type_equal(struct TypeIr* type1, struct TypeIr* type2) {
-    if (type1 == type2)
-        return true;
-    else if (type1->tag == Type_Pointer && type2->tag == Type_Pointer)
-        return type_equal(type1->pointer->elem_type, type2->pointer->elem_type);
-    else if (type1->tag == Type_Function && type2->tag == Type_Function) {
-        struct FunctionTypeIr* ft1 = type1->function;
-        struct FunctionTypeIr* ft2 = type2->function;
-        if (!type_equal(ft1->result_type, ft2->result_type)) return false;
-        struct ListHeader *it1 = list_begin(ft1->param_types),
-                          *it2 = list_begin(ft2->param_types),
-                          *eit1 = list_end(ft1->param_types),
-                          *eit2 = list_end(ft2->param_types);
-        while (!(it1 == eit1 || it2 == eit2)) {
-            struct TypeIr* t1 = ((struct ListItem*)it1)->item;
-            struct TypeIr* t2 = ((struct ListItem*)it2)->item;
-            if (!type_equal(t1, t2)) return false;
-            it1 = list_next(it1);
-            it2 = list_next(it2);
-        }
-        return (it1 == eit1 && it2 == eit2);
-    } else
-        return type1->tag == type2->tag;
-}
-
-struct PointerTypeIr* type_as_pointer(struct TypeIr* type) {
-    return type->tag == Type_Pointer ? type->pointer : NULL;
-}
-
-struct StructTypeIr* type_as_struct(struct TypeIr* type) {
-    return type->tag == Type_Struct ? type->structure : NULL;
-}
-
-struct FunctionTypeIr* type_as_function(struct TypeIr* type) {
-    return type->tag == Type_Function ? type->function : NULL;
-}
-
-struct TypeIr* type_new_int2(void) {
-    static struct TypeIr* type = NULL;
-    if (!type) {
-        type = malloc(sizeof(struct TypeIr));
-        type->tag = Type_Int;
-        type->size = sizeof(int);
-    }
-    return type;
-}
-
-struct TypeIr* type_new_char(void) {
-    static struct TypeIr* type = NULL;
-    if (!type) {
-        type = malloc(sizeof(struct TypeIr));
-        type->tag = Type_Char;
-        type->size = sizeof(char);
-    }
-    return type;
-}
-
-struct TypeIr* type_new_pointer2(struct TypeIr* elem_type) {
-    struct TypeIr* type = malloc(sizeof(struct TypeIr));
-    type->tag = Type_Pointer;
-    type->pointer = malloc(sizeof(struct PointerTypeIr));
-    type->pointer->elem_type = elem_type;
-    type->size = sizeof(void*);
-    return type;
-}
-
-struct TypeIr* type_pointer_elem_type(struct PointerTypeIr* type) {
-    return type->elem_type;
-}
-
-struct TypeIr* type_new_struct(strtable_id name_index,
-                               struct List* elem_types) {
-    struct TypeIr* type = malloc(sizeof(struct TypeIr));
-    type->tag = Type_Struct;
-    type->structure = malloc(sizeof(struct StructTypeIr));
-    type->structure->name_index = name_index;
-    type->structure->elem_types = elem_types;
-    type->size = (size_t)-1;
-    return type;
-}
-
-strtable_id type_struct_name_index(struct StructTypeIr* type) {
-    return type->name_index;
-}
-
-struct List* type_struct_elem_types(struct StructTypeIr* type) {
-    return type->elem_types;
-}
-
-void type_set_elem_types_as_struct(struct TypeIr* type,
-                                   struct List* elem_types) {
-    assert(type->tag == Type_Struct);
-    type->structure->elem_types = elem_types;
-
-    size_t size = 0;
-    for (struct ListHeader *it = list_begin(elem_types),
-                           *eit = list_end(elem_types);
-         it != eit; it = list_next(it)) {
-        struct MemberEntry* entry = (struct MemberEntry*)it;
-        struct TypeIr* member_type = entry->type;
-        entry->offset = size;
-        size_t s = member_type->size;
-        size = (size + s - 1) / s * s;
-        size += s;
-    }
-    size_t alignment = sizeof(void*);
-    size = (size + alignment - 1) / alignment * alignment;
-
-    type->size = size;
-}
-
-struct MemberEntry* type_struct_find_member(struct StructTypeIr* type,
-                                            strtable_id name_index) {
-    for (struct ListHeader *it = list_begin(type->elem_types),
-                           *eit = list_end(type->elem_types);
-         it != eit; it = list_next(it)) {
-        struct MemberEntry* entry = (struct MemberEntry*)it;
-        if (entry->name_index == name_index) return entry;
-    }
-    return NULL;
-}
 
 struct MemberEntry* type_new_member_entry(strtable_id name_index,
                                           struct TypeIr* type) {
@@ -190,14 +38,163 @@ size_t type_member_entry_offset(struct MemberEntry* entry) {
     return entry->offset;
 }
 
-struct TypeIr* type_new_function(struct TypeIr* result_type,
-                                 struct List* param_types) {
-    struct TypeIr* type = malloc(sizeof(struct TypeIr));
-    type->tag = Type_Function;
-    type->function = malloc(sizeof(struct FunctionTypeIr));
-    type->function->result_type = result_type;
-    type->function->param_types = param_types;
+struct TypeIr {
+    enum TypeTag tag;
+    size_t size;
+};
+
+static void initialize_type(struct TypeIr* type, enum TypeTag tag,
+                            size_t size) {
+    type->tag = tag;
+    type->size = size;
+}
+
+struct PointerTypeIr* type_as_pointer(struct TypeIr* type) {
+    return type->tag == Type_Pointer ? (struct PointerTypeIr*)type : NULL;
+}
+
+struct StructTypeIr* type_as_struct(struct TypeIr* type) {
+    return type->tag == Type_Struct ? (struct StructTypeIr*)type : NULL;
+}
+
+struct FunctionTypeIr* type_as_function(struct TypeIr* type) {
+    return type->tag == Type_Function ? (struct FunctionTypeIr*)type : NULL;
+}
+
+enum TypeTag type_tag(struct TypeIr* type) { return type->tag; }
+
+size_t type_size(struct TypeIr* type) { return type->size; }
+
+struct IntTypeIr {
+    struct TypeIr super;
+};
+
+struct IntTypeIr* type_new_int(void) {
+    static struct IntTypeIr* type = NULL;
+    if (!type) {
+        type = malloc(sizeof(struct IntTypeIr));
+        initialize_type(type_int_super(type), Type_Int, sizeof(int));
+    }
     return type;
+}
+
+struct TypeIr* type_int_super(struct IntTypeIr* type) {
+    return &type->super;
+}
+
+struct CharTypeIr {
+    struct TypeIr super;
+};
+
+struct CharTypeIr* type_new_char(void) {
+    static struct CharTypeIr* type = NULL;
+    if (!type) {
+        type = malloc(sizeof(struct CharTypeIr));
+        initialize_type(type_char_super(type), Type_Char, sizeof(char));
+    }
+    return type;
+}
+
+struct TypeIr* type_char_super(struct CharTypeIr* type) {
+    return &type->super;
+}
+
+struct PointerTypeIr {
+    struct TypeIr super;
+    struct TypeIr* elem_type;
+};
+
+struct PointerTypeIr* type_new_pointer(struct TypeIr* elem_type) {
+    struct PointerTypeIr* type = malloc(sizeof(struct PointerTypeIr));
+    initialize_type(type_pointer_super(type), Type_Pointer, sizeof(void*));
+    type->elem_type = elem_type;
+    return type;
+}
+
+struct TypeIr* type_pointer_super(struct PointerTypeIr* type) {
+    return &type->super;
+}
+
+struct TypeIr* type_pointer_elem_type(struct PointerTypeIr* type) {
+    return type->elem_type;
+}
+
+struct StructTypeIr {
+    struct TypeIr super;
+    strtable_id name_index;
+    struct List* elem_types;  // MemberEntry* list
+};
+
+struct StructTypeIr* type_new_struct(strtable_id name_index,
+                                     struct List* elem_types) {
+    struct StructTypeIr* type = malloc(sizeof(struct StructTypeIr));
+    initialize_type(type_struct_super(type), Type_Struct, (size_t)-1);
+    type->name_index = name_index;
+    type->elem_types = elem_types;
+    return type;
+}
+
+struct TypeIr* type_struct_super(struct StructTypeIr* type) {
+    return &type->super;
+}
+
+strtable_id type_struct_name_index(struct StructTypeIr* type) {
+    return type->name_index;
+}
+
+struct List* type_struct_elem_types(struct StructTypeIr* type) {
+    return type->elem_types;
+}
+
+void type_struct_set_elem_types(struct StructTypeIr* type,
+                                struct List* elem_types) {
+    type->elem_types = elem_types;
+
+    size_t size = 0;
+    for (struct ListHeader *it = list_begin(elem_types),
+                           *eit = list_end(elem_types);
+         it != eit; it = list_next(it)) {
+        struct MemberEntry* entry = (struct MemberEntry*)it;
+        struct TypeIr* member_type = entry->type;
+        entry->offset = size;
+        size_t s = member_type->size;
+        size = (size + s - 1) / s * s;
+        size += s;
+    }
+    size_t alignment = sizeof(void*);
+    size = (size + alignment - 1) / alignment * alignment;
+
+    type_struct_super(type)->size = size;
+}
+
+struct MemberEntry* type_struct_find_member(struct StructTypeIr* type,
+                                            strtable_id name_index) {
+    for (struct ListHeader *it = list_begin(type->elem_types),
+                           *eit = list_end(type->elem_types);
+         it != eit; it = list_next(it)) {
+        struct MemberEntry* entry = (struct MemberEntry*)it;
+        if (entry->name_index == name_index) return entry;
+    }
+    return NULL;
+}
+
+struct FunctionTypeIr {
+    struct TypeIr super;
+    struct TypeIr* result_type;
+    struct List* param_types;  // TypeIr* list
+};
+
+struct FunctionTypeIr* type_new_function(struct TypeIr* result_type,
+                                         struct List* param_types) {
+    struct FunctionTypeIr* type = malloc(sizeof(struct FunctionTypeIr));
+    initialize_type(type_function_super(type), Type_Function, (size_t)-1);
+    type->result_type = result_type;
+    type->param_types = param_types;
+    return type;
+}
+
+struct TypeIr* type_function_super(struct FunctionTypeIr* type) {
+    return &type->super;
 }
 
 struct TypeIr* type_function_result_type(struct FunctionTypeIr* type) {
@@ -206,4 +203,32 @@ struct TypeIr* type_function_result_type(struct FunctionTypeIr* type) {
 
 struct List* type_function_param_types(struct FunctionTypeIr* type) {
     return type->param_types;
+}
+
+bool type_equal(struct TypeIr* type1, struct TypeIr* type2) {
+    if (type1 == type2)
+        return true;
+    else if (type1->tag == Type_Pointer && type2->tag == Type_Pointer)
+        return type_equal(type_as_pointer(type1)->elem_type,
+                          type_as_pointer(type2)->elem_type);
+    else if (type1->tag == Type_Struct && type2->tag == Type_Struct)
+        assert(false);
+    else if (type1->tag == Type_Function && type2->tag == Type_Function) {
+        struct FunctionTypeIr* ft1 = type_as_function(type1);
+        struct FunctionTypeIr* ft2 = type_as_function(type2);
+        if (!type_equal(ft1->result_type, ft2->result_type)) return false;
+        struct ListHeader *it1 = list_begin(ft1->param_types),
+                          *it2 = list_begin(ft2->param_types),
+                          *eit1 = list_end(ft1->param_types),
+                          *eit2 = list_end(ft2->param_types);
+        while (!(it1 == eit1 || it2 == eit2)) {
+            struct TypeIr* t1 = ((struct ListItem*)it1)->item;
+            struct TypeIr* t2 = ((struct ListItem*)it2)->item;
+            if (!type_equal(t1, t2)) return false;
+            it1 = list_next(it1);
+            it2 = list_next(it2);
+        }
+        return (it1 == eit1 && it2 == eit2);
+    } else
+        return type1->tag == type2->tag;
 }

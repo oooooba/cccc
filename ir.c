@@ -116,11 +116,11 @@ static struct Location* ir_new_location(struct BlockIr* block,
 }
 
 struct Location* ir_declare_function(strtable_id name_index,
-                                     struct TypeIr* type) {
+                                     struct FunctionTypeIr* type) {
     struct Location* loc = malloc(sizeof(struct Location));
     loc->block = NULL;
     loc->name_index = name_index;
-    loc->type = type;
+    loc->type = type_function_super(type);
     loc->region_offset = (size_t)-1;
     return loc;
 }

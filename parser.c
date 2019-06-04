@@ -278,7 +278,7 @@ static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser) {
     struct TypeIr* type =
         context_find_user_defined_type(parser->context, name_index);
     if (!type) {
-        type = type_new_struct(name_index, NULL);
+        type = type_struct_super(type_new_struct(name_index, NULL));
         context_insert_user_defined_type(parser->context, name_index, type);
     }
 
@@ -303,7 +303,7 @@ static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser) {
         }
         expect(parser, Token_RightCurry);
 
-        type_set_elem_types_as_struct(type, elem_types);
+        type_struct_set_elem_types(type_as_struct(type), elem_types);
     }
 
     return type;
@@ -313,10 +313,10 @@ static struct TypeIr* parse_type_specifier(struct Parser* parser) {
     struct TypeIr* type;
     switch (peek(parser)->tag) {
         case Token_KeywordInt:
-            type = type_new_int2();
+            type = type_int_super(type_new_int());
             break;
         case Token_KeywordChar:
-            type = type_new_char();
+            type = type_char_super(type_new_char());
             break;
         case Token_KeywordStruct:
             return parse_struct_or_union_specifier(parser);
@@ -332,7 +332,7 @@ static strtable_id parse_declarator(struct Parser* parser,
                                     struct TypeIr** result_type) {
     if (acceptable(parser, Token_Asterisk)) {
         advance(parser);
-        *result_type = type_new_pointer2(base_type);
+        *result_type = type_pointer_super(type_new_pointer(base_type));
     } else
         *result_type = base_type;
 
@@ -517,7 +517,8 @@ static struct FunctionIr* parse_function_definition(struct Parser* parser) {
     }
     expect(parser, Token_RightParen);
 
-    struct TypeIr* func_type = type_new_function(func_decl->type, param_types);
+    struct FunctionTypeIr* func_type =
+        type_new_function(func_decl->type, param_types);
     strtable_id name_index = func_decl->name_index;
     struct Location* func_loc = ir_declare_function(name_index, func_type);
     context_insert_function_declaration(parser->context, name_index, func_loc);
@@ -526,8 +527,7 @@ static struct FunctionIr* parse_function_definition(struct Parser* parser) {
 
     parser->current_env = env->outer_env;
 
-    return ir_new_function(name_index, type_as_function(func_type), params,
-                           body);
+    return ir_new_function(name_index, func_type, params, body);
 }
 
 static struct BlockIr* parse_translation_unit(struct Parser* parser) {

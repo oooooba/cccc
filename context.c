@@ -137,7 +137,7 @@ void context_dump_type(struct Context* context, FILE* stream,
         return;
     }
 
-    switch (type_tag2(type)) {
+    switch (type_tag(type)) {
         case Type_Int:
             fprintf(stream, "int");
             break;

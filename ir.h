@@ -113,7 +113,7 @@ struct Location* ir_block_allocate_location(struct BlockIr* ir,
                                             strtable_id name_index,
                                             struct TypeIr* type);
 struct Location* ir_declare_function(strtable_id name_index,
-                                     struct TypeIr* type);
+                                     struct FunctionTypeIr* type);
 void ir_block_commit_region_status(struct BlockIr* ir, size_t region_base);
 size_t ir_block_region_size(struct BlockIr* ir);
 strtable_id ir_location_name_index(struct Location* loc);
