@@ -65,6 +65,23 @@ enum TypeTag type_tag(struct TypeIr* type) { return type->tag; }
 
 size_t type_size(struct TypeIr* type) { return type->size; }
 
+struct VoidTypeIr {
+    struct TypeIr super;
+};
+
+struct VoidTypeIr* type_new_void(void) {
+    static struct VoidTypeIr* type = NULL;
+    if (!type) {
+        type = malloc(sizeof(struct VoidTypeIr));
+        initialize_type(type_void_super(type), Type_Void, (size_t)-1);
+    }
+    return type;
+}
+
+struct TypeIr* type_void_super(struct VoidTypeIr* type) {
+    return &type->super;
+}
+
 struct IntTypeIr {
     struct TypeIr super;
 };

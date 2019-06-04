@@ -18,6 +18,7 @@ struct FunctionTypeIr;
 struct MemberEntry;
 
 enum TypeTag {
+    Type_Void,
     Type_Int,
     Type_Char,
     Type_Pointer,
@@ -32,6 +33,9 @@ struct FunctionTypeIr* type_as_function(struct TypeIr* type);
 
 enum TypeTag type_tag(struct TypeIr* type);
 size_t type_size(struct TypeIr* type);
+
+struct VoidTypeIr* type_new_void(void);
+struct TypeIr* type_void_super(struct VoidTypeIr* type);
 
 struct IntTypeIr* type_new_int(void);
 struct TypeIr* type_int_super(struct IntTypeIr* type);
