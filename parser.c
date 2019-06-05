@@ -318,6 +318,9 @@ static struct TypeIr* parse_type_specifier(struct Parser* parser) {
         case Token_KeywordChar:
             type = type_char_super(type_new_char());
             break;
+        case Token_KeywordVoid:
+            type = type_void_super(type_new_void());
+            break;
         case Token_KeywordStruct:
             return parse_struct_or_union_specifier(parser);
         default:
@@ -489,30 +492,34 @@ static struct FunctionIr* parse_function_definition(struct Parser* parser) {
     list_initialize(params);
     struct List* param_types = malloc(sizeof(struct List));
     list_initialize(param_types);
-    while (!acceptable(parser, Token_RightParen)) {
-        struct List param_decls;
-        list_initialize(&param_decls);
-        parse_declaration(parser, &param_decls);
-        assert(list_size(&param_decls) == 1);
+    if (acceptable(parser, Token_KeywordVoid))
+        advance(parser);
+    else {
+        while (!acceptable(parser, Token_RightParen)) {
+            struct List param_decls;
+            list_initialize(&param_decls);
+            parse_declaration(parser, &param_decls);
+            assert(list_size(&param_decls) == 1);
 
-        struct Declaration* param_decl =
-            (struct Declaration*)list_begin(&param_decls);
-        strtable_id name_index = param_decl->name_index;
-        struct Location* loc =
-            ir_block_allocate_location(body, name_index, param_decl->type);
-        env_insert(env, name_index, loc);
+            struct Declaration* param_decl =
+                (struct Declaration*)list_begin(&param_decls);
+            strtable_id name_index = param_decl->name_index;
+            struct Location* loc =
+                ir_block_allocate_location(body, name_index, param_decl->type);
+            env_insert(env, name_index, loc);
 
-        struct ListItem* param_item = malloc(sizeof(struct ListItem));
-        param_item->item = ir_new_var_expr(loc);
-        list_insert_at_end(params, list_from(param_item));
+            struct ListItem* param_item = malloc(sizeof(struct ListItem));
+            param_item->item = ir_new_var_expr(loc);
+            list_insert_at_end(params, list_from(param_item));
 
-        struct ListItem* param_type_item = malloc(sizeof(struct ListItem));
-        param_type_item->item = param_decl->type;
-        list_insert_at_end(param_types, list_from(param_type_item));
+            struct ListItem* param_type_item = malloc(sizeof(struct ListItem));
+            param_type_item->item = param_decl->type;
+            list_insert_at_end(param_types, list_from(param_type_item));
 
-        if (acceptable(parser, Token_Comma)) {
-            assert(peek_k(parser, 1)->tag != Token_RightParen);
-            advance(parser);
+            if (acceptable(parser, Token_Comma)) {
+                assert(peek_k(parser, 1)->tag != Token_RightParen);
+                advance(parser);
+            }
         }
     }
     expect(parser, Token_RightParen);
