@@ -12,7 +12,6 @@ struct IntTypeIr;
 struct CharTypeIr;
 struct PointerTypeIr;
 struct StructTypeIr;
-
 struct FunctionTypeIr;
 
 struct MemberEntry;
@@ -22,7 +21,6 @@ enum TypeTag {
     Type_Int,
     Type_Char,
     Type_Pointer,
-    Type_Array,
     Type_Struct,
     Type_Function,
 };
