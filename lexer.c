@@ -63,7 +63,7 @@ static bool is_alpha(char c) {
 
 static bool is_simple_lexeme(char c) {
     return (c == '(') || (c == ')') || (c == '{') || (c == '}') || (c == ';') ||
-           (c == '&') || (c == ',') || (c == '.');
+           (c == '&') || (c == ',') || (c == '.') || (c == '[') || (c == ']');
 }
 
 static bool is_complex_lexeme(char c) {
@@ -138,6 +138,12 @@ static enum TokenTag tokenize_simple_lexeme(struct Lexer* lexer) {
             break;
         case '.':
             tag = Token_Dot;
+            break;
+        case '[':
+            tag = Token_LeftBracket;
+            break;
+        case ']':
+            tag = Token_RightBracket;
             break;
         default:
             assert(false);

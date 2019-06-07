@@ -21,6 +21,8 @@ enum TokenTag {
     Token_RightParen,
     Token_LeftCurry,
     Token_RightCurry,
+    Token_LeftBracket,
+    Token_RightBracket,
 
     Token_Comma,
     Token_Semicolon,
