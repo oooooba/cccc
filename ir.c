@@ -462,6 +462,10 @@ struct CastExprIr* ir_expr_as_cast(struct ExprIr* ir) {
     return ir->tag == ExprIrTag_Cast ? (struct CastExprIr*)ir : NULL;
 }
 
+struct SubscriptExprIr* ir_expr_as_subscript(struct ExprIr* ir) {
+    return ir->tag == ExprIrTag_Subscript ? (struct SubscriptExprIr*)ir : NULL;
+}
+
 enum ExprIrTag ir_expr_tag(struct ExprIr* ir) { return ir->tag; }
 
 struct TypeIr* ir_expr_type(struct ExprIr* ir) {
@@ -813,4 +817,31 @@ struct ExprIr* ir_cast_expr_operand(struct CastExprIr* ir) {
 
 void ir_cast_expr_set_operand(struct CastExprIr* ir, struct ExprIr* operand) {
     ir->operand = operand;
+}
+
+struct SubscriptExprIr {
+    struct ExprIr as_expr;
+    struct ExprIr* base;
+    struct ExprIr* index;
+};
+
+struct SubscriptExprIr* ir_new_subscript_expr(struct ExprIr* base,
+                                              struct ExprIr* index) {
+    struct SubscriptExprIr* ir = malloc(sizeof(struct SubscriptExprIr));
+    initialize_expr(ir_subscript_expr_cast(ir), ExprIrTag_Subscript);
+    ir->base = base;
+    ir->index = index;
+    return ir;
+}
+
+struct ExprIr* ir_subscript_expr_cast(struct SubscriptExprIr* ir) {
+    return &ir->as_expr;
+}
+
+struct ExprIr* ir_subscript_expr_base(struct SubscriptExprIr* ir) {
+    return ir->base;
+}
+
+struct ExprIr* ir_subscript_expr_index(struct SubscriptExprIr* ir) {
+    return ir->index;
 }
