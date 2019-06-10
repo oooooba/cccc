@@ -153,31 +153,34 @@ static struct ExprIr* parse_assignment_expression(struct Parser* parser);
 
 static struct ExprIr* parse_postfix_expression(struct Parser* parser) {
     struct ExprIr* expr = parse_primary_expression(parser);
-    if (acceptable(parser, Token_LeftParen)) {
-        advance(parser);
-        struct List* args = malloc(sizeof(struct List));
-        list_initialize(args);
-        while (!acceptable(parser, Token_RightParen)) {
-            struct ExprIr* arg = parse_assignment_expression(parser);
-            struct ListItem* item = malloc(sizeof(struct ListItem));
-            item->item = arg;
-            list_insert_at_end(args, list_from(item));
-            if (acceptable(parser, Token_Comma)) {
-                assert(peek_k(parser, 1)->tag != Token_RightParen);
-                advance(parser);
+    while (true) {
+        if (acceptable(parser, Token_LeftParen)) {
+            advance(parser);
+            struct List* args = malloc(sizeof(struct List));
+            list_initialize(args);
+            while (!acceptable(parser, Token_RightParen)) {
+                struct ExprIr* arg = parse_assignment_expression(parser);
+                struct ListItem* item = malloc(sizeof(struct ListItem));
+                item->item = arg;
+                list_insert_at_end(args, list_from(item));
+                if (acceptable(parser, Token_Comma)) {
+                    assert(peek_k(parser, 1)->tag != Token_RightParen);
+                    advance(parser);
+                }
             }
-        }
-        advance(parser);
-        expr = ir_call_expr_cast(ir_new_call_expr(expr, args));
-    } else if (acceptable(parser, Token_Dot)) {
-        advance(parser);
-        strtable_id name_index = parse_identifier(parser);
-        struct AddrofExprIr* base = ir_new_addrof_expr(expr);
-        struct MemberExprIr* member =
-            ir_new_member_expr(ir_addrof_expr_cast(base), name_index);
-        struct DerefExprIr* deref =
-            ir_new_deref_expr(ir_member_expr_cast(member));
-        expr = ir_deref_expr_cast(deref);
+            advance(parser);
+            expr = ir_call_expr_cast(ir_new_call_expr(expr, args));
+        } else if (acceptable(parser, Token_Dot)) {
+            advance(parser);
+            strtable_id name_index = parse_identifier(parser);
+            struct AddrofExprIr* base = ir_new_addrof_expr(expr);
+            struct MemberExprIr* member =
+                ir_new_member_expr(ir_addrof_expr_cast(base), name_index);
+            struct DerefExprIr* deref =
+                ir_new_deref_expr(ir_member_expr_cast(member));
+            expr = ir_deref_expr_cast(deref);
+        } else
+            break;
     }
     return expr;
 }
