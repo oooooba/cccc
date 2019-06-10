@@ -122,6 +122,8 @@ static struct ExprIr* parse_constant(struct Parser* parser) {
 
 /***** expressions *****/
 
+static struct ExprIr* parse_expression(struct Parser* parser);
+
 static struct ExprIr* parse_primary_expression(struct Parser* parser) {
     switch (peek(parser)->tag) {
         case Token_Integer:
@@ -154,7 +156,12 @@ static struct ExprIr* parse_assignment_expression(struct Parser* parser);
 static struct ExprIr* parse_postfix_expression(struct Parser* parser) {
     struct ExprIr* expr = parse_primary_expression(parser);
     while (true) {
-        if (acceptable(parser, Token_LeftParen)) {
+        if (acceptable(parser, Token_LeftBracket)) {
+            advance(parser);
+            struct ExprIr* index = parse_expression(parser);
+            expect(parser, Token_RightBracket);
+            expr = ir_subscript_expr_cast(ir_new_subscript_expr(expr, index));
+        } else if (acceptable(parser, Token_LeftParen)) {
             advance(parser);
             struct List* args = malloc(sizeof(struct List));
             list_initialize(args);

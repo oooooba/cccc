@@ -24,6 +24,8 @@ struct Visitor {
                                         struct AddrofExprIr* ir);
     struct ExprIr* (*visit_cast_expr)(struct Visitor* visitor,
                                       struct CastExprIr* ir);
+    struct ExprIr* (*visit_subscript_expr)(struct Visitor* visitor,
+                                           struct SubscriptExprIr* ir);
     struct BlockIr* (*visit_block)(struct Visitor* visitor, struct BlockIr* ir);
     struct FunctionIr* (*visit_function)(struct Visitor* visitor,
                                          struct FunctionIr* ir);
