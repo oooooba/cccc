@@ -207,8 +207,16 @@ static struct ExprIr* parse_unary_expression(struct Parser* parser) {
         return parse_postfix_expression(parser);
 }
 
+static struct TypeIr* parse_type_name(struct Parser* parser);
+
 static struct ExprIr* parse_cast_expression(struct Parser* parser) {
-    return parse_unary_expression(parser);
+    if (!acceptable(parser, Token_LeftParen))
+        return parse_unary_expression(parser);
+    expect(parser, Token_LeftParen);
+    struct TypeIr* type = parse_type_name(parser);
+    expect(parser, Token_RightParen);
+    struct ExprIr* expr = parse_cast_expression(parser);
+    return ir_cast_expr_cast(ir_new_cast_expr(expr, type));
 }
 
 static struct ExprIr* parse_multiplicative_expression(struct Parser* parser) {
@@ -355,6 +363,15 @@ static strtable_id parse_declarator(struct Parser* parser,
     advance(parser);
 
     return name_index;
+}
+
+static struct TypeIr* parse_type_name(struct Parser* parser) {
+    struct TypeIr* type = parse_type_specifier(parser);
+    if (acceptable(parser, Token_Asterisk)) {
+        advance(parser);
+        type = type_pointer_super(type_new_pointer(type));
+    }
+    return type;
 }
 
 static void parse_declaration(struct Parser* parser, struct List* result) {
