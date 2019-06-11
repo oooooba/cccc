@@ -8,6 +8,7 @@
 #include <stddef.h>
 
 struct TypeIr;
+struct LongTypeIr;
 struct IntTypeIr;
 struct CharTypeIr;
 struct PointerTypeIr;
@@ -18,6 +19,7 @@ struct MemberEntry;
 
 enum TypeTag {
     Type_Void,
+    Type_Long,
     Type_Int,
     Type_Char,
     Type_Pointer,
@@ -34,6 +36,9 @@ size_t type_size(struct TypeIr* type);
 
 struct VoidTypeIr* type_new_void(void);
 struct TypeIr* type_void_super(struct VoidTypeIr* type);
+
+struct LongTypeIr* type_new_long(void);
+struct TypeIr* type_long_super(struct LongTypeIr* type);
 
 struct IntTypeIr* type_new_int(void);
 struct TypeIr* type_int_super(struct IntTypeIr* type);

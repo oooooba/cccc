@@ -82,6 +82,24 @@ struct TypeIr* type_void_super(struct VoidTypeIr* type) {
     return &type->super;
 }
 
+struct LongTypeIr {
+    struct TypeIr super;
+};
+
+struct LongTypeIr* type_new_long(void) {
+    static struct LongTypeIr* type = NULL;
+    if (!type) {
+        type = malloc(sizeof(struct LongTypeIr));
+        initialize_type(type_long_super(type), Type_Long, sizeof(long));
+        assert(sizeof(long) == 8);
+    }
+    return type;
+}
+
+struct TypeIr* type_long_super(struct LongTypeIr* type) {
+    return &type->super;
+}
+
 struct IntTypeIr {
     struct TypeIr super;
 };
