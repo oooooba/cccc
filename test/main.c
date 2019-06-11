@@ -17,6 +17,7 @@ int test13(void);
 int test14(void);
 int test15(void);
 int test16(void);
+int test17(int);
 
 static void check(const char* msg, int expected, int actual) {
     if (actual == expected) {
@@ -43,5 +44,6 @@ int main(void) {
     check("test14", 8, test14());
     check("test15", 1, test15());
     check("test16", 'B', test16());
+    check("test17", 0x78563412, test17(0x12345678));
     return 0;
 }

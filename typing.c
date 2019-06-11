@@ -47,7 +47,19 @@ static struct ExprIr* visit_binop_expr(struct TypingVisitor* visitor,
         else if (type_tag(lhs_type) == Type_Char &&
                  type_tag(rhs_type) == Type_Int)
             lhs = ir_cast_expr_cast(ir_new_cast_expr(lhs, rhs_type));
-        else
+        else if (ir_binop_expr_op(ir) == BinopExprIrTag_Add ||
+                 ir_binop_expr_op(ir) == BinopExprIrTag_Sub) {
+            if (type_tag(lhs_type) == Type_Int &&
+                type_tag(rhs_type) == Type_Pointer) {
+                struct CastExprIr* new_rhs =
+                    ir_new_cast_expr(lhs, type_long_super(type_new_long()));
+                lhs = rhs;
+                rhs = ir_cast_expr_cast(new_rhs);
+            } else if (type_tag(lhs_type) == Type_Pointer &&
+                       type_tag(rhs_type) == Type_Int)
+                rhs = ir_cast_expr_cast(
+                    ir_new_cast_expr(rhs, type_long_super(type_new_long())));
+        } else
             assert(false);
     }
 
@@ -186,6 +198,14 @@ static struct ExprIr* visit_addrof_expr(struct TypingVisitor* visitor,
     return ir_addrof_expr_cast(ir);
 }
 
+static struct ExprIr* visit_cast_expr(struct TypingVisitor* visitor,
+                                      struct CastExprIr* ir) {
+    struct ExprIr* operand = ir_cast_expr_operand(ir);
+    operand = visitor_visit_expr(as_visitor(visitor), operand);
+    ir_cast_expr_set_operand(ir, operand);
+    return ir_cast_expr_cast(ir);
+}
+
 static struct BlockIr* visit_block(struct TypingVisitor* visitor,
                                    struct BlockIr* ir) {
     struct BlockIterator* it = ir_block_new_iterator(ir);
@@ -264,6 +284,7 @@ struct TypingVisitor* new_typing_visitor(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_member_expr, visit_member_expr);
     register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr);
     register_visitor(visitor->as_visitor, visit_addrof_expr, visit_addrof_expr);
+    register_visitor(visitor->as_visitor, visit_cast_expr, visit_cast_expr);
     register_visitor(visitor->as_visitor, visit_block, visit_block);
     register_visitor(visitor->as_visitor, visit_function, visit_function);
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf);

@@ -39,7 +39,7 @@ int test9(void) {
 
 int test10(void) {
     int x;
-    int *y;
+    int* y;
     y = &x;
     *y = 4;
     return x;
@@ -70,4 +70,17 @@ int test16(void) {
     char c;
     c = 65;
     return c + 1;
+}
+
+int test17(int i) {
+    char* c;
+    c = (char*)&i;
+    char tmp;
+    tmp = c[0];
+    c[0] = c[3];
+    c[3] = tmp;
+    tmp = c[2];
+    c[2] = c[1];
+    c[1] = tmp;
+    return i;
 }

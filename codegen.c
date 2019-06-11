@@ -78,7 +78,16 @@ static struct ExprIr* visit_binop_expr2(struct CodegenVisitor* visitor,
             assert(false);
     }
 
-    fprintf(visitor->stream, "\t%s\t%s, %s\n", op, result_reg, rhs_reg);
+    if (ir_expr_type(lhs) == NULL ||
+        type_tag(ir_expr_type(lhs)) != Type_Pointer)
+        fprintf(visitor->stream, "\t%s\t%s, %s\n", op, result_reg, rhs_reg);
+    else {
+        struct TypeIr* elem_type =
+            type_pointer_elem_type(type_as_pointer(ir_expr_type(lhs)));
+        fprintf(visitor->stream, "\timul\t%s, %ld\n", rhs_reg,
+                type_size(elem_type));
+        fprintf(visitor->stream, "\t%s\t%s, %s\n", op, result_reg, rhs_reg);
+    }
     return NULL;
 }
 
