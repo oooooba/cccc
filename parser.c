@@ -160,7 +160,11 @@ static struct ExprIr* parse_postfix_expression(struct Parser* parser) {
             advance(parser);
             struct ExprIr* index = parse_expression(parser);
             expect(parser, Token_RightBracket);
-            expr = ir_subscript_expr_cast(ir_new_subscript_expr(expr, index));
+            struct BinopExprIr* add =
+                ir_new_binop_expr(BinopExprIrTag_Add, expr, index);
+            struct DerefExprIr* deref =
+                ir_new_deref_expr(ir_binop_expr_cast(add));
+            expr = ir_deref_expr_cast(deref);
         } else if (acceptable(parser, Token_LeftParen)) {
             advance(parser);
             struct List* args = malloc(sizeof(struct List));
