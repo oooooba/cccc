@@ -334,6 +334,9 @@ static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser) {
 static struct TypeIr* parse_type_specifier(struct Parser* parser) {
     struct TypeIr* type;
     switch (peek(parser)->tag) {
+        case Token_KeywordLong:
+            type = type_long_super(type_new_long());
+            break;
         case Token_KeywordInt:
             type = type_int_super(type_new_int());
             break;
