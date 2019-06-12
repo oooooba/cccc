@@ -430,10 +430,8 @@ static struct BlockIr* parse_compound_statement(struct Parser* parser,
                 if (!decl->initializer) continue;
 
                 struct VarExprIr* var = ir_new_var_expr(loc);
-                struct AddrofExprIr* addrof_var =
-                    ir_new_addrof_expr(ir_var_expr_cast(var));
-                struct SubstExprIr* subst = ir_new_subst_expr(
-                    ir_addrof_expr_cast(addrof_var), decl->initializer);
+                struct SubstExprIr* subst =
+                    ir_new_subst_expr(ir_var_expr_cast(var), decl->initializer);
                 ir_block_insert_expr_at_end(block, ir_subst_expr_cast(subst));
             }
         } else {

@@ -73,8 +73,7 @@ int test16(void) {
 }
 
 int test17(int i) {
-    char* c;
-    c = (char*)&i;
+    char* c = (char*)&i;
     char tmp;
     tmp = c[0];
     c[0] = c[3];
