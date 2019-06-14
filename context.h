@@ -12,7 +12,9 @@
 
 struct Context {
     struct Strtable strtable;
-    struct Map function_declaration_map;  // key: strtable_id, value: Location*
+    struct Map function_declaration_map;  // key: strtable_id, value: Location*,
+                                          // ToDo: replace value type to
+                                          // VarExprIr* which has Location*
     struct Map user_defined_type_map;     // key: strtable_id, value: TypeIr*
     struct Vector register_ids;           // strtable_id vector
 };

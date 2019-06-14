@@ -75,7 +75,8 @@ static bool acceptable(struct Parser* parser, enum TokenTag expected) {
 }
 
 static bool acceptable_type(struct Parser* parser) {
-    return acceptable(parser, Token_KeywordInt) ||
+    return acceptable(parser, Token_KeywordLong) ||
+           acceptable(parser, Token_KeywordInt) ||
            acceptable(parser, Token_KeywordChar) ||
            acceptable(parser, Token_KeywordStruct);
 }
@@ -506,7 +507,8 @@ static struct Ir* parse_statement(struct Parser* parser) {
 
 /***** external definitions *****/
 
-static struct FunctionIr* parse_function_definition(struct Parser* parser) {
+static struct FunctionIr* parse_function_definition_or_declaration(
+    struct Parser* parser) {
     struct List func_decls;
     list_initialize(&func_decls);
     parse_declaration(parser, &func_decls);
@@ -556,17 +558,40 @@ static struct FunctionIr* parse_function_definition(struct Parser* parser) {
     }
     expect(parser, Token_RightParen);
 
+    bool has_func_def;
+    if (acceptable(parser, Token_LeftCurry))
+        has_func_def = true;
+    else if (acceptable(parser, Token_Semicolon))
+        has_func_def = false;
+    else
+        assert(false);
+
     struct FunctionTypeIr* func_type =
         type_new_function(func_decl->type, param_types);
     strtable_id name_index = func_decl->name_index;
-    struct Location* func_loc = ir_declare_function(name_index, func_type);
-    context_insert_function_declaration(parser->context, name_index, func_loc);
+    struct Location* func_loc =
+        context_find_function_declaration(parser->context, name_index);
+    if (func_loc) {
+        // ToDo: check function type check
 
-    body = parse_compound_statement(parser, body);
+        // prevent to insert dupulicate definitions
+        if (has_func_def) assert(!ir_location_function_definition(func_loc));
+    } else {
+        func_loc = ir_declare_function(name_index, func_type);
+        context_insert_function_declaration(parser->context, name_index,
+                                            func_loc);
+    }
+
+    struct FunctionIr* function = NULL;
+    if (has_func_def) {
+        body = parse_compound_statement(parser, body);
+        function = ir_new_function(name_index, func_type, params, body);
+        ir_location_set_function_definition(func_loc, function);
+    } else
+        expect(parser, Token_Semicolon);
 
     parser->current_env = env->outer_env;
-
-    return ir_new_function(name_index, func_type, params, body);
+    return function;
 }
 
 static struct BlockIr* parse_translation_unit(struct Parser* parser) {
@@ -578,9 +603,9 @@ static struct BlockIr* parse_translation_unit(struct Parser* parser) {
             expect(parser, Token_Semicolon);
             (void)type;
         } else {
-            struct Ir* item =
-                ir_function_cast(parse_function_definition(parser));
-            ir_block_insert_at_end(translation_unit, item);
+            struct Ir* item = ir_function_cast(
+                parse_function_definition_or_declaration(parser));
+            if (item) ir_block_insert_at_end(translation_unit, item);
         }
     }
     expect(parser, Token_PseudoFileEnd);

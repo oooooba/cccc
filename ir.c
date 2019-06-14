@@ -97,7 +97,11 @@ struct List* ir_function_param_types(struct FunctionIr* ir) {
 }
 
 struct Location {
-    struct BlockIr* block;
+    bool is_function;
+    union {
+        struct BlockIr* block;                   // location for a variable
+        struct FunctionIr* function_definition;  // function definition
+    };
     strtable_id name_index;
     struct TypeIr* type;
     size_t region_offset;
@@ -108,6 +112,7 @@ static struct Location* ir_new_location(struct BlockIr* block,
                                         struct TypeIr* type,
                                         size_t region_offset) {
     struct Location* loc = malloc(sizeof(struct Location));
+    loc->is_function = false;
     loc->block = block;
     loc->name_index = name_index;
     loc->type = type;
@@ -118,6 +123,7 @@ static struct Location* ir_new_location(struct BlockIr* block,
 struct Location* ir_declare_function(strtable_id name_index,
                                      struct FunctionTypeIr* type) {
     struct Location* loc = malloc(sizeof(struct Location));
+    loc->is_function = true;
     loc->block = NULL;
     loc->name_index = name_index;
     loc->type = type_function_super(type);
@@ -238,7 +244,18 @@ static size_t ir_location_offset(struct Location* loc) {
 }
 
 static bool ir_location_is_function(struct Location* loc) {
-    return loc->block == NULL;
+    return loc->is_function;
+}
+
+struct FunctionIr* ir_location_function_definition(struct Location* loc) {
+    assert(ir_location_is_function(loc));
+    return loc->function_definition;
+}
+
+void ir_location_set_function_definition(struct Location* loc,
+                                         struct FunctionIr* function) {
+    assert(ir_location_is_function(loc));
+    loc->function_definition = function;
 }
 
 struct CfIr {

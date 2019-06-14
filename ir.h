@@ -117,6 +117,9 @@ struct Location* ir_declare_function(strtable_id name_index,
 void ir_block_commit_region_status(struct BlockIr* ir, size_t region_base);
 size_t ir_block_region_size(struct BlockIr* ir);
 strtable_id ir_location_name_index(struct Location* loc);
+struct FunctionIr* ir_location_function_definition(struct Location* loc);
+void ir_location_set_function_definition(struct Location* loc,
+                                         struct FunctionIr* function);
 
 struct Ir* ir_cf_cast(struct CfIr* ir);
 struct BranchCfIr* ir_cf_as_branch(struct CfIr* ir);
