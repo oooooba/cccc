@@ -6,6 +6,7 @@
 #include "strtable.h"
 #include "type.h"
 #include "vector.h"
+#include "visitor.h"
 
 #include <stddef.h>
 #include <stdio.h>
@@ -57,5 +58,7 @@ void context_dump_type(struct Context* context, FILE* stream,
                        struct TypeIr* type);
 
 enum RegisterSizeKind context_type_to_register_size_kind(struct TypeIr* type);
+
+void context_apply_visitor(struct Context* context, struct Visitor* visitor);
 
 #endif

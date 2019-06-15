@@ -5,6 +5,7 @@
 #include "strtable.h"
 #include "type.h"
 #include "vector.h"
+#include "visitor.h"
 
 #include <assert.h>
 #include <stdbool.h>
@@ -192,5 +193,16 @@ enum RegisterSizeKind context_type_to_register_size_kind(struct TypeIr* type) {
         default:
             assert(false);
             return -1;
+    }
+}
+
+void context_apply_visitor(struct Context* context, struct Visitor* visitor) {
+    struct Map* funcs = &context->function_declaration_map;
+    for (struct ListHeader *it = map_begin(funcs), *eit = map_end(funcs);
+         it != eit; it = list_next(it)) {
+        struct Location* loc = map_entry_value((struct MapEntry*)it);
+        struct FunctionIr* func = ir_location_function_definition(loc);
+        visitor_visit_function(visitor, func);
+        ir_location_set_function_definition(loc, func);
     }
 }

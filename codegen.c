@@ -338,6 +338,6 @@ struct CodegenVisitor* new_codegen_visitor(struct Context* context,
     return visitor;
 }
 
-void codegen_apply(struct CodegenVisitor* visitor, struct BlockIr* ir) {
-    visitor_visit_block(as_visitor(visitor), ir);
+void codegen_apply(struct CodegenVisitor* visitor) {
+    context_apply_visitor(visitor->context, as_visitor(visitor));
 }
