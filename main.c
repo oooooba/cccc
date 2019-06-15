@@ -20,8 +20,8 @@ struct SimplifyVisitor* new_simplify_visitor(struct Context* context);
 struct RegallocVisitor;
 struct RegallocVisitor* new_regalloc_visitor(struct Context* context);
 
-struct PostRegallocVisitor;
-struct PostRegallocVisitor* new_post_regalloc_visitor(struct Context* context);
+struct FixupVisitor;
+struct FixupVisitor* new_fixup_visitor(struct Context* context);
 
 struct CodegenVisitor;
 struct CodegenVisitor* new_codegen_visitor(struct Context* context,
@@ -62,16 +62,14 @@ int main(void) {
     struct RegallocVisitor* regalloc_visitor = new_regalloc_visitor(&context);
     visitor_apply((struct Visitor*)regalloc_visitor);
 
-    fprintf(stderr, "[apply post regalloc]\n");
-    struct PostRegallocVisitor* post_regalloc_visitor =
-        new_post_regalloc_visitor(&context);
-    visitor_apply((struct Visitor*)post_regalloc_visitor);
+    fprintf(stderr, "[apply fixup]\n");
+    struct FixupVisitor* fixup_visitor = new_fixup_visitor(&context);
+    visitor_apply((struct Visitor*)fixup_visitor);
 
     fprintf(stderr, "[apply codegen]\n");
     struct CodegenVisitor* codegen_visitor =
         new_codegen_visitor(&context, stdout);
     visitor_apply((struct Visitor*)codegen_visitor);
-    // codegen_apply(codegen_visitor);
 
     return 0;
 }

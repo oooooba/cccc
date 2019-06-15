@@ -8,6 +8,7 @@ add_executable(cccc
     codegen.c
     context.c
     dump.c
+    fixup.c
     ir.c
     lexer.c
     list.c
