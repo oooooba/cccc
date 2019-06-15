@@ -5,7 +5,6 @@
 #include "strtable.h"
 #include "type.h"
 #include "vector.h"
-#include "visitor.h"
 
 #include <assert.h>
 #include <stdbool.h>
@@ -29,6 +28,14 @@ void context_insert_function_declaration(struct Context* context,
 struct Location* context_find_function_declaration(struct Context* context,
                                                    strtable_id index) {
     return map_find(&context->function_declaration_map, (void*)index);
+}
+
+struct ListHeader* context_function_declaration_begin(struct Context* context) {
+    return map_begin(&context->function_declaration_map);
+}
+
+struct ListHeader* context_function_declaration_end(struct Context* context) {
+    return map_end(&context->function_declaration_map);
 }
 
 void context_insert_user_defined_type(struct Context* context,
@@ -193,16 +200,5 @@ enum RegisterSizeKind context_type_to_register_size_kind(struct TypeIr* type) {
         default:
             assert(false);
             return -1;
-    }
-}
-
-void context_apply_visitor(struct Context* context, struct Visitor* visitor) {
-    struct Map* funcs = &context->function_declaration_map;
-    for (struct ListHeader *it = map_begin(funcs), *eit = map_end(funcs);
-         it != eit; it = list_next(it)) {
-        struct Location* loc = map_entry_value((struct MapEntry*)it);
-        struct FunctionIr* func = ir_location_function_definition(loc);
-        visitor_visit_function(visitor, func);
-        ir_location_set_function_definition(loc, func);
     }
 }

@@ -123,7 +123,9 @@ struct StmtIr* visitor_visit_cf_stmt(struct Visitor* visitor,
     return ir_cf_stmt_super(ir);
 }
 
-void visitor_initialize(struct Visitor* visitor) {
+void visitor_initialize(struct Visitor* visitor, struct Context* context) {
+    visitor->context = context;
+
     register_visitor(*visitor, visit_const_expr, NULL);
     register_visitor(*visitor, visit_binop_expr, NULL);
     register_visitor(*visitor, visit_call_expr, NULL);
@@ -146,4 +148,20 @@ void visitor_initialize(struct Visitor* visitor) {
     register_visitor(*visitor, visit_label_cf, NULL);
     register_visitor(*visitor, visit_push_cf, NULL);
     register_visitor(*visitor, visit_pop_cf, NULL);
+}
+
+struct Context* visitor_context(struct Visitor* visitor) {
+    return visitor->context;
+}
+
+void visitor_apply(struct Visitor* visitor) {
+    for (struct ListHeader *
+             it = context_function_declaration_begin(visitor->context),
+            *eit = context_function_declaration_end(visitor->context);
+         it != eit; it = list_next(it)) {
+        struct Location* loc = map_entry_value((struct MapEntry*)it);
+        struct FunctionIr* func = ir_location_function_definition(loc);
+        visitor_visit_function(visitor, func);
+        ir_location_set_function_definition(loc, func);
+    }
 }

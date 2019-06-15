@@ -7,7 +7,6 @@
 
 struct RegallocVisitor {
     struct Visitor as_visitor;
-    struct Context* context;
 
     /*
      * behave like stack pointer
@@ -22,11 +21,15 @@ static struct Visitor* as_visitor(struct RegallocVisitor* visitor) {
     return &visitor->as_visitor;
 }
 
+static struct Context* ctx(struct RegallocVisitor* visitor) {
+    return visitor_context(as_visitor(visitor));
+}
+
 static strtable_id acquire_register(struct RegallocVisitor* visitor,
                                     struct TypeIr* type) {
     enum RegisterSizeKind kind = context_type_to_register_size_kind(type);
     strtable_id id =
-        context_nth_reg(visitor->context, visitor->free_register_index, kind);
+        context_nth_reg(ctx(visitor), visitor->free_register_index, kind);
     ++visitor->free_register_index;
     return id;
 }
@@ -35,17 +38,16 @@ static void release_register(struct RegallocVisitor* visitor) {
     --visitor->free_register_index;
 }
 
-static strtable_id get_nth_func_call_arg_register(struct Context* context,
-                                                  size_t n,
+static strtable_id get_nth_func_call_arg_register(struct Context* ctx, size_t n,
                                                   struct TypeIr* type) {
     enum RegisterSizeKind kind = context_type_to_register_size_kind(type);
-    return context_nth_func_call_arg_reg(context, n, kind);
+    return context_nth_func_call_arg_reg(ctx, n, kind);
 }
 
-static strtable_id get_func_call_result_register(struct Context* context,
+static strtable_id get_func_call_result_register(struct Context* ctx,
                                                  struct TypeIr* type) {
     enum RegisterSizeKind kind = context_type_to_register_size_kind(type);
-    return context_func_call_result_reg(context, kind);
+    return context_func_call_result_reg(ctx, kind);
 }
 
 static struct ExprIr* visit_const_expr2(struct RegallocVisitor* visitor,
@@ -101,8 +103,8 @@ static struct ExprIr* visit_call_expr2(struct RegallocVisitor* visitor,
         struct ExprIr* arg = ((struct ListItem*)it)->item;
 
         strtable_id arg_reg_id = ir_expr_reg_id(arg);
-        strtable_id param_reg_id = get_nth_func_call_arg_register(
-            visitor->context, i, ir_expr_type(arg));
+        strtable_id param_reg_id =
+            get_nth_func_call_arg_register(ctx(visitor), i, ir_expr_type(arg));
 
         struct ConstExprIr* copy_instr = ir_new_register_const_expr(arg_reg_id);
         ir_expr_set_reg_id(ir_const_expr_cast(copy_instr), param_reg_id);
@@ -110,12 +112,12 @@ static struct ExprIr* visit_call_expr2(struct RegallocVisitor* visitor,
         ++i;
     }
 
-    if (reg_id != context_func_call_result_reg(visitor->context,
-                                               RegisterSizeKind_32) &&
-        reg_id != context_func_call_result_reg(visitor->context,
-                                               RegisterSizeKind_64)) {
+    if (reg_id !=
+            context_func_call_result_reg(ctx(visitor), RegisterSizeKind_32) &&
+        reg_id !=
+            context_func_call_result_reg(ctx(visitor), RegisterSizeKind_64)) {
         strtable_id result_reg_id =
-            context_func_call_result_reg(visitor->context, RegisterSizeKind_64);
+            context_func_call_result_reg(ctx(visitor), RegisterSizeKind_64);
 
         // save result register
         struct PushCfIr* push_instr = ir_new_push_cf(result_reg_id);
@@ -124,7 +126,7 @@ static struct ExprIr* visit_call_expr2(struct RegallocVisitor* visitor,
 
         // copy result register to expected one
         struct ConstExprIr* copy_instr = ir_new_register_const_expr(
-            get_func_call_result_register(visitor->context, result_type));
+            get_func_call_result_register(ctx(visitor), result_type));
         ir_expr_set_reg_id(ir_const_expr_cast(copy_instr), reg_id);
         ir_block_insert_expr_at_end(post_block, ir_const_expr_cast(copy_instr));
 
@@ -238,7 +240,7 @@ static struct CfIr* visit_return_cf2(struct RegallocVisitor* visitor,
 
 struct RegallocVisitor* new_regalloc_visitor(struct Context* context) {
     struct RegallocVisitor* visitor = malloc(sizeof(struct RegallocVisitor));
-    visitor_initialize(as_visitor(visitor));
+    visitor_initialize(as_visitor(visitor), context);
 
     register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr2);
     register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr2);
@@ -255,18 +257,12 @@ struct RegallocVisitor* new_regalloc_visitor(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf2);
     register_visitor(visitor->as_visitor, visit_return_cf, visit_return_cf2);
 
-    visitor->context = context;
     visitor->free_register_index = 0;
     return visitor;
 }
 
-void regalloc_apply(struct RegallocVisitor* visitor, struct BlockIr* ir) {
-    visitor_visit_block(as_visitor(visitor), ir);
-}
-
 struct PostRegallocVisitor {
     struct Visitor as_visitor;
-    struct Context* context;
     size_t parent_region_end;
     size_t max_region_end;
 };
@@ -274,6 +270,10 @@ struct PostRegallocVisitor {
 static struct Visitor* as_visitor_post_process(
     struct PostRegallocVisitor* visitor) {
     return &visitor->as_visitor;
+}
+
+static struct Context* ctx_post_process(struct PostRegallocVisitor* visitor) {
+    return visitor_context(as_visitor_post_process(visitor));
 }
 
 static struct BlockIr* visit_block2_post_process(
@@ -321,10 +321,10 @@ static struct FunctionIr* visit_function2_post_process(
     // initially, insert_point points to List::end (= List itself)
     ir_block_iterator_next(insert_point);
 
-    strtable_id sp_reg_id =
-        context_stack_pointer_reg(visitor->context, RegisterSizeKind_64);
-    strtable_id bp_reg_id =
-        context_base_pointer_reg(visitor->context, RegisterSizeKind_64);
+    strtable_id sp_reg_id = context_stack_pointer_reg(ctx_post_process(visitor),
+                                                      RegisterSizeKind_64);
+    strtable_id bp_reg_id = context_base_pointer_reg(ctx_post_process(visitor),
+                                                     RegisterSizeKind_64);
 
     // insert saving base pointer register code
     {
@@ -341,8 +341,8 @@ static struct FunctionIr* visit_function2_post_process(
         struct ConstExprIr* size =
             ir_new_integer_const_expr(ir_function_region_size(ir));
         ir_expr_set_reg_id(ir_const_expr_cast(size),
-                           context_func_call_result_reg(visitor->context,
-                                                        RegisterSizeKind_64));
+                           context_func_call_result_reg(
+                               ctx_post_process(visitor), RegisterSizeKind_64));
         struct ConstExprIr* sp = ir_new_register_const_expr(sp_reg_id);
         ir_expr_set_reg_id(ir_const_expr_cast(sp), sp_reg_id);
         struct BinopExprIr* sub =
@@ -361,12 +361,12 @@ static struct FunctionIr* visit_function2_post_process(
         struct TypeIr* dst_var_type = ir_var_expr_type(dst_var);
         struct TypeIr* dst_ptr_type = ir_expr_type(ir_var_expr_cast(dst_var));
 
-        strtable_id tmp_reg_id =
-            get_func_call_result_register(visitor->context, dst_ptr_type);
+        strtable_id tmp_reg_id = get_func_call_result_register(
+            ctx_post_process(visitor), dst_ptr_type);
         ir_expr_set_reg_id(ir_var_expr_cast(dst_var), tmp_reg_id);
 
-        strtable_id param_reg_id =
-            get_nth_func_call_arg_register(visitor->context, i, dst_var_type);
+        strtable_id param_reg_id = get_nth_func_call_arg_register(
+            ctx_post_process(visitor), i, dst_var_type);
         struct ConstExprIr* src_reg = ir_new_register_const_expr(param_reg_id);
         ir_expr_set_reg_id(ir_const_expr_cast(src_reg), param_reg_id);
 
@@ -383,7 +383,7 @@ static struct FunctionIr* visit_function2_post_process(
     // insert saving general purpose registers code
     {
         struct PushCfIr* push = ir_new_push_cf(
-            context_nth_reg(visitor->context, 1, RegisterSizeKind_64));
+            context_nth_reg(ctx_post_process(visitor), 1, RegisterSizeKind_64));
         ir_block_insert_at(insert_point, ir_cf_cast(ir_push_cf_cast(push)));
     }
 
@@ -397,7 +397,7 @@ static struct FunctionIr* visit_function2_post_process(
     // insert restoring general purpose registers code
     {
         struct PopCfIr* pop = ir_new_pop_cf(
-            context_nth_reg(visitor->context, 1, RegisterSizeKind_64));
+            context_nth_reg(ctx_post_process(visitor), 1, RegisterSizeKind_64));
         ir_block_insert_at_end(body, ir_cf_cast(ir_pop_cf_cast(pop)));
     }
 
@@ -421,18 +421,12 @@ static struct FunctionIr* visit_function2_post_process(
 struct PostRegallocVisitor* new_post_regalloc_visitor(struct Context* context) {
     struct PostRegallocVisitor* visitor =
         malloc(sizeof(struct PostRegallocVisitor));
-    visitor_initialize(as_visitor_post_process(visitor));
+    visitor_initialize(as_visitor_post_process(visitor), context);
 
     register_visitor(visitor->as_visitor, visit_block,
                      visit_block2_post_process);
     register_visitor(visitor->as_visitor, visit_function,
                      visit_function2_post_process);
 
-    visitor->context = context;
     return visitor;
-}
-
-void regalloc_apply_post_process(struct PostRegallocVisitor* visitor,
-                                 struct BlockIr* ir) {
-    visitor_visit_block(as_visitor_post_process(visitor), ir);
 }

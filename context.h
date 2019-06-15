@@ -6,7 +6,6 @@
 #include "strtable.h"
 #include "type.h"
 #include "vector.h"
-#include "visitor.h"
 
 #include <stddef.h>
 #include <stdio.h>
@@ -34,6 +33,8 @@ void context_insert_function_declaration(struct Context* context,
                                          struct Location* func_loc);
 struct Location* context_find_function_declaration(struct Context* context,
                                                    strtable_id index);
+struct ListHeader* context_function_declaration_begin(struct Context* context);
+struct ListHeader* context_function_declaration_end(struct Context* context);
 
 void context_insert_user_defined_type(struct Context* context,
                                       strtable_id index, struct TypeIr* type);
@@ -58,7 +59,5 @@ void context_dump_type(struct Context* context, FILE* stream,
                        struct TypeIr* type);
 
 enum RegisterSizeKind context_type_to_register_size_kind(struct TypeIr* type);
-
-void context_apply_visitor(struct Context* context, struct Visitor* visitor);
 
 #endif

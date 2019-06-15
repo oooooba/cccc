@@ -9,7 +9,6 @@
 
 struct TypingVisitor {
     struct Visitor as_visitor;
-    struct Context* context;
     struct FunctionIr* function;
 };
 
@@ -266,7 +265,7 @@ static struct CfIr* visit_return_cf(struct TypingVisitor* visitor,
 
 struct TypingVisitor* new_typing_visitor(struct Context* context) {
     struct TypingVisitor* visitor = malloc(sizeof(struct TypingVisitor));
-    visitor_initialize(as_visitor(visitor));
+    visitor_initialize(as_visitor(visitor), context);
 
     register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr);
     register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr);
@@ -283,10 +282,5 @@ struct TypingVisitor* new_typing_visitor(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf);
     register_visitor(visitor->as_visitor, visit_return_cf, visit_return_cf);
 
-    visitor->context = context;
     return visitor;
-}
-
-void typing_apply(struct TypingVisitor* visitor, struct BlockIr* ir) {
-    visitor_visit_block(as_visitor(visitor), ir);
 }

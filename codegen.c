@@ -9,7 +9,6 @@
 
 struct CodegenVisitor {
     struct Visitor as_visitor;
-    struct Context* context;
     FILE* stream;
     struct FunctionIr* function;
 };
@@ -18,9 +17,13 @@ static struct Visitor* as_visitor(struct CodegenVisitor* visitor) {
     return &visitor->as_visitor;
 }
 
+static struct Context* ctx(struct CodegenVisitor* visitor) {
+    return visitor_context(as_visitor(visitor));
+}
+
 static const char* register_name(struct CodegenVisitor* visitor,
                                  strtable_id index) {
-    const char* reg = strtable_at(&visitor->context->strtable, index);
+    const char* reg = strtable_at(&ctx(visitor)->strtable, index);
     assert(reg[0] == '%');
     return reg + 1;
 }
@@ -106,7 +109,7 @@ static struct ExprIr* visit_call_expr2(struct CodegenVisitor* visitor,
     visitor_visit_block(as_visitor(visitor), ir_call_expr_pre_expr_block(ir));
 
     strtable_id name_id = ir_var_expr_index(func_name);
-    const char* name = strtable_at(&visitor->context->strtable, name_id);
+    const char* name = strtable_at(&ctx(visitor)->strtable, name_id);
     fprintf(visitor->stream, "\tcall\t%s", name);
 
     // debug code
@@ -116,12 +119,11 @@ static struct ExprIr* visit_call_expr2(struct CodegenVisitor* visitor,
                                *eit = list_end(ir_call_expr_args(ir));
              it != eit; it = list_next(it)) {
             struct ExprIr* arg = ((struct ListItem*)it)->item;
-            fprintf(
-                visitor->stream, "%s ",
-                strtable_at(&visitor->context->strtable, ir_expr_reg_id(arg)));
+            fprintf(visitor->stream, "%s ",
+                    strtable_at(&ctx(visitor)->strtable, ir_expr_reg_id(arg)));
         }
         fprintf(visitor->stream, ") => %s",
-                strtable_at(&visitor->context->strtable,
+                strtable_at(&ctx(visitor)->strtable,
                             ir_expr_reg_id(ir_call_expr_cast(ir))));
         fprintf(visitor->stream, "\n");
     }
@@ -235,7 +237,7 @@ static struct FunctionIr* visit_function2(struct CodegenVisitor* visitor,
     visitor->function = ir;
 
     const char* name =
-        strtable_at(&visitor->context->strtable, ir_function_name_index(ir));
+        strtable_at(&ctx(visitor)->strtable, ir_function_name_index(ir));
     fprintf(visitor->stream, ".global %s\n", name);
     fprintf(visitor->stream, "%s:\n", name);
 
@@ -309,7 +311,7 @@ static struct CfIr* visit_pop_cf2(struct CodegenVisitor* visitor,
 struct CodegenVisitor* new_codegen_visitor(struct Context* context,
                                            FILE* stream) {
     struct CodegenVisitor* visitor = malloc(sizeof(struct CodegenVisitor));
-    visitor_initialize(as_visitor(visitor));
+    visitor_initialize(as_visitor(visitor), context);
 
     register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr2);
     register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr2);
@@ -329,15 +331,10 @@ struct CodegenVisitor* new_codegen_visitor(struct Context* context,
     register_visitor(visitor->as_visitor, visit_push_cf, visit_push_cf2);
     register_visitor(visitor->as_visitor, visit_pop_cf, visit_pop_cf2);
 
-    visitor->context = context;
     visitor->stream = stream;
 
     fprintf(stream, ".intel_syntax noprefix\n");
     fprintf(stream, ".text\n");
 
     return visitor;
-}
-
-void codegen_apply(struct CodegenVisitor* visitor) {
-    context_apply_visitor(visitor->context, as_visitor(visitor));
 }

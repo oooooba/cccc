@@ -1,9 +1,12 @@
 #ifndef VISITOR_H
 #define VISITOR_H
 
+#include "context.h"
 #include "ir.h"
 
 struct Visitor {
+    struct Context* context;
+
     struct ExprIr* (*visit_const_expr)(struct Visitor* visitor,
                                        struct ConstExprIr* ir);
     struct ExprIr* (*visit_binop_expr)(struct Visitor* visitor,
@@ -69,7 +72,9 @@ struct BlockStmtIr*
 visitor_convert_block_to_block_stmt_only_used_for_refactoring(
     struct BlockIr* ir);
 
-void visitor_initialize(struct Visitor* visitor);
+void visitor_initialize(struct Visitor* visitor, struct Context* context);
+struct Context* visitor_context(struct Visitor* visitor);
+void visitor_apply(struct Visitor* visitor);
 
 #define register_visitor(obj, member, proc) \
     do {                                    \

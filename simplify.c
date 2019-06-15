@@ -8,7 +8,6 @@
 
 struct SimplifyVisitor {
     struct Visitor as_visitor;
-    struct Context* context;
 };
 
 static struct Visitor* as_visitor(struct SimplifyVisitor* visitor) {
@@ -200,7 +199,7 @@ static struct CfIr* visit_return_cf(struct SimplifyVisitor* visitor,
 
 struct SimplifyVisitor* new_simplify_visitor(struct Context* context) {
     struct SimplifyVisitor* visitor = malloc(sizeof(struct SimplifyVisitor));
-    visitor_initialize(as_visitor(visitor));
+    visitor_initialize(as_visitor(visitor), context);
 
     register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr);
     register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr);
@@ -217,10 +216,5 @@ struct SimplifyVisitor* new_simplify_visitor(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf);
     register_visitor(visitor->as_visitor, visit_return_cf, visit_return_cf);
 
-    visitor->context = context;
     return visitor;
-}
-
-void simplify_apply(struct SimplifyVisitor* visitor, struct BlockIr* ir) {
-    visitor_visit_block(as_visitor(visitor), ir);
 }
