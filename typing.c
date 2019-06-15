@@ -17,13 +17,6 @@ static struct Visitor* as_visitor(struct TypingVisitor* visitor) {
     return &visitor->as_visitor;
 }
 
-static void check_type(struct TypingVisitor* visitor,
-                       struct TypeIr* expected_type,
-                       struct TypeIr* actually_type) {
-    (void)visitor;
-    assert(type_equal(expected_type, actually_type));
-}
-
 static struct ExprIr* visit_const_expr(struct TypingVisitor* visitor,
                                        struct ConstExprIr* ir) {
     (void)visitor;
@@ -262,10 +255,10 @@ static struct CfIr* visit_return_cf(struct TypingVisitor* visitor,
     struct ExprIr* expr = ir_return_cf_expr(ir);
     if (expr) {
         expr = visitor_visit_expr(as_visitor(visitor), expr);
+        struct TypeIr* result_type = ir_function_result_type(visitor->function);
+        if (!type_equal(ir_expr_type(expr), result_type))
+            expr = ir_cast_expr_cast(ir_new_cast_expr(expr, result_type));
         ir_return_cf_set_expr(ir, expr);
-
-        check_type(visitor, ir_function_result_type(visitor->function),
-                   ir_expr_type(expr));
     } else
         assert(false && "unimplemented");  // ToDo: compare to void
     return ir_return_cf_cast(ir);

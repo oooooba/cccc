@@ -83,3 +83,9 @@ int test17(int i) {
     c[1] = tmp;
     return i;
 }
+
+long test(char c, int i);
+
+long test18(int i, char c) { return test(c, i); }
+
+long test(char c, int i) { return c * i; }
