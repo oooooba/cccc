@@ -240,9 +240,10 @@ static struct FunctionIr* visit_function2(struct CodegenVisitor* visitor,
     fprintf(visitor->stream, "%s:\n", name);
 
     // ToDo: for refactoring
-    struct BlockIr* body = ir_function_body(ir);
-    struct BlockStmtIr* new_body = ir_block_stmt_convert_for_refactoring(body);
-    visitor_visit_stmt(as_visitor(visitor), ir_block_stmt_super(new_body));
+    // struct BlockIr* body = ir_function_body(ir);
+    struct BlockStmtIr* body = ir_function_body2(ir);
+    // struct BlockStmtIr* body = ir_block_stmt_convert_for_refactoring(body);
+    visitor_visit_stmt(as_visitor(visitor), ir_block_stmt_super(body));
 
     fprintf(visitor->stream, "\tret\n");
     return NULL;

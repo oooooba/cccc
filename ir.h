@@ -104,6 +104,8 @@ struct Ir* ir_function_cast(struct FunctionIr* ir);
 strtable_id ir_function_name_index(struct FunctionIr* ir);
 struct BlockIr* ir_function_body(struct FunctionIr* ir);
 void ir_function_set_body(struct FunctionIr* ir, struct BlockIr* body);
+struct BlockStmtIr* ir_function_body2(struct FunctionIr* ir);
+void ir_function_set_body2(struct FunctionIr* ir, struct BlockStmtIr* body);
 size_t ir_function_region_size(struct FunctionIr* ir);
 void ir_function_set_region_size(struct FunctionIr* ir, size_t region_size);
 struct List* ir_function_params(struct FunctionIr* ir);

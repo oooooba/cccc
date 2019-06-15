@@ -35,7 +35,8 @@ enum IrTag ir_tag(struct Ir* ir) { return ir->tag; }
 struct FunctionIr {
     struct Ir as_ir;
     strtable_id name_index;
-    struct BlockIr* body;
+    struct BlockIr* body_old;  // ToDo: for refactoring
+    struct BlockStmtIr* body;
     size_t region_size;
     struct List* params;  // VarExprIr* list
     struct FunctionTypeIr* type;
@@ -50,7 +51,8 @@ struct FunctionIr* ir_new_function(strtable_id name_index,
     struct FunctionIr* ir = malloc(sizeof(struct FunctionIr));
     initialize_ir(ir_function_cast(ir), IrTag_Function);
     ir->name_index = name_index;
-    ir->body = body;
+    ir->body_old = body;
+    ir->body = NULL;
     ir->region_size = (size_t)-1;
     ir->params = params;
     ir->type = type;
@@ -66,10 +68,18 @@ strtable_id ir_function_name_index(struct FunctionIr* ir) {
 }
 
 struct BlockIr* ir_function_body(struct FunctionIr* ir) {
-    return ir->body;
+    return ir->body_old;
 }
 
 void ir_function_set_body(struct FunctionIr* ir, struct BlockIr* body) {
+    ir->body_old = body;
+}
+
+struct BlockStmtIr* ir_function_body2(struct FunctionIr* ir) {
+    return ir->body;
+}
+
+void ir_function_set_body2(struct FunctionIr* ir, struct BlockStmtIr* body) {
     ir->body = body;
 }
 

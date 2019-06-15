@@ -291,6 +291,7 @@ static struct BlockIr* visit_block2_post_process(
         struct Ir* stmt = ir_block_iterator_next(it);
         if (!stmt) break;
 
+        // ToDo: fix to handle blocks of IfCfIr
         struct BlockIr* block = ir_as_block(stmt);
         if (block) {
             visitor->parent_region_end = new_region_end;
@@ -409,6 +410,10 @@ static struct FunctionIr* visit_function2_post_process(
         struct PopCfIr* pop = ir_new_pop_cf(bp_reg_id);
         ir_block_insert_at_end(body, ir_cf_cast(ir_pop_cf_cast(pop)));
     }
+
+    ir_function_set_body(ir, NULL);
+    struct BlockStmtIr* new_body = ir_block_stmt_convert_for_refactoring(body);
+    ir_function_set_body2(ir, new_body);
 
     return NULL;
 }
