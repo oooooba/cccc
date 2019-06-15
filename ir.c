@@ -831,3 +831,128 @@ struct ExprIr* ir_cast_expr_operand(struct CastExprIr* ir) {
 void ir_cast_expr_set_operand(struct CastExprIr* ir, struct ExprIr* operand) {
     ir->operand = operand;
 }
+
+struct StmtIr {
+    struct Ir as_ir;
+    enum StmtIrTag tag;
+};
+
+static void initialize_stmt(struct StmtIr* ir, enum StmtIrTag tag) {
+    initialize_ir(ir_stmt_cast(ir), IrTag_Stmt);
+    ir->tag = tag;
+}
+
+enum StmtIrTag ir_stmt_tag(struct StmtIr* ir) { return ir->tag; }
+
+struct Ir* ir_stmt_cast(struct StmtIr* ir) {
+    return &ir->as_ir;
+}
+
+struct ExprStmtIr* ir_stmt_as_expr(struct StmtIr* ir) {
+    return ir->tag == StmtIrTag_Expr ? (struct ExprStmtIr*)ir : NULL;
+}
+
+struct BlockStmtIr* ir_stmt_as_block(struct StmtIr* ir) {
+    return ir->tag == StmtIrTag_Block ? (struct BlockStmtIr*)ir : NULL;
+}
+
+// ToDo: for refactoring
+struct CfStmtIr* ir_stmt_as_cf(struct StmtIr* ir) {
+    return ir->tag == StmtIrTag_Cf ? (struct CfStmtIr*)ir : NULL;
+}
+
+struct ExprStmtIr {
+    struct StmtIr super;
+    struct ExprIr* expr;
+};
+
+struct ExprStmtIr* ir_new_expr_stmt(struct ExprIr* expr) {
+    struct ExprStmtIr* ir = malloc(sizeof(struct ExprStmtIr));
+    initialize_stmt(ir_expr_stmt_super(ir), StmtIrTag_Expr);
+    ir->expr = expr;
+    return ir;
+}
+
+struct StmtIr* ir_expr_stmt_super(struct ExprStmtIr* ir) {
+    return &ir->super;
+}
+
+struct ExprIr* ir_expr_stmt_expr(struct ExprStmtIr* ir) {
+    return ir->expr;
+}
+
+void ir_expr_stmt_set_expr(struct ExprStmtIr* ir, struct ExprIr* expr) {
+    ir->expr = expr;
+}
+
+struct BlockStmtIr {
+    struct StmtIr super;
+    struct List
+        statemetnts;  // elem type: struct ListItem, item type: struct StmtIr*
+    size_t region_size;
+    size_t region_base;
+};
+
+struct BlockStmtIr* ir_new_block_stmt(void) {
+    struct BlockStmtIr* ir = malloc(sizeof(struct BlockStmtIr));
+    initialize_stmt(ir_block_stmt_super(ir), StmtIrTag_Block);
+    list_initialize(&ir->statemetnts);
+    ir->region_size = 0;
+    ir->region_base = (size_t)-1;
+    return ir;
+}
+
+struct StmtIr* ir_block_stmt_super(struct BlockStmtIr* ir) {
+    return &ir->super;
+}
+
+struct List* ir_block_stmt_statements(struct BlockStmtIr* ir) {
+    return &ir->statemetnts;
+}
+
+struct CfStmtIr {
+    struct StmtIr super;
+    struct CfIr* cf;
+};
+
+struct CfStmtIr* ir_new_cf_stmt(struct CfIr* cf) {
+    struct CfStmtIr* ir = malloc(sizeof(struct CfStmtIr));
+    initialize_stmt(ir_cf_stmt_super(ir), StmtIrTag_Cf);
+    ir->cf = cf;
+    return ir;
+}
+
+struct StmtIr* ir_cf_stmt_super(struct CfStmtIr* ir) {
+    return &ir->super;
+}
+
+struct CfIr* ir_cf_stmt_cf(struct CfStmtIr* ir) {
+    return ir->cf;
+}
+
+void ir_cf_stmt_set_cf(struct CfStmtIr* ir, struct CfIr* cf) { ir->cf = cf; }
+
+struct BlockStmtIr* ir_block_stmt_convert_for_refactoring(struct BlockIr* ir) {
+    struct BlockStmtIr* block = ir_new_block_stmt();
+    struct List* stmts = ir_block_stmt_statements(block);
+
+    struct BlockIterator* it = ir_block_new_iterator(ir);
+    for (;;) {
+        struct Ir* stmt = ir_block_iterator_next(it);
+        if (!stmt) break;
+
+        struct ListItem* list_item = malloc(sizeof(struct ListItem));
+        if (ir_tag(stmt) == IrTag_Expr)
+            list_item->item = ir_new_expr_stmt(ir_as_expr(stmt));
+        else if (ir_tag(stmt) == IrTag_Cf)
+            list_item->item = ir_new_cf_stmt(ir_as_cf(stmt));
+        else if (ir_tag(stmt) == IrTag_Block)
+            list_item->item = ir_block_stmt_super(
+                ir_block_stmt_convert_for_refactoring(ir_as_block(stmt)));
+        else
+            assert(false);
+
+        list_insert_at_end(stmts, &list_item->header);
+    }
+    return block;
+}

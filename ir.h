@@ -35,12 +35,18 @@ struct DerefExprIr;
 struct AddrofExprIr;
 struct CastExprIr;
 
+struct StmtIr;
+struct ExprStmt;
+struct BlockStmt;
+struct CfStmt;  // for refactoring
+
 enum IrTag {
     IrTag_Block,
     IrTag_Expr,
     IrTag_Var,
     IrTag_Function,
     IrTag_Cf,
+    IrTag_Stmt,
 };
 
 enum CfIrTag {
@@ -62,6 +68,12 @@ enum ExprIrTag {
     ExprIrTag_Deref,
     ExprIrTag_Addrof,
     ExprIrTag_Cast,
+};
+
+enum StmtIrTag {
+    StmtIrTag_Expr,
+    StmtIrTag_Block,
+    StmtIrTag_Cf,  // ToDo: for refactoring
 };
 
 enum ConstExprIrTag {
@@ -109,13 +121,14 @@ void ir_block_insert_expr_at(struct BlockIterator* it, struct ExprIr* expr);
 void ir_block_insert_at_end(struct BlockIr* ir, struct Ir* statement);
 void ir_block_insert_expr_at_end(struct BlockIr* ir, struct ExprIr* expr);
 void ir_block_insert_block_at_end(struct BlockIr* ir, struct BlockIr* block);
+void ir_block_commit_region_status(struct BlockIr* ir, size_t region_base);
+size_t ir_block_region_size(struct BlockIr* ir);
+
 struct Location* ir_block_allocate_location(struct BlockIr* ir,
                                             strtable_id name_index,
                                             struct TypeIr* type);
 struct Location* ir_declare_function(strtable_id name_index,
                                      struct FunctionTypeIr* type);
-void ir_block_commit_region_status(struct BlockIr* ir, size_t region_base);
-size_t ir_block_region_size(struct BlockIr* ir);
 strtable_id ir_location_name_index(struct Location* loc);
 struct FunctionIr* ir_location_function_definition(struct Location* loc);
 void ir_location_set_function_definition(struct Location* loc,
@@ -250,5 +263,27 @@ struct CastExprIr* ir_new_cast_expr(struct ExprIr* operand,
 struct ExprIr* ir_cast_expr_cast(struct CastExprIr* ir);
 struct ExprIr* ir_cast_expr_operand(struct CastExprIr* ir);
 void ir_cast_expr_set_operand(struct CastExprIr* ir, struct ExprIr* operand);
+
+enum StmtIrTag ir_stmt_tag(struct StmtIr* ir);
+struct Ir* ir_stmt_cast(struct StmtIr* ir);
+struct ExprStmtIr* ir_stmt_as_expr(struct StmtIr* ir);
+struct BlockStmtIr* ir_stmt_as_block(struct StmtIr* ir);
+struct CfStmtIr* ir_stmt_as_cf(struct StmtIr* ir);  // ToDo: for refactoring
+
+struct ExprStmtIr* ir_new_expr_stmt(struct ExprIr* expr);
+struct StmtIr* ir_expr_stmt_super(struct ExprStmtIr* ir);
+struct ExprIr* ir_expr_stmt_expr(struct ExprStmtIr* ir);
+void ir_expr_stmt_set_expr(struct ExprStmtIr* ir, struct ExprIr* expr);
+
+struct BlockStmtIr* ir_new_block_stmt(void);
+struct StmtIr* ir_block_stmt_super(struct BlockStmtIr* ir);
+struct List* ir_block_stmt_statements(struct BlockStmtIr* ir);
+
+// ToDo: for refactoring
+struct CfStmtIr* ir_new_cf_stmt(struct CfIr* cf);
+struct StmtIr* ir_cf_stmt_super(struct CfStmtIr* ir);
+struct CfIr* ir_cf_stmt_cf(struct CfStmtIr* ir);
+void ir_cf_stmt_set_cf(struct CfStmtIr* ir, struct CfIr* cf);
+struct BlockStmtIr* ir_block_stmt_convert_for_refactoring(struct BlockIr* ir);
 
 #endif

@@ -49,6 +49,25 @@ struct ExprIr* visitor_visit_expr(struct Visitor* visitor, struct ExprIr* ir) {
     return NULL;
 }
 
+struct StmtIr* visitor_visit_stmt(struct Visitor* visitor, struct StmtIr* ir) {
+    struct StmtIr* stmt;
+    switch (ir_stmt_tag(ir)) {
+        case StmtIrTag_Expr:
+            stmt = visitor->visit_expr_stmt(visitor, ir_stmt_as_expr(ir));
+            break;
+        case StmtIrTag_Block:
+            stmt = visitor->visit_block_stmt(visitor, ir_stmt_as_block(ir));
+            break;
+        case StmtIrTag_Cf:
+            stmt = visitor->visit_cf_stmt(visitor, ir_stmt_as_cf(ir));
+            break;
+        default:
+            assert(false);
+            stmt = NULL;
+    }
+    return stmt;
+}
+
 struct BlockIr* visitor_visit_block(struct Visitor* visitor,
                                     struct BlockIr* ir) {
     return visitor->visit_block(visitor, ir);
@@ -77,6 +96,33 @@ struct CfIr* visitor_visit_cf(struct Visitor* visitor, struct CfIr* ir) {
     return NULL;
 }
 
+struct StmtIr* visitor_visit_expr_stmt(struct Visitor* visitor,
+                                       struct ExprStmtIr* ir) {
+    struct ExprIr* expr = visitor_visit_expr(visitor, ir_expr_stmt_expr(ir));
+    ir_expr_stmt_set_expr(ir, expr);
+    return ir_expr_stmt_super(ir);
+}
+
+struct StmtIr* visitor_visit_block_stmt(struct Visitor* visitor,
+                                        struct BlockStmtIr* ir) {
+    struct List* stmts = ir_block_stmt_statements(ir);
+    for (struct ListHeader *it = list_begin(stmts), *eit = list_end(stmts);
+         it != eit; it = list_next(it)) {
+        struct ListItem* list_item = (struct ListItem*)it;
+        struct StmtIr* stmt = list_item->item;
+        list_item->item = visitor_visit_stmt(visitor, stmt);
+    }
+    return ir_block_stmt_super(ir);
+}
+
+// ToDo: for refactoring
+struct StmtIr* visitor_visit_cf_stmt(struct Visitor* visitor,
+                                     struct CfStmtIr* ir) {
+    struct CfIr* cf = visitor_visit_cf(visitor, ir_cf_stmt_cf(ir));
+    ir_cf_stmt_set_cf(ir, cf);
+    return ir_cf_stmt_super(ir);
+}
+
 void visitor_initialize(struct Visitor* visitor) {
     register_visitor(*visitor, visit_const_expr, NULL);
     register_visitor(*visitor, visit_binop_expr, NULL);
@@ -88,6 +134,11 @@ void visitor_initialize(struct Visitor* visitor) {
     register_visitor(*visitor, visit_deref_expr, NULL);
     register_visitor(*visitor, visit_addrof_expr, NULL);
     register_visitor(*visitor, visit_cast_expr, NULL);
+
+    register_visitor(*visitor, visit_expr_stmt, visitor_visit_expr_stmt);
+    register_visitor(*visitor, visit_block_stmt, visitor_visit_block_stmt);
+    register_visitor(*visitor, visit_cf_stmt, visitor_visit_cf_stmt);
+
     register_visitor(*visitor, visit_block, NULL);
     register_visitor(*visitor, visit_function, NULL);
     register_visitor(*visitor, visit_branch_cf, NULL);

@@ -25,6 +25,15 @@ struct Visitor {
     struct ExprIr* (*visit_cast_expr)(struct Visitor* visitor,
                                       struct CastExprIr* ir);
     struct BlockIr* (*visit_block)(struct Visitor* visitor, struct BlockIr* ir);
+
+    struct StmtIr* (*visit_expr_stmt)(struct Visitor* visitor,
+                                      struct ExprStmtIr* ir);
+    struct StmtIr* (*visit_block_stmt)(struct Visitor* visitor,
+                                       struct BlockStmtIr* ir);
+    // ToDo: for refactoring
+    struct StmtIr* (*visit_cf_stmt)(struct Visitor* visitor,
+                                    struct CfStmtIr* ir);
+
     struct FunctionIr* (*visit_function)(struct Visitor* visitor,
                                          struct FunctionIr* ir);
     struct CfIr* (*visit_branch_cf)(struct Visitor* visitor,
@@ -44,10 +53,21 @@ struct ExprIr* visitor_visit_expr(struct Visitor* visitor, struct ExprIr* ir);
 struct BlockIr* visitor_visit_block(struct Visitor* visitor,
                                     struct BlockIr* ir);
 
+struct StmtIr* visitor_visit_stmt(struct Visitor* visitor, struct StmtIr* ir);
+
 struct FunctionIr* visitor_visit_function(struct Visitor* visitor,
                                           struct FunctionIr* ir);
 
 struct CfIr* visitor_visit_cf(struct Visitor* visitor, struct CfIr* ir);
+
+struct StmtIr* visitor_visit_expr_stmt(struct Visitor* visitor,
+                                       struct ExprStmtIr* ir);
+struct StmtIr* visitor_visit_block_stmt(struct Visitor* visitor,
+                                        struct BlockStmtIr* ir);
+
+struct BlockStmtIr*
+visitor_convert_block_to_block_stmt_only_used_for_refactoring(
+    struct BlockIr* ir);
 
 void visitor_initialize(struct Visitor* visitor);
 
