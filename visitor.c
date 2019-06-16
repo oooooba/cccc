@@ -116,8 +116,9 @@ struct StmtIr* visitor_visit_block_stmt(struct Visitor* visitor,
          it != eit; it = list_next(it)) {
         struct ListItem* list_item = (struct ListItem*)it;
         struct StmtIr* stmt = list_item->item;
+        stmt = visitor_visit_stmt(visitor, stmt);
         if (stmt) {
-            list_item->item = visitor_visit_stmt(visitor, stmt);
+            list_item->item = stmt;
             changed = true;
         }
     }
