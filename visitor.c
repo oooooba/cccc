@@ -99,28 +99,38 @@ struct CfIr* visitor_visit_cf(struct Visitor* visitor, struct CfIr* ir) {
 struct StmtIr* visitor_visit_expr_stmt(struct Visitor* visitor,
                                        struct ExprStmtIr* ir) {
     struct ExprIr* expr = visitor_visit_expr(visitor, ir_expr_stmt_expr(ir));
-    ir_expr_stmt_set_expr(ir, expr);
-    return ir_expr_stmt_super(ir);
+    if (expr) {
+        ir_expr_stmt_set_expr(ir, expr);
+        return ir_expr_stmt_super(ir);
+    } else
+        return NULL;
 }
 
 struct StmtIr* visitor_visit_block_stmt(struct Visitor* visitor,
                                         struct BlockStmtIr* ir) {
+    bool changed = false;
     struct List* stmts = ir_block_stmt_statements(ir);
     for (struct ListHeader *it = list_begin(stmts), *eit = list_end(stmts);
          it != eit; it = list_next(it)) {
         struct ListItem* list_item = (struct ListItem*)it;
         struct StmtIr* stmt = list_item->item;
-        list_item->item = visitor_visit_stmt(visitor, stmt);
+        if (stmt) {
+            list_item->item = visitor_visit_stmt(visitor, stmt);
+            changed = true;
+        }
     }
-    return ir_block_stmt_super(ir);
+    return changed ? ir_block_stmt_super(ir) : NULL;
 }
 
 // ToDo: for refactoring
 struct StmtIr* visitor_visit_cf_stmt(struct Visitor* visitor,
                                      struct CfStmtIr* ir) {
     struct CfIr* cf = visitor_visit_cf(visitor, ir_cf_stmt_cf(ir));
-    ir_cf_stmt_set_cf(ir, cf);
-    return ir_cf_stmt_super(ir);
+    if (cf) {
+        ir_cf_stmt_set_cf(ir, cf);
+        return ir_cf_stmt_super(ir);
+    } else
+        return NULL;
 }
 
 void visitor_initialize(struct Visitor* visitor, struct Context* context) {
