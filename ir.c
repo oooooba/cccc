@@ -299,8 +299,6 @@ struct LabelCfIr* ir_cf_as_label(struct CfIr* ir) {
 struct BranchCfIr {
     struct CfIr as_cf;
     struct ExprIr* cond_expr;
-    struct BlockIr* true_block;
-    struct BlockIr* false_block;
     struct StmtIr* true_stmt;
     struct StmtIr* false_stmt;
 };
@@ -313,8 +311,6 @@ struct BranchCfIr* ir_new_branch_cf(struct ExprIr* cond_expr,
     ir->cond_expr = cond_expr;
     ir->true_stmt = true_stmt;
     ir->false_stmt = false_stmt;
-    ir->true_block = NULL;
-    ir->false_block = NULL;
     return ir;
 }
 
@@ -329,24 +325,6 @@ struct ExprIr* ir_branch_cf_cond_expr(struct BranchCfIr* ir) {
 void ir_branch_cf_set_cond_expr(struct BranchCfIr* ir,
                                 struct ExprIr* cond_expr) {
     ir->cond_expr = cond_expr;
-}
-
-struct BlockIr* ir_branch_cf_true_block(struct BranchCfIr* ir) {
-    return ir->true_block;
-}
-
-void ir_branch_cf_set_true_block(struct BranchCfIr* ir,
-                                 struct BlockIr* true_block) {
-    ir->true_block = true_block;
-}
-
-struct BlockIr* ir_branch_cf_false_block(struct BranchCfIr* ir) {
-    return ir->false_block;
-}
-
-void ir_branch_cf_set_false_block(struct BranchCfIr* ir,
-                                  struct BlockIr* false_block) {
-    ir->false_block = false_block;
 }
 
 struct StmtIr* ir_branch_cf_true_stmt(struct BranchCfIr* ir) {

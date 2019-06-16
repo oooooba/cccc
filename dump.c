@@ -224,22 +224,12 @@ static struct CfIr* visit_branch_cf2(struct DumpVisitor* visitor,
     visitor_visit_expr(as_visitor(visitor), cond_expr);
     fprintf(visitor->stream, "if (v%p) ", cond_expr);
 
-    struct BlockIr* true_block = ir_branch_cf_true_block(ir);
-    if (true_block)  // old format
-        visitor_visit_block(as_visitor(visitor), true_block);
-    else {  // new format
-        struct StmtIr* true_stmt = ir_branch_cf_true_stmt(ir);
-        visitor_visit_stmt(as_visitor(visitor), true_stmt);
-    }
+    struct StmtIr* true_stmt = ir_branch_cf_true_stmt(ir);
+    visitor_visit_stmt(as_visitor(visitor), true_stmt);
 
     fprintf(visitor->stream, "else ");
-    struct BlockIr* false_block = ir_branch_cf_false_block(ir);
-    if (false_block)  // old format
-        visitor_visit_block(as_visitor(visitor), false_block);
-    else {  // new format
-        struct StmtIr* false_stmt = ir_branch_cf_false_stmt(ir);
-        visitor_visit_stmt(as_visitor(visitor), false_stmt);
-    }
+    struct StmtIr* false_stmt = ir_branch_cf_false_stmt(ir);
+    visitor_visit_stmt(as_visitor(visitor), false_stmt);
 
     return NULL;
 }

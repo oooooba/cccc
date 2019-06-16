@@ -149,12 +149,6 @@ struct CfIr* ir_branch_cf_cast(struct BranchCfIr* ir);
 struct ExprIr* ir_branch_cf_cond_expr(struct BranchCfIr* ir);
 void ir_branch_cf_set_cond_expr(struct BranchCfIr* ir,
                                 struct ExprIr* cond_expr);
-struct BlockIr* ir_branch_cf_true_block(struct BranchCfIr* ir);
-void ir_branch_cf_set_true_block(struct BranchCfIr* ir,
-                                 struct BlockIr* true_block);
-struct BlockIr* ir_branch_cf_false_block(struct BranchCfIr* ir);
-void ir_branch_cf_set_false_block(struct BranchCfIr* ir,
-                                  struct BlockIr* false_block);
 struct StmtIr* ir_branch_cf_true_stmt(struct BranchCfIr* ir);
 void ir_branch_cf_set_true_stmt(struct BranchCfIr* ir,
                                 struct StmtIr* true_stmt);
