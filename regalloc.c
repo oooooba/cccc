@@ -92,8 +92,8 @@ static struct ExprIr* visit_call_expr2(struct RegallocVisitor* visitor,
     strtable_id reg_id = acquire_register(visitor, result_type);
     ir_expr_set_reg_id(ir_call_expr_cast(ir), reg_id);
 
-    struct BlockIr* pre_block = ir_call_expr_pre_expr_block(ir);
-    struct BlockIr* post_block = ir_call_expr_post_expr_block(ir);
+    struct BlockStmtIr* pre_block = ir_call_expr_pre_expr_block(ir);
+    struct BlockStmtIr* post_block = ir_call_expr_post_expr_block(ir);
 
     // copy argument registers to parameter ones
     size_t i = 0;
@@ -108,7 +108,9 @@ static struct ExprIr* visit_call_expr2(struct RegallocVisitor* visitor,
 
         struct ConstExprIr* copy_instr = ir_new_register_const_expr(arg_reg_id);
         ir_expr_set_reg_id(ir_const_expr_cast(copy_instr), param_reg_id);
-        ir_block_insert_expr_at_end(pre_block, ir_const_expr_cast(copy_instr));
+        struct ExprStmtIr* stmt =
+            ir_new_expr_stmt(ir_const_expr_cast(copy_instr));
+        ir_block_stmt_insert_at_end(pre_block, ir_expr_stmt_super(stmt));
         ++i;
     }
 
@@ -120,20 +122,20 @@ static struct ExprIr* visit_call_expr2(struct RegallocVisitor* visitor,
             context_func_call_result_reg(ctx(visitor), RegisterSizeKind_64);
 
         // save result register
-        struct PushCfIr* push_instr = ir_new_push_cf(result_reg_id);
-        ir_block_insert_at_end(pre_block,
-                               ir_cf_cast(ir_push_cf_cast(push_instr)));
+        struct PushStmtIr* push_instr = ir_new_push_stmt(result_reg_id);
+        ir_block_stmt_insert_at_end(pre_block, ir_push_stmt_super(push_instr));
 
         // copy result register to expected one
         struct ConstExprIr* copy_instr = ir_new_register_const_expr(
             get_func_call_result_register(ctx(visitor), result_type));
         ir_expr_set_reg_id(ir_const_expr_cast(copy_instr), reg_id);
-        ir_block_insert_expr_at_end(post_block, ir_const_expr_cast(copy_instr));
+        struct ExprStmtIr* stmt =
+            ir_new_expr_stmt(ir_const_expr_cast(copy_instr));
+        ir_block_stmt_insert_at_end(post_block, ir_expr_stmt_super(stmt));
 
         // restore result register
-        struct PopCfIr* pop_instr = ir_new_pop_cf(result_reg_id);
-        ir_block_insert_at_end(post_block,
-                               ir_cf_cast(ir_pop_cf_cast(pop_instr)));
+        struct PopStmtIr* pop_instr = ir_new_pop_stmt(result_reg_id);
+        ir_block_stmt_insert_at_end(post_block, ir_pop_stmt_super(pop_instr));
     }
 
     return NULL;

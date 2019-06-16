@@ -218,8 +218,8 @@ struct ExprIr* ir_call_expr_cast(struct CallExprIr* ir);
 struct ExprIr* ir_call_expr_function(struct CallExprIr* ir);
 void ir_call_expr_set_function(struct CallExprIr* ir, struct ExprIr* function);
 struct List* ir_call_expr_args(struct CallExprIr* ir);
-struct BlockIr* ir_call_expr_pre_expr_block(struct CallExprIr* ir);
-struct BlockIr* ir_call_expr_post_expr_block(struct CallExprIr* ir);
+struct BlockStmtIr* ir_call_expr_pre_expr_block(struct CallExprIr* ir);
+struct BlockStmtIr* ir_call_expr_post_expr_block(struct CallExprIr* ir);
 
 struct VarExprIr* ir_new_var_expr(struct Location* location);
 struct ExprIr* ir_var_expr_cast(struct VarExprIr* ir);
@@ -286,6 +286,7 @@ void ir_expr_stmt_set_expr(struct ExprStmtIr* ir, struct ExprIr* expr);
 struct BlockStmtIr* ir_new_block_stmt(void);
 struct StmtIr* ir_block_stmt_super(struct BlockStmtIr* ir);
 struct List* ir_block_stmt_statements(struct BlockStmtIr* ir);
+void ir_block_stmt_insert_at_end(struct BlockStmtIr* ir, struct StmtIr* stmt);
 
 // ToDo: for refactoring
 struct CfStmtIr* ir_new_cf_stmt(struct CfIr* cf);

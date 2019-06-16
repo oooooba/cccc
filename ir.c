@@ -589,8 +589,8 @@ struct CallExprIr {
     struct ExprIr as_expr;
     struct ExprIr* function;
     struct List* args;  // ExprIr* list
-    struct BlockIr* pre_expr_block;
-    struct BlockIr* post_expr_block;
+    struct BlockStmtIr* pre_expr_block;
+    struct BlockStmtIr* post_expr_block;
 };
 
 struct CallExprIr* ir_new_call_expr(struct ExprIr* function,
@@ -599,8 +599,8 @@ struct CallExprIr* ir_new_call_expr(struct ExprIr* function,
     initialize_expr(ir_call_expr_cast(ir), ExprIrTag_Call);
     ir->function = function;
     ir->args = args;
-    ir->pre_expr_block = ir_new_block();
-    ir->post_expr_block = ir_new_block();
+    ir->pre_expr_block = ir_new_block_stmt();
+    ir->post_expr_block = ir_new_block_stmt();
     return ir;
 }
 
@@ -620,11 +620,11 @@ struct List* ir_call_expr_args(struct CallExprIr* ir) {
     return ir->args;
 }
 
-struct BlockIr* ir_call_expr_pre_expr_block(struct CallExprIr* ir) {
+struct BlockStmtIr* ir_call_expr_pre_expr_block(struct CallExprIr* ir) {
     return ir->pre_expr_block;
 }
 
-struct BlockIr* ir_call_expr_post_expr_block(struct CallExprIr* ir) {
+struct BlockStmtIr* ir_call_expr_post_expr_block(struct CallExprIr* ir) {
     return ir->post_expr_block;
 }
 
@@ -926,6 +926,12 @@ struct StmtIr* ir_block_stmt_super(struct BlockStmtIr* ir) {
 
 struct List* ir_block_stmt_statements(struct BlockStmtIr* ir) {
     return &ir->statemetnts;
+}
+
+void ir_block_stmt_insert_at_end(struct BlockStmtIr* ir, struct StmtIr* stmt) {
+    struct ListItem* list_item = malloc(sizeof(struct ListItem));
+    list_item->item = stmt;
+    list_insert_at_end(&ir->statemetnts, list_from(list_item));
 }
 
 struct CfStmtIr {

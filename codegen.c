@@ -106,7 +106,8 @@ static struct ExprIr* visit_call_expr2(struct CodegenVisitor* visitor,
         visitor_visit_expr(as_visitor(visitor), arg);
     }
 
-    visitor_visit_block(as_visitor(visitor), ir_call_expr_pre_expr_block(ir));
+    visitor_visit_stmt(as_visitor(visitor),
+                       ir_block_stmt_super(ir_call_expr_pre_expr_block(ir)));
 
     strtable_id name_id = ir_var_expr_index(func_name);
     const char* name = strtable_at(&ctx(visitor)->strtable, name_id);
@@ -128,7 +129,8 @@ static struct ExprIr* visit_call_expr2(struct CodegenVisitor* visitor,
         fprintf(visitor->stream, "\n");
     }
 
-    visitor_visit_block(as_visitor(visitor), ir_call_expr_post_expr_block(ir));
+    visitor_visit_stmt(as_visitor(visitor),
+                       ir_block_stmt_super(ir_call_expr_post_expr_block(ir)));
 
     return NULL;
 }
