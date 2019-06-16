@@ -61,6 +61,12 @@ struct StmtIr* visitor_visit_stmt(struct Visitor* visitor, struct StmtIr* ir) {
         case StmtIrTag_Cf:
             stmt = visitor->visit_cf_stmt(visitor, ir_stmt_as_cf(ir));
             break;
+        case StmtIrTag_Push:
+            stmt = visitor->visit_push_stmt(visitor, ir_stmt_as_push(ir));
+            break;
+        case StmtIrTag_Pop:
+            stmt = visitor->visit_pop_stmt(visitor, ir_stmt_as_pop(ir));
+            break;
         default:
             assert(false);
             stmt = NULL;
@@ -150,6 +156,8 @@ void visitor_initialize(struct Visitor* visitor, struct Context* context) {
     register_visitor(*visitor, visit_expr_stmt, visitor_visit_expr_stmt);
     register_visitor(*visitor, visit_block_stmt, visitor_visit_block_stmt);
     register_visitor(*visitor, visit_cf_stmt, visitor_visit_cf_stmt);
+    register_visitor(*visitor, visit_push_stmt, NULL);
+    register_visitor(*visitor, visit_pop_stmt, NULL);
 
     register_visitor(*visitor, visit_block, NULL);
     register_visitor(*visitor, visit_function, NULL);

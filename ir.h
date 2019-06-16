@@ -39,6 +39,8 @@ struct StmtIr;
 struct ExprStmt;
 struct BlockStmt;
 struct CfStmt;  // for refactoring
+struct PushStmt;
+struct PopStmt;
 
 enum IrTag {
     IrTag_Block,
@@ -74,6 +76,8 @@ enum StmtIrTag {
     StmtIrTag_Expr,
     StmtIrTag_Block,
     StmtIrTag_Cf,  // ToDo: for refactoring
+    StmtIrTag_Push,
+    StmtIrTag_Pop,
 };
 
 enum ConstExprIrTag {
@@ -271,6 +275,8 @@ struct Ir* ir_stmt_cast(struct StmtIr* ir);
 struct ExprStmtIr* ir_stmt_as_expr(struct StmtIr* ir);
 struct BlockStmtIr* ir_stmt_as_block(struct StmtIr* ir);
 struct CfStmtIr* ir_stmt_as_cf(struct StmtIr* ir);  // ToDo: for refactoring
+struct PushStmtIr* ir_stmt_as_push(struct StmtIr* ir);
+struct PopStmtIr* ir_stmt_as_pop(struct StmtIr* ir);
 
 struct ExprStmtIr* ir_new_expr_stmt(struct ExprIr* expr);
 struct StmtIr* ir_expr_stmt_super(struct ExprStmtIr* ir);
@@ -287,5 +293,13 @@ struct StmtIr* ir_cf_stmt_super(struct CfStmtIr* ir);
 struct CfIr* ir_cf_stmt_cf(struct CfStmtIr* ir);
 void ir_cf_stmt_set_cf(struct CfStmtIr* ir, struct CfIr* cf);
 struct BlockStmtIr* ir_block_stmt_convert_for_refactoring(struct BlockIr* ir);
+
+struct PushStmtIr* ir_new_push_stmt(strtable_id reg_id);
+struct StmtIr* ir_push_stmt_super(struct PushStmtIr* ir);
+strtable_id ir_push_stmt_reg_id(struct PushStmtIr* ir);
+
+struct PopStmtIr* ir_new_pop_stmt(strtable_id reg_id);
+struct StmtIr* ir_pop_stmt_super(struct PopStmtIr* ir);
+strtable_id ir_pop_stmt_reg_id(struct PopStmtIr* ir);
 
 #endif

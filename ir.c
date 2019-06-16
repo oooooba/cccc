@@ -871,6 +871,14 @@ struct CfStmtIr* ir_stmt_as_cf(struct StmtIr* ir) {
     return ir->tag == StmtIrTag_Cf ? (struct CfStmtIr*)ir : NULL;
 }
 
+struct PushStmtIr* ir_stmt_as_push(struct StmtIr* ir) {
+    return ir->tag == StmtIrTag_Push ? (struct PushStmtIr*)ir : NULL;
+}
+
+struct PopStmtIr* ir_stmt_as_pop(struct StmtIr* ir) {
+    return ir->tag == StmtIrTag_Pop ? (struct PopStmtIr*)ir : NULL;
+}
+
 struct ExprStmtIr {
     struct StmtIr super;
     struct ExprIr* expr;
@@ -966,3 +974,39 @@ struct BlockStmtIr* ir_block_stmt_convert_for_refactoring(struct BlockIr* ir) {
     }
     return block;
 }
+
+struct PushStmtIr {
+    struct StmtIr super;
+    strtable_id reg_id;
+};
+
+struct PushStmtIr* ir_new_push_stmt(strtable_id reg_id) {
+    struct PushStmtIr* ir = malloc(sizeof(struct PushStmtIr));
+    initialize_stmt(ir_push_stmt_super(ir), StmtIrTag_Push);
+    ir->reg_id = reg_id;
+    return ir;
+}
+
+struct StmtIr* ir_push_stmt_super(struct PushStmtIr* ir) {
+    return &ir->super;
+}
+
+strtable_id ir_push_stmt_reg_id(struct PushStmtIr* ir) { return ir->reg_id; }
+
+struct PopStmtIr {
+    struct StmtIr super;
+    strtable_id reg_id;
+};
+
+struct PopStmtIr* ir_new_pop_stmt(strtable_id reg_id) {
+    struct PopStmtIr* ir = malloc(sizeof(struct PopStmtIr));
+    initialize_stmt(ir_pop_stmt_super(ir), StmtIrTag_Pop);
+    ir->reg_id = reg_id;
+    return ir;
+}
+
+struct StmtIr* ir_pop_stmt_super(struct PopStmtIr* ir) {
+    return &ir->super;
+}
+
+strtable_id ir_pop_stmt_reg_id(struct PopStmtIr* ir) { return ir->reg_id; }

@@ -37,6 +37,11 @@ struct Visitor {
     struct StmtIr* (*visit_cf_stmt)(struct Visitor* visitor,
                                     struct CfStmtIr* ir);
 
+    struct StmtIr* (*visit_push_stmt)(struct Visitor* visitor,
+                                      struct PushStmtIr* ir);
+    struct StmtIr* (*visit_pop_stmt)(struct Visitor* visitor,
+                                     struct PopStmtIr* ir);
+
     struct FunctionIr* (*visit_function)(struct Visitor* visitor,
                                          struct FunctionIr* ir);
     struct CfIr* (*visit_branch_cf)(struct Visitor* visitor,
