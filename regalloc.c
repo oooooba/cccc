@@ -224,18 +224,8 @@ static struct CfIr* visit_branch_cf2(struct RegallocVisitor* visitor,
     visitor_visit_expr(as_visitor(visitor), ir_branch_cf_cond_expr(ir));
     release_register(visitor);
 
-    // ToDo: for refactoring
-    visitor_visit_block(as_visitor(visitor), ir_branch_cf_true_block(ir));
-    struct BlockStmtIr* true_block =
-        ir_block_stmt_convert_for_refactoring(ir_branch_cf_true_block(ir));
-    ir_branch_cf_set_true_block(ir, NULL);
-    ir_branch_cf_set_true_stmt(ir, ir_block_stmt_super(true_block));
-
-    visitor_visit_block(as_visitor(visitor), ir_branch_cf_false_block(ir));
-    struct BlockStmtIr* false_block =
-        ir_block_stmt_convert_for_refactoring(ir_branch_cf_false_block(ir));
-    ir_branch_cf_set_false_block(ir, NULL);
-    ir_branch_cf_set_false_stmt(ir, ir_block_stmt_super(false_block));
+    visitor_visit_stmt(as_visitor(visitor), ir_branch_cf_true_stmt(ir));
+    visitor_visit_stmt(as_visitor(visitor), ir_branch_cf_false_stmt(ir));
 
     return NULL;
 }

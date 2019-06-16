@@ -238,13 +238,18 @@ static struct CfIr* visit_branch_cf(struct TypingVisitor* visitor,
     cond_expr = visitor_visit_expr(as_visitor(visitor), cond_expr);
     ir_branch_cf_set_cond_expr(ir, cond_expr);
 
-    struct BlockIr* true_block = ir_branch_cf_true_block(ir);
-    true_block = visitor_visit_block(as_visitor(visitor), true_block);
-    ir_branch_cf_set_true_block(ir, true_block);
+    // ToDo: for refactoring
+    visitor_visit_block(as_visitor(visitor), ir_branch_cf_true_block(ir));
+    struct BlockStmtIr* true_block =
+        ir_block_stmt_convert_for_refactoring(ir_branch_cf_true_block(ir));
+    ir_branch_cf_set_true_block(ir, NULL);
+    ir_branch_cf_set_true_stmt(ir, ir_block_stmt_super(true_block));
 
-    struct BlockIr* false_block = ir_branch_cf_false_block(ir);
-    false_block = visitor_visit_block(as_visitor(visitor), false_block);
-    ir_branch_cf_set_false_block(ir, false_block);
+    visitor_visit_block(as_visitor(visitor), ir_branch_cf_false_block(ir));
+    struct BlockStmtIr* false_block =
+        ir_block_stmt_convert_for_refactoring(ir_branch_cf_false_block(ir));
+    ir_branch_cf_set_false_block(ir, NULL);
+    ir_branch_cf_set_false_stmt(ir, ir_block_stmt_super(false_block));
 
     return ir_branch_cf_cast(ir);
 }

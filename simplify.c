@@ -181,8 +181,8 @@ static struct CfIr* visit_branch_cf(struct SimplifyVisitor* visitor,
         ir_branch_cf_set_cond_expr(ir, cond_expr);
     }
 
-    visitor_visit_block(as_visitor(visitor), ir_branch_cf_true_block(ir));
-    visitor_visit_block(as_visitor(visitor), ir_branch_cf_false_block(ir));
+    visitor_visit_stmt(as_visitor(visitor), ir_branch_cf_true_stmt(ir));
+    visitor_visit_stmt(as_visitor(visitor), ir_branch_cf_false_stmt(ir));
 
     return NULL;
 }
