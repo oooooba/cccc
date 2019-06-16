@@ -50,8 +50,6 @@ struct Visitor {
                                     struct ReturnCfIr* ir);
     struct CfIr* (*visit_label_cf)(struct Visitor* visitor,
                                    struct LabelCfIr* ir);
-    struct CfIr* (*visit_push_cf)(struct Visitor* visitor, struct PushCfIr* ir);
-    struct CfIr* (*visit_pop_cf)(struct Visitor* visitor, struct PopCfIr* ir);
 };
 
 struct Ir* visitor_visit_ir(struct Visitor* visitor, struct Ir* ir);

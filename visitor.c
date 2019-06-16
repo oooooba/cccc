@@ -92,10 +92,6 @@ struct CfIr* visitor_visit_cf(struct Visitor* visitor, struct CfIr* ir) {
             return visitor->visit_return_cf(visitor, ir_cf_as_return(ir));
         case CfIrTag_Label:
             return visitor->visit_label_cf(visitor, ir_cf_as_label(ir));
-        case CfIrTag_Push:
-            return visitor->visit_push_cf(visitor, ir_cf_as_push(ir));
-        case CfIrTag_Pop:
-            return visitor->visit_pop_cf(visitor, ir_cf_as_pop(ir));
         default:
             assert(false);
     }
@@ -164,8 +160,6 @@ void visitor_initialize(struct Visitor* visitor, struct Context* context) {
     register_visitor(*visitor, visit_branch_cf, NULL);
     register_visitor(*visitor, visit_return_cf, NULL);
     register_visitor(*visitor, visit_label_cf, NULL);
-    register_visitor(*visitor, visit_push_cf, NULL);
-    register_visitor(*visitor, visit_pop_cf, NULL);
 }
 
 struct Context* visitor_context(struct Visitor* visitor) {

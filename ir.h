@@ -20,8 +20,6 @@ struct CfIr;
 struct BranchCfIr;
 struct ReturnCfIr;
 struct LabelCfIr;
-struct PushCfIr;
-struct PopCfIr;
 
 struct ExprIr;
 struct ConstExprIr;
@@ -144,8 +142,6 @@ struct Ir* ir_cf_cast(struct CfIr* ir);
 struct BranchCfIr* ir_cf_as_branch(struct CfIr* ir);
 struct ReturnCfIr* ir_cf_as_return(struct CfIr* ir);
 struct LabelCfIr* ir_cf_as_label(struct CfIr* ir);
-struct PushCfIr* ir_cf_as_push(struct CfIr* ir);
-struct PopCfIr* ir_cf_as_pop(struct CfIr* ir);
 enum CfIrTag ir_cf_tag(struct CfIr* ir);
 
 struct BranchCfIr* ir_new_branch_cf(struct ExprIr* cond_expr,
@@ -170,14 +166,6 @@ void ir_return_cf_set_expr(struct ReturnCfIr* ir, struct ExprIr* expr);
 struct LabelCfIr* ir_new_label_cf(strtable_id index);
 struct CfIr* ir_label_cf_cast(struct LabelCfIr* ir);
 strtable_id ir_label_cf_index(struct LabelCfIr* ir);
-
-struct PushCfIr* ir_new_push_cf(strtable_id reg_id);
-struct CfIr* ir_push_cf_cast(struct PushCfIr* ir);
-strtable_id ir_push_cf_reg_id(struct PushCfIr* ir);
-
-struct PopCfIr* ir_new_pop_cf(strtable_id reg_id);
-struct CfIr* ir_pop_cf_cast(struct PopCfIr* ir);
-strtable_id ir_pop_cf_reg_id(struct PopCfIr* ir);
 
 struct Ir* ir_expr_cast(struct ExprIr* ir);
 struct ConstExprIr* ir_expr_as_const(struct ExprIr* ir);

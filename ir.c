@@ -296,14 +296,6 @@ struct LabelCfIr* ir_cf_as_label(struct CfIr* ir) {
     return ir->tag == CfIrTag_Label ? (struct LabelCfIr*)ir : NULL;
 }
 
-struct PushCfIr* ir_cf_as_push(struct CfIr* ir) {
-    return ir->tag == CfIrTag_Push ? (struct PushCfIr*)ir : NULL;
-}
-
-struct PopCfIr* ir_cf_as_pop(struct CfIr* ir) {
-    return ir->tag == CfIrTag_Pop ? (struct PopCfIr*)ir : NULL;
-}
-
 struct BranchCfIr {
     struct CfIr as_cf;
     struct ExprIr* cond_expr;
@@ -394,42 +386,6 @@ struct CfIr* ir_label_cf_cast(struct LabelCfIr* ir) {
 }
 
 strtable_id ir_label_cf_index(struct LabelCfIr* ir) { return ir->index; }
-
-struct PushCfIr {
-    struct CfIr as_cf;
-    strtable_id reg_id;
-};
-
-struct PushCfIr* ir_new_push_cf(strtable_id reg_id) {
-    struct PushCfIr* ir = malloc(sizeof(struct PushCfIr));
-    initialize_cf(ir_push_cf_cast(ir), CfIrTag_Push);
-    ir->reg_id = reg_id;
-    return ir;
-}
-
-struct CfIr* ir_push_cf_cast(struct PushCfIr* ir) {
-    return &ir->as_cf;
-}
-
-strtable_id ir_push_cf_reg_id(struct PushCfIr* ir) { return ir->reg_id; }
-
-struct PopCfIr {
-    struct CfIr as_cf;
-    strtable_id reg_id;
-};
-
-struct PopCfIr* ir_new_pop_cf(strtable_id reg_id) {
-    struct PopCfIr* ir = malloc(sizeof(struct PopCfIr));
-    initialize_cf(ir_pop_cf_cast(ir), CfIrTag_Pop);
-    ir->reg_id = reg_id;
-    return ir;
-}
-
-struct CfIr* ir_pop_cf_cast(struct PopCfIr* ir) {
-    return &ir->as_cf;
-}
-
-strtable_id ir_pop_cf_reg_id(struct PopCfIr* ir) { return ir->reg_id; }
 
 struct ExprIr {
     struct Ir as_ir;

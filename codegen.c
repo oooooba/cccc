@@ -307,22 +307,6 @@ static struct CfIr* visit_label_cf2(struct CodegenVisitor* visitor,
     return NULL;
 }
 
-static struct CfIr* visit_push_cf2(struct CodegenVisitor* visitor,
-                                   struct PushCfIr* ir) {
-    strtable_id reg_id = ir_push_cf_reg_id(ir);
-    const char* reg = register_name(visitor, reg_id);
-    fprintf(visitor->stream, "\tpush\t%s\n", reg);
-    return NULL;
-}
-
-static struct CfIr* visit_pop_cf2(struct CodegenVisitor* visitor,
-                                  struct PopCfIr* ir) {
-    strtable_id reg_id = ir_pop_cf_reg_id(ir);
-    const char* reg = register_name(visitor, reg_id);
-    fprintf(visitor->stream, "\tpop\t%s\n", reg);
-    return NULL;
-}
-
 struct CodegenVisitor* new_codegen_visitor(struct Context* context,
                                            FILE* stream) {
     struct CodegenVisitor* visitor = malloc(sizeof(struct CodegenVisitor));
@@ -347,8 +331,6 @@ struct CodegenVisitor* new_codegen_visitor(struct Context* context,
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf2);
     register_visitor(visitor->as_visitor, visit_return_cf, visit_return_cf2);
     register_visitor(visitor->as_visitor, visit_label_cf, visit_label_cf2);
-    register_visitor(visitor->as_visitor, visit_push_cf, visit_push_cf2);
-    register_visitor(visitor->as_visitor, visit_pop_cf, visit_pop_cf2);
 
     visitor->stream = stream;
 
