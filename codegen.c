@@ -220,19 +220,6 @@ static struct ExprIr* visit_cast_expr2(struct CodegenVisitor* visitor,
     return NULL;
 }
 
-static struct BlockIr* visit_block2(struct CodegenVisitor* visitor,
-                                    struct BlockIr* ir) {
-    fprintf(visitor->stream, "lab_%p:\n", ir);
-    struct BlockIterator* it = ir_block_new_iterator(ir);
-    for (;;) {
-        struct Ir* stmt = ir_block_iterator_next(it);
-        if (!stmt) break;
-
-        visitor_visit_ir(as_visitor(visitor), stmt);
-    }
-    return NULL;
-}
-
 static struct StmtIr* visit_push_stmt(struct CodegenVisitor* visitor,
                                       struct PushStmtIr* ir) {
     strtable_id reg_id = ir_push_stmt_reg_id(ir);
@@ -277,11 +264,11 @@ static struct CfIr* visit_branch_cf2(struct CodegenVisitor* visitor,
     fprintf(visitor->stream, "\tand\t%s, %s\n", cond_reg, cond_reg);
     fprintf(visitor->stream, "\tjz\tlab_%p_else\n", ir);
 
-    visitor_visit_block(as_visitor(visitor), ir_branch_cf_true_block(ir));
+    visitor_visit_stmt(as_visitor(visitor), ir_branch_cf_true_stmt(ir));
     fprintf(visitor->stream, "\tjmp\tlab_%p_cont\n", ir);
 
     fprintf(visitor->stream, "lab_%p_else:\n", ir);
-    visitor_visit_block(as_visitor(visitor), ir_branch_cf_false_block(ir));
+    visitor_visit_stmt(as_visitor(visitor), ir_branch_cf_false_stmt(ir));
 
     fprintf(visitor->stream, "lab_%p_cont:\n", ir);
     return NULL;
@@ -322,7 +309,6 @@ struct CodegenVisitor* new_codegen_visitor(struct Context* context,
                      visit_member_expr2);
     register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr2);
     register_visitor(visitor->as_visitor, visit_cast_expr, visit_cast_expr2);
-    register_visitor(visitor->as_visitor, visit_block, visit_block2);
 
     register_visitor(visitor->as_visitor, visit_push_stmt, visit_push_stmt);
     register_visitor(visitor->as_visitor, visit_pop_stmt, visit_pop_stmt);

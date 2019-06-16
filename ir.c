@@ -301,6 +301,8 @@ struct BranchCfIr {
     struct ExprIr* cond_expr;
     struct BlockIr* true_block;
     struct BlockIr* false_block;
+    struct StmtIr* true_stmt;
+    struct StmtIr* false_stmt;
 };
 
 struct BranchCfIr* ir_new_branch_cf(struct ExprIr* cond_expr,
@@ -311,6 +313,8 @@ struct BranchCfIr* ir_new_branch_cf(struct ExprIr* cond_expr,
     ir->cond_expr = cond_expr;
     ir->true_block = true_block;
     ir->false_block = false_block;
+    ir->true_stmt = NULL;
+    ir->false_stmt = NULL;
     return ir;
 }
 
@@ -343,6 +347,24 @@ struct BlockIr* ir_branch_cf_false_block(struct BranchCfIr* ir) {
 void ir_branch_cf_set_false_block(struct BranchCfIr* ir,
                                   struct BlockIr* false_block) {
     ir->false_block = false_block;
+}
+
+struct StmtIr* ir_branch_cf_true_stmt(struct BranchCfIr* ir) {
+    return ir->true_stmt;
+}
+
+void ir_branch_cf_set_true_stmt(struct BranchCfIr* ir,
+                                struct StmtIr* true_stmt) {
+    ir->true_stmt = true_stmt;
+}
+
+struct StmtIr* ir_branch_cf_false_stmt(struct BranchCfIr* ir) {
+    return ir->false_stmt;
+}
+
+void ir_branch_cf_set_false_stmt(struct BranchCfIr* ir,
+                                 struct StmtIr* false_stmt) {
+    ir->false_stmt = false_stmt;
 }
 
 struct ReturnCfIr {

@@ -53,8 +53,6 @@ enum CfIrTag {
     CfIrTag_Branch,
     CfIrTag_Return,
     CfIrTag_Label,
-    CfIrTag_Push,
-    CfIrTag_Pop,
 };
 
 enum ExprIrTag {
@@ -157,6 +155,12 @@ void ir_branch_cf_set_true_block(struct BranchCfIr* ir,
 struct BlockIr* ir_branch_cf_false_block(struct BranchCfIr* ir);
 void ir_branch_cf_set_false_block(struct BranchCfIr* ir,
                                   struct BlockIr* false_block);
+struct StmtIr* ir_branch_cf_true_stmt(struct BranchCfIr* ir);
+void ir_branch_cf_set_true_stmt(struct BranchCfIr* ir,
+                                struct StmtIr* true_stmt);
+struct StmtIr* ir_branch_cf_false_stmt(struct BranchCfIr* ir);
+void ir_branch_cf_set_false_stmt(struct BranchCfIr* ir,
+                                 struct StmtIr* false_stmt);
 
 struct ReturnCfIr* ir_new_return_cf(struct ExprIr* expr);
 struct CfIr* ir_return_cf_cast(struct ReturnCfIr* ir);
