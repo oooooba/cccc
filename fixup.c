@@ -72,8 +72,8 @@ static struct FunctionIr* visit_function(struct FixupVisitor* visitor,
 
     // insert saving base pointer register code
     {
-        struct PushCfIr* push = ir_new_push_cf(bp_reg_id);
-        insert(stmts, insert_point, ir_new_cf_stmt(ir_push_cf_cast(push)));
+        struct PushStmtIr* push = ir_new_push_stmt(bp_reg_id);
+        insert(stmts, insert_point, ir_push_stmt_super(push));
 
         struct ConstExprIr* mov = ir_new_register_const_expr(sp_reg_id);
         ir_expr_set_reg_id(ir_const_expr_cast(mov), bp_reg_id);
@@ -127,9 +127,9 @@ static struct FunctionIr* visit_function(struct FixupVisitor* visitor,
 
     // insert saving general purpose registers code
     {
-        struct PushCfIr* push = ir_new_push_cf(
+        struct PushStmtIr* push = ir_new_push_stmt(
             context_nth_reg(ctx(visitor), 1, RegisterSizeKind_64));
-        insert(stmts, insert_point, ir_new_cf_stmt(ir_push_cf_cast(push)));
+        insert(stmts, insert_point, ir_push_stmt_super(push));
     }
 
     // move to end of statements
@@ -144,9 +144,9 @@ static struct FunctionIr* visit_function(struct FixupVisitor* visitor,
 
     // insert restoring general purpose registers code
     {
-        struct PopCfIr* pop = ir_new_pop_cf(
+        struct PopStmtIr* pop = ir_new_pop_stmt(
             context_nth_reg(ctx(visitor), 1, RegisterSizeKind_64));
-        insert(stmts, insert_point, ir_new_cf_stmt(ir_pop_cf_cast(pop)));
+        insert(stmts, insert_point, ir_pop_stmt_super(pop));
     }
 
     // insert restoring base pointer register code
@@ -155,8 +155,8 @@ static struct FunctionIr* visit_function(struct FixupVisitor* visitor,
         ir_expr_set_reg_id(ir_const_expr_cast(mov), sp_reg_id);
         insert(stmts, insert_point, ir_new_expr_stmt(ir_const_expr_cast(mov)));
 
-        struct PopCfIr* pop = ir_new_pop_cf(bp_reg_id);
-        insert(stmts, insert_point, ir_new_cf_stmt(ir_pop_cf_cast(pop)));
+        struct PopStmtIr* pop = ir_new_pop_stmt(bp_reg_id);
+        insert(stmts, insert_point, ir_pop_stmt_super(pop));
     }
 
     ir_function_set_body2(ir, body);

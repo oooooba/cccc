@@ -231,6 +231,22 @@ static struct BlockIr* visit_block2(struct CodegenVisitor* visitor,
     return NULL;
 }
 
+static struct StmtIr* visit_push_stmt(struct CodegenVisitor* visitor,
+                                      struct PushStmtIr* ir) {
+    strtable_id reg_id = ir_push_stmt_reg_id(ir);
+    const char* reg = register_name(visitor, reg_id);
+    fprintf(visitor->stream, "\tpush\t%s\n", reg);
+    return NULL;
+}
+
+static struct StmtIr* visit_pop_stmt(struct CodegenVisitor* visitor,
+                                     struct PopStmtIr* ir) {
+    strtable_id reg_id = ir_pop_stmt_reg_id(ir);
+    const char* reg = register_name(visitor, reg_id);
+    fprintf(visitor->stream, "\tpop\t%s\n", reg);
+    return NULL;
+}
+
 static struct FunctionIr* visit_function2(struct CodegenVisitor* visitor,
                                           struct FunctionIr* ir) {
     fprintf(visitor->stream, "\n");
@@ -321,6 +337,10 @@ struct CodegenVisitor* new_codegen_visitor(struct Context* context,
     register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr2);
     register_visitor(visitor->as_visitor, visit_cast_expr, visit_cast_expr2);
     register_visitor(visitor->as_visitor, visit_block, visit_block2);
+
+    register_visitor(visitor->as_visitor, visit_push_stmt, visit_push_stmt);
+    register_visitor(visitor->as_visitor, visit_pop_stmt, visit_pop_stmt);
+
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf2);
     register_visitor(visitor->as_visitor, visit_return_cf, visit_return_cf2);
