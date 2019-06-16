@@ -467,16 +467,20 @@ static struct CfIr* parse_selection_statement(struct Parser* parser) {
 
         struct Ir* true_stmt = parse_statement(parser);
         struct BlockIr* true_block = to_block(true_stmt);
+        struct StmtIr* true_stmt_t = ir_block_stmt_super(
+            ir_block_stmt_convert_for_refactoring(true_block));
 
-        struct BlockIr* false_block = NULL;
+        struct StmtIr* false_stmt_t = NULL;
         if (acceptable(parser, Token_KeywordElse)) {
             advance(parser);
             struct Ir* false_stmt = parse_statement(parser);
-            false_block = to_block(false_stmt);
+            struct BlockIr* false_block = to_block(false_stmt);
+            false_stmt_t = ir_block_stmt_super(
+                ir_block_stmt_convert_for_refactoring(false_block));
         }
 
         return ir_branch_cf_cast(
-            ir_new_branch_cf(cond_expr, true_block, false_block));
+            ir_new_branch_cf(cond_expr, true_stmt_t, false_stmt_t));
     }
     assert(false);
 }

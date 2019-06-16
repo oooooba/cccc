@@ -306,15 +306,15 @@ struct BranchCfIr {
 };
 
 struct BranchCfIr* ir_new_branch_cf(struct ExprIr* cond_expr,
-                                    struct BlockIr* true_block,
-                                    struct BlockIr* false_block) {
+                                    struct StmtIr* true_stmt,
+                                    struct StmtIr* false_stmt) {
     struct BranchCfIr* ir = malloc(sizeof(struct BranchCfIr));
     initialize_cf(ir_branch_cf_cast(ir), CfIrTag_Branch);
     ir->cond_expr = cond_expr;
-    ir->true_block = true_block;
-    ir->false_block = false_block;
-    ir->true_stmt = NULL;
-    ir->false_stmt = NULL;
+    ir->true_stmt = true_stmt;
+    ir->false_stmt = false_stmt;
+    ir->true_block = NULL;
+    ir->false_block = NULL;
     return ir;
 }
 

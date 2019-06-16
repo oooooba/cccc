@@ -143,8 +143,8 @@ struct LabelCfIr* ir_cf_as_label(struct CfIr* ir);
 enum CfIrTag ir_cf_tag(struct CfIr* ir);
 
 struct BranchCfIr* ir_new_branch_cf(struct ExprIr* cond_expr,
-                                    struct BlockIr* true_block,
-                                    struct BlockIr* false_block);
+                                    struct StmtIr* true_stmt,
+                                    struct StmtIr* false_stmt);
 struct CfIr* ir_branch_cf_cast(struct BranchCfIr* ir);
 struct ExprIr* ir_branch_cf_cond_expr(struct BranchCfIr* ir);
 void ir_branch_cf_set_cond_expr(struct BranchCfIr* ir,
