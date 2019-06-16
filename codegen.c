@@ -241,10 +241,7 @@ static struct FunctionIr* visit_function2(struct CodegenVisitor* visitor,
     fprintf(visitor->stream, ".global %s\n", name);
     fprintf(visitor->stream, "%s:\n", name);
 
-    // ToDo: for refactoring
-    // struct BlockIr* body = ir_function_body(ir);
     struct BlockStmtIr* body = ir_function_body2(ir);
-    // struct BlockStmtIr* body = ir_block_stmt_convert_for_refactoring(body);
     visitor_visit_stmt(as_visitor(visitor), ir_block_stmt_super(body));
 
     fprintf(visitor->stream, "\tret\n");
