@@ -865,6 +865,7 @@ struct BlockStmtIr {
         statemetnts;  // elem type: struct ListItem, item type: struct StmtIr*
     size_t region_size;
     size_t region_base;
+    struct BlockIr* tmp_block_for_refactoring;  // ToDo: for refactoring
 };
 
 struct BlockStmtIr* ir_new_block_stmt(void) {
@@ -873,6 +874,7 @@ struct BlockStmtIr* ir_new_block_stmt(void) {
     list_initialize(&ir->statemetnts);
     ir->region_size = 0;
     ir->region_base = (size_t)-1;
+    ir->tmp_block_for_refactoring = NULL;
     return ir;
 }
 
@@ -888,6 +890,23 @@ void ir_block_stmt_insert_at_end(struct BlockStmtIr* ir, struct StmtIr* stmt) {
     struct ListItem* list_item = malloc(sizeof(struct ListItem));
     list_item->item = stmt;
     list_insert_at_end(&ir->statemetnts, list_from(list_item));
+}
+
+void ir_block_stmt_commit_region_status(struct BlockStmtIr* ir,
+                                        size_t region_base) {
+    assert(ir->region_base == (size_t)-1);
+    size_t alignment = sizeof(void*);
+    assert(region_base % alignment == 0);
+    ir->region_size = (ir->region_size + alignment - 1) / alignment * alignment;
+    ir->region_base = region_base;
+
+    // ToDo: for refactoring
+    ir->tmp_block_for_refactoring->region_base = region_base;
+}
+
+size_t ir_block_stmt_region_size(struct BlockStmtIr* ir) {
+    assert(ir->region_base != (size_t)-1);
+    return ir->region_size;
 }
 
 struct CfStmtIr {
@@ -915,6 +934,8 @@ void ir_cf_stmt_set_cf(struct CfStmtIr* ir, struct CfIr* cf) { ir->cf = cf; }
 struct BlockStmtIr* ir_block_stmt_convert_for_refactoring(struct BlockIr* ir) {
     struct BlockStmtIr* block = ir_new_block_stmt();
     struct List* stmts = ir_block_stmt_statements(block);
+    block->region_size = ir->region_size;
+    block->tmp_block_for_refactoring = ir;
 
     struct BlockIterator* it = ir_block_new_iterator(ir);
     for (;;) {

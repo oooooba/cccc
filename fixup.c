@@ -24,28 +24,33 @@ static void insert(struct List* list, struct ListHeader* point, void* item) {
     list_insert_at(list, point, list_from(list_item));
 }
 
-static struct BlockIr* visit_block(struct FixupVisitor* visitor,
-                                   struct BlockIr* ir) {
+static struct StmtIr* visit_expr_stmt(struct FixupVisitor* visitor,
+                                      struct ExprStmtIr* ir) {
+    (void)visitor;
+    (void)ir;
+    return NULL;
+}
+
+static struct StmtIr* visit_block_stmt(struct FixupVisitor* visitor,
+                                       struct BlockStmtIr* ir) {
     size_t region_base = visitor->parent_region_end;
-    ir_block_commit_region_status(ir, region_base);
-    size_t region_size = ir_block_region_size(ir);
+    ir_block_stmt_commit_region_status(ir, region_base);
+    size_t region_size = ir_block_stmt_region_size(ir);
     size_t new_region_end = region_base + region_size;
 
     if (new_region_end > visitor->max_region_end)
         visitor->max_region_end = new_region_end;
 
-    struct BlockIterator* it = ir_block_new_iterator(ir);
-    for (;;) {
-        struct Ir* stmt = ir_block_iterator_next(it);
-        if (!stmt) break;
+    visitor->parent_region_end = new_region_end;
+    visitor_visit_block_stmt(as_visitor(visitor), ir);
+    visitor->parent_region_end = region_base;
+    return NULL;
+}
 
-        // ToDo: fix to handle blocks of IfCfIr
-        struct BlockIr* block = ir_as_block(stmt);
-        if (block) {
-            visitor->parent_region_end = new_region_end;
-            visitor_visit_block(as_visitor(visitor), block);
-        }
-    }
+static struct StmtIr* visit_cf_stmt(struct FixupVisitor* visitor,
+                                    struct CfStmtIr* ir) {
+    (void)visitor;
+    (void)ir;
     return NULL;
 }
 
@@ -54,11 +59,8 @@ static struct FunctionIr* visit_function(struct FixupVisitor* visitor,
     visitor->parent_region_end = sizeof(void*);
     visitor->max_region_end = sizeof(void*);
 
-    // ToDo: for refactoring
-    struct BlockIr* old_body = ir_function_body(ir);
-    visitor_visit_block(as_visitor(visitor), old_body);
-    ir_function_set_body(ir, NULL);
-    struct BlockStmtIr* body = ir_block_stmt_convert_for_refactoring(old_body);
+    struct BlockStmtIr* body = ir_function_body2(ir);
+    visit_block_stmt(visitor, body);
 
     ir_function_set_region_size(ir, visitor->max_region_end);
 
@@ -167,7 +169,10 @@ struct FixupVisitor* new_fixup_visitor(struct Context* context) {
     struct FixupVisitor* visitor = malloc(sizeof(struct FixupVisitor));
     visitor_initialize(as_visitor(visitor), context);
 
-    register_visitor(visitor->as_visitor, visit_block, visit_block);
+    register_visitor(visitor->as_visitor, visit_expr_stmt, visit_expr_stmt);
+    register_visitor(visitor->as_visitor, visit_block_stmt, visit_block_stmt);
+    register_visitor(visitor->as_visitor, visit_cf_stmt,
+                     visit_cf_stmt);  // ToDo: for refactoring
     register_visitor(visitor->as_visitor, visit_function, visit_function);
 
     return visitor;

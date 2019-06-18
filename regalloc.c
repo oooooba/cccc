@@ -214,9 +214,13 @@ static struct BlockIr* visit_block2(struct RegallocVisitor* visitor,
 
 static struct FunctionIr* visit_function2(struct RegallocVisitor* visitor,
                                           struct FunctionIr* ir) {
-    struct BlockIr* body = ir_function_body(ir);
-    visitor_visit_block(as_visitor(visitor), body);
-    return NULL;
+    // ToDo: for refactoring
+    struct BlockIr* old_body = ir_function_body(ir);
+    visitor_visit_block(as_visitor(visitor), old_body);
+    ir_function_set_body(ir, NULL);
+    struct BlockStmtIr* body = ir_block_stmt_convert_for_refactoring(old_body);
+    ir_function_set_body2(ir, body);
+    return ir;
 }
 
 static struct CfIr* visit_branch_cf2(struct RegallocVisitor* visitor,

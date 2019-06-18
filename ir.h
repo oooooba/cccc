@@ -273,6 +273,9 @@ struct BlockStmtIr* ir_new_block_stmt(void);
 struct StmtIr* ir_block_stmt_super(struct BlockStmtIr* ir);
 struct List* ir_block_stmt_statements(struct BlockStmtIr* ir);
 void ir_block_stmt_insert_at_end(struct BlockStmtIr* ir, struct StmtIr* stmt);
+void ir_block_stmt_commit_region_status(struct BlockStmtIr* ir,
+                                        size_t region_base);
+size_t ir_block_stmt_region_size(struct BlockStmtIr* ir);
 
 // ToDo: for refactoring
 struct CfStmtIr* ir_new_cf_stmt(struct CfIr* cf);
