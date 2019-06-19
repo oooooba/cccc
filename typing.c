@@ -198,19 +198,6 @@ static struct ExprIr* visit_cast_expr(struct TypingVisitor* visitor,
     return ir_cast_expr_cast(ir);
 }
 
-static struct BlockIr* visit_block(struct TypingVisitor* visitor,
-                                   struct BlockIr* ir) {
-    struct BlockIterator* it = ir_block_new_iterator(ir);
-    for (;;) {
-        struct Ir* stmt = ir_block_iterator_next(it);
-        if (!stmt) break;
-
-        stmt = visitor_visit_ir(as_visitor(visitor), stmt);
-        ir_block_iterator_swap_at(it, stmt);
-    }
-    return ir;
-}
-
 static struct FunctionIr* visit_function(struct TypingVisitor* visitor,
                                          struct FunctionIr* ir) {
     visitor->function = ir;
@@ -225,9 +212,8 @@ static struct FunctionIr* visit_function(struct TypingVisitor* visitor,
         item->item = param;
     }
 
-    struct BlockIr* body = ir_function_body(ir);
-    body = visitor_visit_block(as_visitor(visitor), body);
-    ir_function_set_body(ir, body);
+    struct BlockStmtIr* body = ir_function_body2(ir);
+    visitor_visit_stmt(as_visitor(visitor), ir_block_stmt_super(body));
 
     return ir;
 }
@@ -272,7 +258,6 @@ struct TypingVisitor* new_typing_visitor(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr);
     register_visitor(visitor->as_visitor, visit_addrof_expr, visit_addrof_expr);
     register_visitor(visitor->as_visitor, visit_cast_expr, visit_cast_expr);
-    register_visitor(visitor->as_visitor, visit_block, visit_block);
     register_visitor(visitor->as_visitor, visit_function, visit_function);
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf);
     register_visitor(visitor->as_visitor, visit_return_cf, visit_return_cf);

@@ -199,27 +199,17 @@ static struct ExprIr* visit_cast_expr2(struct RegallocVisitor* visitor,
     return NULL;
 }
 
-static struct BlockIr* visit_block2(struct RegallocVisitor* visitor,
-                                    struct BlockIr* ir) {
-    struct BlockIterator* it = ir_block_new_iterator(ir);
-    for (;;) {
-        struct Ir* stmt = ir_block_iterator_next(it);
-        if (!stmt) break;
-
-        visitor_visit_ir(as_visitor(visitor), stmt);
-        if (ir_as_expr(stmt)) release_register(visitor);
-    }
+static struct BlockStmtIr* visit_expr_stmt(struct RegallocVisitor* visitor,
+                                           struct ExprStmtIr* ir) {
+    visitor_visit_expr(as_visitor(visitor), ir_expr_stmt_expr(ir));
+    release_register(visitor);
     return NULL;
 }
 
 static struct FunctionIr* visit_function2(struct RegallocVisitor* visitor,
                                           struct FunctionIr* ir) {
-    // ToDo: for refactoring
-    struct BlockIr* old_body = ir_function_body(ir);
-    visitor_visit_block(as_visitor(visitor), old_body);
-    ir_function_set_body(ir, NULL);
-    struct BlockStmtIr* body = ir_block_stmt_convert_for_refactoring(old_body);
-    ir_function_set_body2(ir, body);
+    struct BlockStmtIr* body = ir_function_body2(ir);
+    visitor_visit_stmt(as_visitor(visitor), ir_block_stmt_super(body));
     return ir;
 }
 
@@ -258,7 +248,7 @@ struct RegallocVisitor* new_regalloc_visitor(struct Context* context) {
                      visit_member_expr2);
     register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr2);
     register_visitor(visitor->as_visitor, visit_cast_expr, visit_cast_expr2);
-    register_visitor(visitor->as_visitor, visit_block, visit_block2);
+    register_visitor(visitor->as_visitor, visit_expr_stmt, visit_expr_stmt);
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf2);
     register_visitor(visitor->as_visitor, visit_return_cf, visit_return_cf2);

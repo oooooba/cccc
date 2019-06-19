@@ -170,20 +170,6 @@ static struct ExprIr* visit_cast_expr2(struct DumpVisitor* visitor,
     return NULL;
 }
 
-static struct BlockIr* visit_block2(struct DumpVisitor* visitor,
-                                    struct BlockIr* ir) {
-    fprintf(visitor->stream, "[@%p]{\n", ir);
-    struct BlockIterator* it = ir_block_new_iterator(ir);
-    for (;;) {
-        struct Ir* stmt = ir_block_iterator_next(it);
-        if (!stmt) break;
-
-        visitor_visit_ir(as_visitor(visitor), stmt);
-    }
-    fprintf(visitor->stream, "}\n");
-    return NULL;
-}
-
 static struct BlockStmtIr* visit_block_stmt(struct DumpVisitor* visitor,
                                             struct BlockStmtIr* ir) {
     fprintf(visitor->stream, "[@%p]{\n", ir);
@@ -196,7 +182,6 @@ static struct FunctionIr* visit_function2(struct DumpVisitor* visitor,
                                           struct FunctionIr* ir) {
     const char* name =
         strtable_at(&ctx(visitor)->strtable, ir_function_name_index(ir));
-    struct BlockIr* body = ir_function_body(ir);
     fprintf(visitor->stream, "function %s (", name);
     bool first = true;
     for (struct ListHeader *it = list_begin(ir_function_params(ir)),
@@ -214,7 +199,7 @@ static struct FunctionIr* visit_function2(struct DumpVisitor* visitor,
                           ir_expr_type(ir_var_expr_cast(var)));
     }
     fprintf(visitor->stream, ") ");
-    visitor_visit_block(as_visitor(visitor), body);
+    visit_block_stmt(visitor, ir_function_body2(ir));
     return NULL;
 }
 
@@ -263,7 +248,6 @@ struct DumpVisitor* new_dump_visitor(struct Context* context, FILE* stream) {
                      visit_addrof_expr2);
     register_visitor(visitor->as_visitor, visit_cast_expr, visit_cast_expr2);
     register_visitor(visitor->as_visitor, visit_block_stmt, visit_block_stmt);
-    register_visitor(visitor->as_visitor, visit_block, visit_block2);
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf2);
     register_visitor(visitor->as_visitor, visit_return_cf, visit_return_cf2);

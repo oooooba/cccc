@@ -589,7 +589,10 @@ static struct FunctionIr* parse_function_definition_or_declaration(
     struct FunctionIr* function = NULL;
     if (has_func_def) {
         body = parse_compound_statement(parser, body);
-        function = ir_new_function(name_index, func_type, params, body);
+        struct BlockStmtIr* body_block =
+            ir_block_stmt_convert_for_refactoring(body);
+        function = ir_new_function(name_index, func_type, params, NULL);
+        ir_function_set_body2(function, body_block);
         ir_location_set_function_definition(func_loc, function);
     } else
         expect(parser, Token_Semicolon);
