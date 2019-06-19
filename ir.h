@@ -123,8 +123,6 @@ void ir_block_insert_expr_at(struct BlockIterator* it, struct ExprIr* expr);
 void ir_block_insert_at_end(struct BlockIr* ir, struct Ir* statement);
 void ir_block_insert_expr_at_end(struct BlockIr* ir, struct ExprIr* expr);
 void ir_block_insert_block_at_end(struct BlockIr* ir, struct BlockIr* block);
-void ir_block_commit_region_status(struct BlockIr* ir, size_t region_base);
-size_t ir_block_region_size(struct BlockIr* ir);
 
 struct Location* ir_block_allocate_location(struct BlockIr* ir,
                                             strtable_id name_index,

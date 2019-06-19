@@ -8,6 +8,53 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#define INVALID_VALUE ((size_t)-1)
+
+struct Region {
+    size_t base;
+    size_t size;
+};
+
+static struct Region* ir_new_region(void) {
+    struct Region* region = malloc(sizeof(struct Region));
+    *region = (struct Region){.base = INVALID_VALUE, .size = 0};
+    return region;
+}
+
+static size_t ir_region_base(struct Region* region) {
+    assert(region->base != INVALID_VALUE);
+    return region->base;
+}
+
+static size_t ir_region_size(struct Region* region) {
+    assert(region->base != INVALID_VALUE);
+    return region->size;
+}
+
+static size_t ir_region_allocate(struct Region* region, size_t size) {
+    assert(region->base == INVALID_VALUE);
+    size_t offset = region->size;
+    region->size += size;
+    return offset;
+}
+
+static size_t ir_region_align(struct Region* region, size_t alignment) {
+    assert(region->base == INVALID_VALUE);
+    size_t old_size = region->size;
+    size_t new_size = (old_size + alignment - 1) / alignment * alignment;
+    region->size = new_size;
+    return new_size - old_size;
+}
+
+static size_t ir_region_freeze(struct Region* region, size_t base,
+                               size_t alignment) {
+    assert(region->base == INVALID_VALUE);
+    assert(base % alignment == 0);
+    size_t diff = ir_region_align(region, alignment);
+    region->base = base;
+    return diff;
+}
+
 struct Ir {
     enum IrTag tag;
 };
@@ -107,6 +154,7 @@ struct List* ir_function_param_types(struct FunctionIr* ir) {
 }
 
 struct Location {
+    struct Region* region;
     bool is_function;
     union {
         struct BlockIr* block;                   // location for a variable
@@ -114,38 +162,41 @@ struct Location {
     };
     strtable_id name_index;
     struct TypeIr* type;
-    size_t region_offset;
+    size_t offset;
 };
 
-static struct Location* ir_new_location(struct BlockIr* block,
+static struct Location* ir_new_location(struct Region* region,
+                                        struct BlockIr* block,
                                         strtable_id name_index,
-                                        struct TypeIr* type,
-                                        size_t region_offset) {
+                                        struct TypeIr* type) {
     struct Location* loc = malloc(sizeof(struct Location));
+    loc->region = region;
     loc->is_function = false;
     loc->block = block;
     loc->name_index = name_index;
     loc->type = type;
-    loc->region_offset = region_offset;
+    size_t size = type_size(type);
+    ir_region_align(region, size);
+    loc->offset = ir_region_allocate(region, size);
     return loc;
 }
 
 struct Location* ir_declare_function(strtable_id name_index,
                                      struct FunctionTypeIr* type) {
     struct Location* loc = malloc(sizeof(struct Location));
+    loc->region = NULL;
     loc->is_function = true;
     loc->block = NULL;
     loc->name_index = name_index;
     loc->type = type_function_super(type);
-    loc->region_offset = (size_t)-1;
+    loc->offset = INVALID_VALUE;
     return loc;
 }
 
 struct BlockIr {
     struct Ir as_ir;
     struct List statemetnts;
-    size_t region_size;
-    size_t region_base;
+    struct Region* region;
 };
 
 struct BlockIterator {
@@ -157,8 +208,7 @@ struct BlockIr* ir_new_block(void) {
     struct BlockIr* ir = malloc(sizeof(struct BlockIr));
     initialize_ir(ir_block_cast(ir), IrTag_Block);
     list_initialize(&ir->statemetnts);
-    ir->region_size = 0;
-    ir->region_base = (size_t)-1;
+    ir->region = ir_new_region();
     return ir;
 }
 
@@ -215,30 +265,7 @@ void ir_block_insert_block_at_end(struct BlockIr* ir, struct BlockIr* block) {
 struct Location* ir_block_allocate_location(struct BlockIr* ir,
                                             strtable_id name_index,
                                             struct TypeIr* type) {
-    assert(ir->region_base == (size_t)-1);
-    size_t var_size = type_size(type);
-    ir->region_size = (ir->region_size + var_size - 1) / var_size * var_size;
-    size_t region_offset = ir->region_size;
-    ir->region_size += var_size;
-    return ir_new_location(ir, name_index, type, region_offset);
-}
-
-static size_t ir_block_region_base(struct BlockIr* ir) {
-    assert(ir->region_base != (size_t)-1);
-    return ir->region_base;
-}
-
-void ir_block_commit_region_status(struct BlockIr* ir, size_t region_base) {
-    assert(ir->region_base == (size_t)-1);
-    size_t alignment = sizeof(void*);
-    assert(region_base % alignment == 0);
-    ir->region_size = (ir->region_size + alignment - 1) / alignment * alignment;
-    ir->region_base = region_base;
-}
-
-size_t ir_block_region_size(struct BlockIr* ir) {
-    assert(ir->region_base != (size_t)-1);
-    return ir->region_size;
+    return ir_new_location(ir->region, ir, name_index, type);
 }
 
 strtable_id ir_location_name_index(struct Location* loc) {
@@ -250,7 +277,7 @@ static struct TypeIr* ir_location_type(struct Location* loc) {
 }
 
 static size_t ir_location_offset(struct Location* loc) {
-    return ir_block_region_base(loc->block) + loc->region_offset;
+    return ir_region_base(loc->region) + loc->offset;
 }
 
 static bool ir_location_is_function(struct Location* loc) {
@@ -863,18 +890,13 @@ struct BlockStmtIr {
     struct StmtIr super;
     struct List
         statemetnts;  // elem type: struct ListItem, item type: struct StmtIr*
-    size_t region_size;
-    size_t region_base;
-    struct BlockIr* tmp_block_for_refactoring;  // ToDo: for refactoring
+    struct Region* region;
 };
 
 struct BlockStmtIr* ir_new_block_stmt(void) {
     struct BlockStmtIr* ir = malloc(sizeof(struct BlockStmtIr));
     initialize_stmt(ir_block_stmt_super(ir), StmtIrTag_Block);
     list_initialize(&ir->statemetnts);
-    ir->region_size = 0;
-    ir->region_base = (size_t)-1;
-    ir->tmp_block_for_refactoring = NULL;
     return ir;
 }
 
@@ -894,19 +916,12 @@ void ir_block_stmt_insert_at_end(struct BlockStmtIr* ir, struct StmtIr* stmt) {
 
 void ir_block_stmt_commit_region_status(struct BlockStmtIr* ir,
                                         size_t region_base) {
-    assert(ir->region_base == (size_t)-1);
     size_t alignment = sizeof(void*);
-    assert(region_base % alignment == 0);
-    ir->region_size = (ir->region_size + alignment - 1) / alignment * alignment;
-    ir->region_base = region_base;
-
-    // ToDo: for refactoring
-    ir->tmp_block_for_refactoring->region_base = region_base;
+    ir_region_freeze(ir->region, region_base, alignment);
 }
 
 size_t ir_block_stmt_region_size(struct BlockStmtIr* ir) {
-    assert(ir->region_base != (size_t)-1);
-    return ir->region_size;
+    return ir_region_size(ir->region);
 }
 
 struct CfStmtIr {
@@ -934,8 +949,7 @@ void ir_cf_stmt_set_cf(struct CfStmtIr* ir, struct CfIr* cf) { ir->cf = cf; }
 struct BlockStmtIr* ir_block_stmt_convert_for_refactoring(struct BlockIr* ir) {
     struct BlockStmtIr* block = ir_new_block_stmt();
     struct List* stmts = ir_block_stmt_statements(block);
-    block->region_size = ir->region_size;
-    block->tmp_block_for_refactoring = ir;
+    block->region = ir->region;  // ToDo: for refactoring
 
     struct BlockIterator* it = ir_block_new_iterator(ir);
     for (;;) {
