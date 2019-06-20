@@ -207,7 +207,7 @@ struct BlockStmtIr* ir_call_expr_post_expr_block(struct CallExprIr* ir);
 
 struct VarExprIr* ir_new_var_expr(struct Location* location);
 struct ExprIr* ir_var_expr_cast(struct VarExprIr* ir);
-struct Location* ir_var_expr_location(struct VarExprIr* ir);
+struct VarExprIr* ir_ar_expr_clone(struct VarExprIr* ir);
 size_t ir_var_expr_offset(struct VarExprIr* ir);
 strtable_id ir_var_expr_index(struct VarExprIr* ir);
 struct TypeIr* ir_var_expr_type(struct VarExprIr* ir);

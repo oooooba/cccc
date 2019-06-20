@@ -627,8 +627,9 @@ struct ExprIr* ir_var_expr_cast(struct VarExprIr* ir) {
     return &ir->as_expr;
 }
 
-struct Location* ir_var_expr_location(struct VarExprIr* ir) {
-    return ir->location;
+struct VarExprIr* ir_ar_expr_clone(struct VarExprIr* ir) {
+    struct VarExprIr* new_ir = ir_new_var_expr(ir->location);
+    return new_ir;
 }
 
 size_t ir_var_expr_offset(struct VarExprIr* ir) {
