@@ -21,12 +21,12 @@ void context_initialize(struct Context* context) {
 
 void context_insert_function_declaration(struct Context* context,
                                          strtable_id index,
-                                         struct Location* func_loc) {
-    map_insert(&context->function_declaration_map, (void*)index, func_loc);
+                                         struct FunctionIr* func) {
+    map_insert(&context->function_declaration_map, (void*)index, func);
 }
 
-struct Location* context_find_function_declaration(struct Context* context,
-                                                   strtable_id index) {
+struct FunctionIr* context_find_function_declaration(struct Context* context,
+                                                     strtable_id index) {
     return map_find(&context->function_declaration_map, (void*)index);
 }
 

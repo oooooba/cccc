@@ -172,9 +172,9 @@ void visitor_apply(struct Visitor* visitor) {
              it = context_function_declaration_begin(visitor->context),
             *eit = context_function_declaration_end(visitor->context);
          it != eit; it = list_next(it)) {
-        struct Location* loc = map_entry_value((struct MapEntry*)it);
-        struct FunctionIr* func = ir_location_function_definition(loc);
-        visitor_visit_function(visitor, func);
-        ir_location_set_function_definition(loc, func);
+        struct MapEntry* map_entry = (struct MapEntry*)it;
+        struct FunctionIr* func = map_entry_value(map_entry);
+        func = visitor_visit_function(visitor, func);
+        if (func) map_entry_set_value(map_entry, func);
     }
 }

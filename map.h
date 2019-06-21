@@ -16,5 +16,6 @@ struct ListHeader* map_begin(struct Map* map);
 struct ListHeader* map_end(struct Map* map);
 void* map_entry_key(struct MapEntry* map_entry);
 void* map_entry_value(struct MapEntry* map_entry);
+void map_entry_set_value(struct MapEntry* map_entry, void* value);
 
 #endif

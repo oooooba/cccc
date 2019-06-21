@@ -87,6 +87,7 @@ struct FunctionIr {
     size_t region_size;
     struct List* params;  // VarExprIr* list
     struct FunctionTypeIr* type;
+    bool has_definition;
 };
 
 struct FunctionIr* ir_new_function(strtable_id name_index,
@@ -145,6 +146,23 @@ struct List* ir_function_params(struct FunctionIr* ir) {
     return ir->params;
 }
 
+void ir_function_set_params(struct FunctionIr* ir, struct List* params) {
+    ir->params = params;
+}
+
+bool ir_function_has_definition(struct FunctionIr* ir) {
+    return ir->has_definition;
+}
+
+void ir_function_set_has_definition(struct FunctionIr* ir) {
+    assert(!ir->has_definition);
+    ir->has_definition = true;
+}
+
+struct TypeIr* ir_function_type(struct FunctionIr* ir) {
+    return type_function_super(ir->type);
+}
+
 struct TypeIr* ir_function_result_type(struct FunctionIr* ir) {
     return type_function_result_type(ir->type);
 }
@@ -178,18 +196,6 @@ static struct Location* ir_new_location(struct Region* region,
     size_t size = type_size(type);
     ir_region_align(region, size);
     loc->offset = ir_region_allocate(region, size);
-    return loc;
-}
-
-struct Location* ir_declare_function(strtable_id name_index,
-                                     struct FunctionTypeIr* type) {
-    struct Location* loc = malloc(sizeof(struct Location));
-    loc->region = NULL;
-    loc->is_function = true;
-    loc->block = NULL;
-    loc->name_index = name_index;
-    loc->type = type_function_super(type);
-    loc->offset = INVALID_VALUE;
     return loc;
 }
 
@@ -613,13 +619,17 @@ struct BlockStmtIr* ir_call_expr_post_expr_block(struct CallExprIr* ir) {
 
 struct VarExprIr {
     struct ExprIr as_expr;
+    bool is_function;
     struct Location* location;
+    struct FunctionIr* function;
 };
 
 struct VarExprIr* ir_new_var_expr(struct Location* location) {
     struct VarExprIr* ir = malloc(sizeof(struct VarExprIr));
     initialize_expr(ir_var_expr_cast(ir), ExprIrTag_Var);
     ir->location = location;
+    ir->is_function = false;
+    ir->function = NULL;
     return ir;
 }
 
@@ -627,25 +637,46 @@ struct ExprIr* ir_var_expr_cast(struct VarExprIr* ir) {
     return &ir->as_expr;
 }
 
-struct VarExprIr* ir_ar_expr_clone(struct VarExprIr* ir) {
-    struct VarExprIr* new_ir = ir_new_var_expr(ir->location);
+struct VarExprIr* ir_var_expr_clone(struct VarExprIr* ir) {
+    struct VarExprIr* new_ir = ir_new_var_expr(NULL);
+    new_ir->is_function = ir->is_function;
+    new_ir->location = ir->location;
+    new_ir->function = ir->function;
     return new_ir;
 }
 
+struct VarExprIr* ir_var_expr_from_function(struct FunctionIr* function) {
+    struct VarExprIr* new_ir = ir_new_var_expr(NULL);
+    new_ir->is_function = true;
+    new_ir->location = NULL;
+    new_ir->function = function;
+    return new_ir;
+}
+
+bool ir_var_expr_is_function(struct VarExprIr* ir) { return ir->is_function; }
+
+struct FunctionIr* ir_var_expr_function(struct VarExprIr* ir) {
+    assert(ir->is_function);
+    return ir->function;
+}
+
 size_t ir_var_expr_offset(struct VarExprIr* ir) {
+    assert(!ir->is_function);
     return ir_location_offset(ir->location);
 }
 
 strtable_id ir_var_expr_index(struct VarExprIr* ir) {
-    return ir_location_name_index(ir->location);
+    if (ir->is_function)
+        return ir_function_name_index(ir->function);
+    else
+        return ir_location_name_index(ir->location);
 }
 
 struct TypeIr* ir_var_expr_type(struct VarExprIr* ir) {
-    return ir_location_type(ir->location);
-}
-
-bool ir_var_expr_is_function(struct VarExprIr* ir) {
-    return ir_location_is_function(ir->location);
+    if (ir->is_function)
+        return ir_function_type(ir->function);
+    else
+        return ir_location_type(ir->location);
 }
 
 struct UnopExprIr {

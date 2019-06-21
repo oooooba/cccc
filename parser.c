@@ -139,10 +139,10 @@ static struct ExprIr* parse_primary_expression(struct Parser* parser) {
                     ir_new_deref_expr(ir_var_expr_cast(var));
                 return ir_deref_expr_cast(deref_var);
             } else {
-                // reference to function
-                loc = context_find_function_declaration(parser->context, index);
-                assert(loc);
-                struct VarExprIr* var = ir_new_var_expr(loc);
+                struct FunctionIr* function =
+                    context_find_function_declaration(parser->context, index);
+                assert(function);
+                struct VarExprIr* var = ir_var_expr_from_function(function);
                 return ir_var_expr_cast(var);
             }
         } break;
@@ -573,27 +573,26 @@ static struct FunctionIr* parse_function_definition_or_declaration(
     struct FunctionTypeIr* func_type =
         type_new_function(func_decl->type, param_types);
     strtable_id name_index = func_decl->name_index;
-    struct Location* func_loc =
+    struct FunctionIr* function =
         context_find_function_declaration(parser->context, name_index);
-    if (func_loc) {
+    if (function) {
         // ToDo: check function type check
 
         // prevent to insert dupulicate definitions
-        if (has_func_def) assert(!ir_location_function_definition(func_loc));
+        if (has_func_def) assert(!ir_function_has_definition(function));
     } else {
-        func_loc = ir_declare_function(name_index, func_type);
+        function = ir_new_function(name_index, func_type, params, body);
         context_insert_function_declaration(parser->context, name_index,
-                                            func_loc);
+                                            function);
     }
 
-    struct FunctionIr* function = NULL;
     if (has_func_def) {
         body = parse_compound_statement(parser, body);
         struct BlockStmtIr* body_block =
             ir_block_stmt_convert_for_refactoring(body);
-        function = ir_new_function(name_index, func_type, params, NULL);
+        assert(!ir_function_has_definition(function));
         ir_function_set_body2(function, body_block);
-        ir_location_set_function_definition(func_loc, function);
+        ir_function_set_params(function, params);  // ToDo: fix
     } else
         expect(parser, Token_Semicolon);
 

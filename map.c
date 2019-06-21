@@ -52,3 +52,7 @@ struct ListHeader* map_end(struct Map* map) {
 void* map_entry_key(struct MapEntry* map_entry) { return map_entry->key; }
 
 void* map_entry_value(struct MapEntry* map_entry) { return map_entry->value; }
+
+void map_entry_set_value(struct MapEntry* map_entry, void* value) {
+    map_entry->value = value;
+}

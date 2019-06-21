@@ -109,6 +109,11 @@ void ir_function_set_body2(struct FunctionIr* ir, struct BlockStmtIr* body);
 size_t ir_function_region_size(struct FunctionIr* ir);
 void ir_function_set_region_size(struct FunctionIr* ir, size_t region_size);
 struct List* ir_function_params(struct FunctionIr* ir);
+void ir_function_set_params(struct FunctionIr* ir,
+                            struct List* params);  // ToDo: remove
+bool ir_function_has_definition(struct FunctionIr* ir);
+void ir_function_set_has_definition(struct FunctionIr* ir);
+struct TypeIr* ir_function_result_type(struct FunctionIr* ir);
 struct TypeIr* ir_function_result_type(struct FunctionIr* ir);
 struct List* ir_function_param_types(struct FunctionIr* ir);
 
@@ -127,12 +132,7 @@ void ir_block_insert_block_at_end(struct BlockIr* ir, struct BlockIr* block);
 struct Location* ir_block_allocate_location(struct BlockIr* ir,
                                             strtable_id name_index,
                                             struct TypeIr* type);
-struct Location* ir_declare_function(strtable_id name_index,
-                                     struct FunctionTypeIr* type);
 strtable_id ir_location_name_index(struct Location* loc);
-struct FunctionIr* ir_location_function_definition(struct Location* loc);
-void ir_location_set_function_definition(struct Location* loc,
-                                         struct FunctionIr* function);
 
 struct Ir* ir_cf_cast(struct CfIr* ir);
 struct BranchCfIr* ir_cf_as_branch(struct CfIr* ir);
@@ -207,11 +207,12 @@ struct BlockStmtIr* ir_call_expr_post_expr_block(struct CallExprIr* ir);
 
 struct VarExprIr* ir_new_var_expr(struct Location* location);
 struct ExprIr* ir_var_expr_cast(struct VarExprIr* ir);
-struct VarExprIr* ir_ar_expr_clone(struct VarExprIr* ir);
+struct VarExprIr* ir_var_expr_clone(struct VarExprIr* ir);
+struct VarExprIr* ir_var_expr_from_function(struct FunctionIr* function);
+bool ir_var_expr_is_function(struct VarExprIr* ir);
 size_t ir_var_expr_offset(struct VarExprIr* ir);
 strtable_id ir_var_expr_index(struct VarExprIr* ir);
 struct TypeIr* ir_var_expr_type(struct VarExprIr* ir);
-bool ir_var_expr_is_function(struct VarExprIr* ir);
 
 struct UnopExprIr* ir_new_unop_expr(enum UnopExprIrTag op,
                                     struct ExprIr* operand);
