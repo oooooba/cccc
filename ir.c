@@ -265,10 +265,11 @@ void ir_block_insert_block_at_end(struct BlockIr* ir, struct BlockIr* block) {
     ir_block_insert_at_end(ir, ir_block_cast(block));
 }
 
-struct Location* ir_block_allocate_location(struct BlockIr* ir,
-                                            strtable_id name_index,
-                                            struct TypeIr* type) {
-    return ir_new_location(ir->region, ir, name_index, type);
+struct VarExprIr* ir_block_allocate_location(struct BlockIr* ir,
+                                             strtable_id name_index,
+                                             struct TypeIr* type) {
+    struct Location* loc = ir_new_location(ir->region, ir, name_index, type);
+    return ir_new_var_expr(loc);
 }
 
 strtable_id ir_location_name_index(struct Location* loc) {

@@ -24,33 +24,32 @@ struct Parser {
 /***** helper functions *****/
 
 struct Env {
-    // struct Map var_map;  // key: strtable_id, value: VarIr*
-    struct Map location_map;  // key: strtable_id, value: Location*
+    struct Map var_map;  // key: strtable_id, value: VarExprIr*
     struct Env* outer_env;
 };
 
 static struct Env* env_new(struct Env* outer_env) {
     struct Env* env = malloc(sizeof(struct Env));
-    map_initialize(&env->location_map);
+    map_initialize(&env->var_map);
     env->outer_env = outer_env;
     return env;
 }
 
-static struct Location* env_find(struct Env* env, strtable_id index) {
+static struct VarExprIr* env_find(struct Env* env, strtable_id index) {
     if (!env) return NULL;
-    struct Location* loc =
-        (struct Location*)map_find(&env->location_map, (void*)index);
-    if (loc) {
-        assert(ir_location_name_index(loc) == index);
-        return loc;
+    struct VarExprIr* var =
+        (struct VarExprIr*)map_find(&env->var_map, (void*)index);
+    if (var) {
+        assert(ir_var_expr_index(var) == index);
+        return var;
     } else
         return env_find(env->outer_env, index);
 }
 
 static void env_insert(struct Env* env, strtable_id index,
-                       struct Location* location) {
-    assert(ir_location_name_index(location) == index);
-    map_insert(&env->location_map, (void*)index, location);
+                       struct VarExprIr* var) {
+    assert(ir_var_expr_index(var) == index);
+    map_insert(&env->var_map, (void*)index, var);
 }
 
 static struct Token* peek_k(struct Parser* parser, size_t k) {
@@ -131,10 +130,10 @@ static struct ExprIr* parse_primary_expression(struct Parser* parser) {
             return parse_constant(parser);
         case Token_Id: {
             strtable_id index = parse_identifier(parser);
-            struct Location* loc = env_find(parser->current_env, index);
-            if (loc) {
+            struct VarExprIr* var = env_find(parser->current_env, index);
+            if (var) {
                 // reference to memory location (variable)
-                struct VarExprIr* var = ir_new_var_expr(loc);
+                var = ir_var_expr_clone(var);
                 struct DerefExprIr* deref_var =
                     ir_new_deref_expr(ir_var_expr_cast(var));
                 return ir_deref_expr_cast(deref_var);
@@ -427,13 +426,12 @@ static struct BlockIr* parse_compound_statement(struct Parser* parser,
                 strtable_id name_index = decl->name_index;
 
                 assert(!env_find(env, name_index));
-                struct Location* loc =
+                struct VarExprIr* var =
                     ir_block_allocate_location(block, name_index, decl->type);
-                env_insert(env, name_index, loc);
+                env_insert(env, name_index, var);
 
                 if (!decl->initializer) continue;
 
-                struct VarExprIr* var = ir_new_var_expr(loc);
                 struct SubstExprIr* subst =
                     ir_new_subst_expr(ir_var_expr_cast(var), decl->initializer);
                 ir_block_insert_expr_at_end(block, ir_subst_expr_cast(subst));
@@ -542,12 +540,12 @@ static struct FunctionIr* parse_function_definition_or_declaration(
             struct Declaration* param_decl =
                 (struct Declaration*)list_begin(&param_decls);
             strtable_id name_index = param_decl->name_index;
-            struct Location* loc =
+            struct VarExprIr* var =
                 ir_block_allocate_location(body, name_index, param_decl->type);
-            env_insert(env, name_index, loc);
+            env_insert(env, name_index, var);
 
             struct ListItem* param_item = malloc(sizeof(struct ListItem));
-            param_item->item = ir_new_var_expr(loc);
+            param_item->item = var;
             list_insert_at_end(params, list_from(param_item));
 
             struct ListItem* param_type_item = malloc(sizeof(struct ListItem));

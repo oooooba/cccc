@@ -128,9 +128,9 @@ void ir_block_insert_at_end(struct BlockIr* ir, struct Ir* statement);
 void ir_block_insert_expr_at_end(struct BlockIr* ir, struct ExprIr* expr);
 void ir_block_insert_block_at_end(struct BlockIr* ir, struct BlockIr* block);
 
-struct Location* ir_block_allocate_location(struct BlockIr* ir,
-                                            strtable_id name_index,
-                                            struct TypeIr* type);
+struct VarExprIr* ir_block_allocate_location(struct BlockIr* ir,
+                                             strtable_id name_index,
+                                             struct TypeIr* type);
 strtable_id ir_location_name_index(struct Location* loc);
 
 struct Ir* ir_cf_cast(struct CfIr* ir);
