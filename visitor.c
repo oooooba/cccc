@@ -8,8 +8,6 @@ struct Ir* visitor_visit_ir(struct Visitor* visitor, struct Ir* ir) {
     switch (ir_tag(ir)) {
         case IrTag_Expr:
             return ir_expr_cast(visitor_visit_expr(visitor, ir_as_expr(ir)));
-        case IrTag_Block:
-            return ir_block_cast(visitor_visit_block(visitor, ir_as_block(ir)));
         case IrTag_Function:
             return ir_function_cast(
                 visitor_visit_function(visitor, ir_as_function(ir)));
@@ -72,11 +70,6 @@ struct StmtIr* visitor_visit_stmt(struct Visitor* visitor, struct StmtIr* ir) {
             stmt = NULL;
     }
     return stmt;
-}
-
-struct BlockIr* visitor_visit_block(struct Visitor* visitor,
-                                    struct BlockIr* ir) {
-    return visitor->visit_block(visitor, ir);
 }
 
 struct FunctionIr* visitor_visit_function(struct Visitor* visitor,
@@ -156,7 +149,6 @@ void visitor_initialize(struct Visitor* visitor, struct Context* context) {
     register_visitor(*visitor, visit_push_stmt, NULL);
     register_visitor(*visitor, visit_pop_stmt, NULL);
 
-    register_visitor(*visitor, visit_block, NULL);
     register_visitor(*visitor, visit_function, NULL);
     register_visitor(*visitor, visit_branch_cf, NULL);
     register_visitor(*visitor, visit_return_cf, NULL);

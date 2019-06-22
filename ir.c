@@ -65,10 +65,6 @@ struct ExprIr* ir_as_expr(struct Ir* ir) {
     return ir->tag == IrTag_Expr ? (struct ExprIr*)ir : NULL;
 }
 
-struct BlockIr* ir_as_block(struct Ir* ir) {
-    return ir->tag == IrTag_Block ? (struct BlockIr*)ir : NULL;
-}
-
 struct FunctionIr* ir_as_function(struct Ir* ir) {
     return ir->tag == IrTag_Function ? (struct FunctionIr*)ir : NULL;
 }
@@ -82,12 +78,10 @@ enum IrTag ir_tag(struct Ir* ir) { return ir->tag; }
 struct FunctionIr {
     struct Ir as_ir;
     strtable_id name_index;
-    struct BlockIr* body_old;  // ToDo: for refactoring
     struct BlockStmtIr* body;
     size_t region_size;
     struct List* params;  // VarExprIr* list
     struct FunctionTypeIr* type;
-    // bool has_definition;
 };
 
 struct FunctionIr* ir_new_function(strtable_id name_index,
@@ -95,7 +89,6 @@ struct FunctionIr* ir_new_function(strtable_id name_index,
     struct FunctionIr* ir = malloc(sizeof(struct FunctionIr));
     initialize_ir(ir_function_cast(ir), IrTag_Function);
     ir->name_index = name_index;
-    ir->body_old = NULL;
     ir->body = NULL;
     ir->region_size = (size_t)-1;
     ir->params = NULL;
@@ -109,14 +102,6 @@ struct Ir* ir_function_cast(struct FunctionIr* ir) {
 
 strtable_id ir_function_name_index(struct FunctionIr* ir) {
     return ir->name_index;
-}
-
-struct BlockIr* ir_function_body(struct FunctionIr* ir) {
-    return ir->body_old;
-}
-
-void ir_function_set_body(struct FunctionIr* ir, struct BlockIr* body) {
-    ir->body_old = body;
 }
 
 struct BlockStmtIr* ir_function_body2(struct FunctionIr* ir) {
@@ -171,98 +156,24 @@ struct List* ir_function_param_types(struct FunctionIr* ir) {
 struct Location {
     struct Region* region;
     bool is_function;
-    union {
-        struct BlockIr* block;                   // location for a variable
-        struct FunctionIr* function_definition;  // function definition
-    };
+    struct FunctionIr* function_definition;  // function definition
     strtable_id name_index;
     struct TypeIr* type;
     size_t offset;
 };
 
 static struct Location* ir_new_location(struct Region* region,
-                                        struct BlockIr* block,
                                         strtable_id name_index,
                                         struct TypeIr* type) {
     struct Location* loc = malloc(sizeof(struct Location));
     loc->region = region;
     loc->is_function = false;
-    loc->block = block;
     loc->name_index = name_index;
     loc->type = type;
     size_t size = type_size(type);
     ir_region_align(region, size);
     loc->offset = ir_region_allocate(region, size);
     return loc;
-}
-
-struct BlockIr {
-    struct Ir as_ir;
-    struct List statemetnts;
-    struct Region* region;
-};
-
-struct BlockIterator {
-    struct BlockIr* block;
-    struct ListHeader* current;
-};
-
-struct BlockIr* ir_new_block(void) {
-    struct BlockIr* ir = malloc(sizeof(struct BlockIr));
-    initialize_ir(ir_block_cast(ir), IrTag_Block);
-    list_initialize(&ir->statemetnts);
-    ir->region = ir_new_region();
-    return ir;
-}
-
-struct Ir* ir_block_cast(struct BlockIr* ir) {
-    return &ir->as_ir;
-}
-
-struct BlockIterator* ir_block_new_iterator(struct BlockIr* ir) {
-    struct BlockIterator* it = malloc(sizeof(struct BlockIterator));
-    it->block = ir;
-    it->current = list_end(&ir->statemetnts);
-    return it;
-}
-
-struct Ir* ir_block_iterator_next(struct BlockIterator* it) {
-    it->current = list_next(it->current);
-    struct ListHeader* current = it->current;
-    if (current == list_end(&it->block->statemetnts)) return NULL;
-    return ((struct ListItem*)current)->item;
-}
-
-struct Ir* ir_block_iterator_swap_at(struct BlockIterator* it,
-                                     struct Ir* statement) {
-    struct ListItem* item = (struct ListItem*)it->current;
-    struct Ir* prev_statement = item->item;
-    item->item = statement;
-    return prev_statement;
-}
-
-void ir_block_insert_at(struct BlockIterator* it, struct Ir* statement) {
-    struct ListItem* item = malloc(sizeof(struct ListItem));
-    item->item = statement;
-    list_insert_at(&it->block->statemetnts, it->current, &item->header);
-}
-
-void ir_block_insert_expr_at(struct BlockIterator* it, struct ExprIr* expr) {
-    ir_block_insert_at(it, ir_expr_cast(expr));
-}
-
-void ir_block_insert_at_end(struct BlockIr* ir, struct Ir* statement) {
-    struct ListItem* item = malloc(sizeof(struct ListItem));
-    item->item = statement;
-    list_insert_at_end(&ir->statemetnts, &item->header);
-}
-
-void ir_block_insert_expr_at_end(struct BlockIr* ir, struct ExprIr* expr) {
-    ir_block_insert_at_end(ir, ir_expr_cast(expr));
-}
-
-void ir_block_insert_block_at_end(struct BlockIr* ir, struct BlockIr* block) {
-    ir_block_insert_at_end(ir, ir_block_cast(block));
 }
 
 static strtable_id ir_location_name_index(struct Location* loc) {
@@ -941,7 +852,7 @@ void ir_block_stmt_insert_at_end(struct BlockStmtIr* ir, struct StmtIr* stmt) {
 struct VarExprIr* ir_block_stmt_allocate_variable(struct BlockStmtIr* ir,
                                                   strtable_id name_index,
                                                   struct TypeIr* type) {
-    struct Location* loc = ir_new_location(ir->region, NULL, name_index, type);
+    struct Location* loc = ir_new_location(ir->region, name_index, type);
     return ir_new_var_expr(loc);
 }
 
@@ -976,32 +887,6 @@ struct CfIr* ir_cf_stmt_cf(struct CfStmtIr* ir) {
 }
 
 void ir_cf_stmt_set_cf(struct CfStmtIr* ir, struct CfIr* cf) { ir->cf = cf; }
-
-struct BlockStmtIr* ir_block_stmt_convert_for_refactoring(struct BlockIr* ir) {
-    struct BlockStmtIr* block = ir_new_block_stmt();
-    struct List* stmts = ir_block_stmt_statements(block);
-    block->region = ir->region;  // ToDo: for refactoring
-
-    struct BlockIterator* it = ir_block_new_iterator(ir);
-    for (;;) {
-        struct Ir* stmt = ir_block_iterator_next(it);
-        if (!stmt) break;
-
-        struct ListItem* list_item = malloc(sizeof(struct ListItem));
-        if (ir_tag(stmt) == IrTag_Expr)
-            list_item->item = ir_new_expr_stmt(ir_as_expr(stmt));
-        else if (ir_tag(stmt) == IrTag_Cf)
-            list_item->item = ir_new_cf_stmt(ir_as_cf(stmt));
-        else if (ir_tag(stmt) == IrTag_Block)
-            list_item->item = ir_block_stmt_super(
-                ir_block_stmt_convert_for_refactoring(ir_as_block(stmt)));
-        else
-            assert(false);
-
-        list_insert_at_end(stmts, &list_item->header);
-    }
-    return block;
-}
 
 struct PushStmtIr {
     struct StmtIr super;

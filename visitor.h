@@ -27,8 +27,6 @@ struct Visitor {
                                         struct AddrofExprIr* ir);
     struct ExprIr* (*visit_cast_expr)(struct Visitor* visitor,
                                       struct CastExprIr* ir);
-    struct BlockIr* (*visit_block)(struct Visitor* visitor, struct BlockIr* ir);
-
     struct StmtIr* (*visit_expr_stmt)(struct Visitor* visitor,
                                       struct ExprStmtIr* ir);
     struct StmtIr* (*visit_block_stmt)(struct Visitor* visitor,
@@ -56,9 +54,6 @@ struct Ir* visitor_visit_ir(struct Visitor* visitor, struct Ir* ir);
 
 struct ExprIr* visitor_visit_expr(struct Visitor* visitor, struct ExprIr* ir);
 
-struct BlockIr* visitor_visit_block(struct Visitor* visitor,
-                                    struct BlockIr* ir);
-
 struct StmtIr* visitor_visit_stmt(struct Visitor* visitor, struct StmtIr* ir);
 
 struct FunctionIr* visitor_visit_function(struct Visitor* visitor,
@@ -70,10 +65,6 @@ struct StmtIr* visitor_visit_expr_stmt(struct Visitor* visitor,
                                        struct ExprStmtIr* ir);
 struct StmtIr* visitor_visit_block_stmt(struct Visitor* visitor,
                                         struct BlockStmtIr* ir);
-
-struct BlockStmtIr*
-visitor_convert_block_to_block_stmt_only_used_for_refactoring(
-    struct BlockIr* ir);
 
 void visitor_initialize(struct Visitor* visitor, struct Context* context);
 struct Context* visitor_context(struct Visitor* visitor);

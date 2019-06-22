@@ -12,9 +12,6 @@ struct Ir;
 
 struct FunctionIr;
 
-struct BlockIr;
-struct BlockIterator;
-
 struct CfIr;
 struct BranchCfIr;
 struct ReturnCfIr;
@@ -40,7 +37,6 @@ struct PushStmt;
 struct PopStmt;
 
 enum IrTag {
-    IrTag_Block,
     IrTag_Expr,
     IrTag_Var,
     IrTag_Function,
@@ -91,7 +87,6 @@ enum UnopExprIrTag {
 };
 
 struct ExprIr* ir_as_expr(struct Ir* ir);
-struct BlockIr* ir_as_block(struct Ir* ir);
 struct FunctionIr* ir_as_function(struct Ir* ir);
 struct CfIr* ir_as_cf(struct Ir* ir);
 enum IrTag ir_tag(struct Ir* ir);
@@ -100,8 +95,6 @@ struct FunctionIr* ir_new_function(strtable_id name_index,
                                    struct FunctionTypeIr* type);
 struct Ir* ir_function_cast(struct FunctionIr* ir);
 strtable_id ir_function_name_index(struct FunctionIr* ir);
-struct BlockIr* ir_function_body(struct FunctionIr* ir);
-void ir_function_set_body(struct FunctionIr* ir, struct BlockIr* body);
 struct BlockStmtIr* ir_function_body2(struct FunctionIr* ir);
 void ir_function_set_body2(struct FunctionIr* ir, struct BlockStmtIr* body);
 size_t ir_function_region_size(struct FunctionIr* ir);
@@ -114,18 +107,6 @@ struct TypeIr* ir_function_type(struct FunctionIr* ir);
 struct TypeIr* ir_function_result_type(struct FunctionIr* ir);
 struct TypeIr* ir_function_result_type(struct FunctionIr* ir);
 struct List* ir_function_param_types(struct FunctionIr* ir);
-
-struct BlockIr* ir_new_block(void);
-struct Ir* ir_block_cast(struct BlockIr* ir);
-struct BlockIterator* ir_block_new_iterator(struct BlockIr* ir);
-struct Ir* ir_block_iterator_next(struct BlockIterator* it);
-struct Ir* ir_block_iterator_swap_at(struct BlockIterator* it,
-                                     struct Ir* statement);
-void ir_block_insert_at(struct BlockIterator* it, struct Ir* statement);
-void ir_block_insert_expr_at(struct BlockIterator* it, struct ExprIr* expr);
-void ir_block_insert_at_end(struct BlockIr* ir, struct Ir* statement);
-void ir_block_insert_expr_at_end(struct BlockIr* ir, struct ExprIr* expr);
-void ir_block_insert_block_at_end(struct BlockIr* ir, struct BlockIr* block);
 
 struct Ir* ir_cf_cast(struct CfIr* ir);
 struct BranchCfIr* ir_cf_as_branch(struct CfIr* ir);
@@ -276,7 +257,6 @@ struct CfStmtIr* ir_new_cf_stmt(struct CfIr* cf);
 struct StmtIr* ir_cf_stmt_super(struct CfStmtIr* ir);
 struct CfIr* ir_cf_stmt_cf(struct CfStmtIr* ir);
 void ir_cf_stmt_set_cf(struct CfStmtIr* ir, struct CfIr* cf);
-struct BlockStmtIr* ir_block_stmt_convert_for_refactoring(struct BlockIr* ir);
 
 struct PushStmtIr* ir_new_push_stmt(strtable_id reg_id);
 struct StmtIr* ir_push_stmt_super(struct PushStmtIr* ir);

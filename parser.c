@@ -595,27 +595,21 @@ static struct FunctionIr* parse_function_definition_or_declaration(
     return function;
 }
 
-static struct BlockIr* parse_translation_unit(struct Parser* parser) {
+static void parse_translation_unit(struct Parser* parser) {
     expect(parser, Token_PseudoFileBegin);
-    struct BlockIr* translation_unit = ir_new_block();
     while (!acceptable(parser, Token_PseudoFileEnd)) {
         if (acceptable(parser, Token_KeywordStruct)) {
             struct TypeIr* type = parse_type_specifier(parser);
             expect(parser, Token_Semicolon);
             (void)type;
         } else {
-            struct Ir* item = ir_function_cast(
-                parse_function_definition_or_declaration(parser));
-            if (item) ir_block_insert_at_end(translation_unit, item);
+            parse_function_definition_or_declaration(parser);
         }
     }
     expect(parser, Token_PseudoFileEnd);
-    return translation_unit;
 }
 
-struct BlockIr* parser_run(struct Parser* parser) {
-    return parse_translation_unit(parser);
-}
+void parser_run(struct Parser* parser) { parse_translation_unit(parser); }
 
 struct Parser* parser_new(struct Context* context, struct List* tokens) {
     struct Parser* parser = malloc(sizeof(struct Parser));
