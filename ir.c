@@ -87,22 +87,18 @@ struct FunctionIr {
     size_t region_size;
     struct List* params;  // VarExprIr* list
     struct FunctionTypeIr* type;
-    bool has_definition;
+    // bool has_definition;
 };
 
 struct FunctionIr* ir_new_function(strtable_id name_index,
-                                   struct FunctionTypeIr* type,
-                                   struct List* params, struct BlockIr* body) {
-    // ToDo: insert assertion code to validate equality between type and type of
-    // params
-
+                                   struct FunctionTypeIr* type) {
     struct FunctionIr* ir = malloc(sizeof(struct FunctionIr));
     initialize_ir(ir_function_cast(ir), IrTag_Function);
     ir->name_index = name_index;
-    ir->body_old = body;
+    ir->body_old = NULL;
     ir->body = NULL;
     ir->region_size = (size_t)-1;
-    ir->params = params;
+    ir->params = NULL;
     ir->type = type;
     return ir;
 }
@@ -124,10 +120,12 @@ void ir_function_set_body(struct FunctionIr* ir, struct BlockIr* body) {
 }
 
 struct BlockStmtIr* ir_function_body2(struct FunctionIr* ir) {
+    assert(ir->body);
     return ir->body;
 }
 
 void ir_function_set_body2(struct FunctionIr* ir, struct BlockStmtIr* body) {
+    assert(ir->body);
     ir->body = body;
 }
 
@@ -143,20 +141,19 @@ void ir_function_set_region_size(struct FunctionIr* ir, size_t region_size) {
 }
 
 struct List* ir_function_params(struct FunctionIr* ir) {
+    assert(ir->params);
     return ir->params;
 }
 
-void ir_function_set_params(struct FunctionIr* ir, struct List* params) {
+bool ir_function_has_defined(struct FunctionIr* ir) { return ir->body != NULL; }
+
+void ir_function_define(struct FunctionIr* ir, struct List* params,
+                        struct BlockStmtIr* body) {
+    // ToDo: insert equality check between type and type of params
+    assert(!ir->params);
+    assert(!ir->body);
     ir->params = params;
-}
-
-bool ir_function_has_definition(struct FunctionIr* ir) {
-    return ir->has_definition;
-}
-
-void ir_function_set_has_definition(struct FunctionIr* ir) {
-    assert(!ir->has_definition);
-    ir->has_definition = true;
+    ir->body = body;
 }
 
 struct TypeIr* ir_function_type(struct FunctionIr* ir) {

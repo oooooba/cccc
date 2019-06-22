@@ -576,12 +576,12 @@ static struct FunctionIr* parse_function_definition_or_declaration(
     struct FunctionIr* function =
         context_find_function_declaration(parser->context, name_index);
     if (function) {
-        // ToDo: check function type check
+        // ToDo: check function type
 
         // prevent to insert dupulicate definitions
-        if (has_func_def) assert(!ir_function_has_definition(function));
+        if (has_func_def) assert(!ir_function_has_defined(function));
     } else {
-        function = ir_new_function(name_index, func_type, params, body);
+        function = ir_new_function(name_index, func_type);
         context_insert_function_declaration(parser->context, name_index,
                                             function);
     }
@@ -590,9 +590,8 @@ static struct FunctionIr* parse_function_definition_or_declaration(
         body = parse_compound_statement(parser, body);
         struct BlockStmtIr* body_block =
             ir_block_stmt_convert_for_refactoring(body);
-        assert(!ir_function_has_definition(function));
-        ir_function_set_body2(function, body_block);
-        ir_function_set_params(function, params);  // ToDo: fix
+        assert(!ir_function_has_defined(function));
+        ir_function_define(function, params, body_block);
     } else
         expect(parser, Token_Semicolon);
 

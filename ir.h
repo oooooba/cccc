@@ -98,8 +98,7 @@ struct CfIr* ir_as_cf(struct Ir* ir);
 enum IrTag ir_tag(struct Ir* ir);
 
 struct FunctionIr* ir_new_function(strtable_id name_index,
-                                   struct FunctionTypeIr* type,
-                                   struct List* params, struct BlockIr* body);
+                                   struct FunctionTypeIr* type);
 struct Ir* ir_function_cast(struct FunctionIr* ir);
 strtable_id ir_function_name_index(struct FunctionIr* ir);
 struct BlockIr* ir_function_body(struct FunctionIr* ir);
@@ -109,10 +108,10 @@ void ir_function_set_body2(struct FunctionIr* ir, struct BlockStmtIr* body);
 size_t ir_function_region_size(struct FunctionIr* ir);
 void ir_function_set_region_size(struct FunctionIr* ir, size_t region_size);
 struct List* ir_function_params(struct FunctionIr* ir);
-void ir_function_set_params(struct FunctionIr* ir,
-                            struct List* params);  // ToDo: remove
-bool ir_function_has_definition(struct FunctionIr* ir);
-void ir_function_set_has_definition(struct FunctionIr* ir);
+bool ir_function_has_defined(struct FunctionIr* ir);
+void ir_function_define(struct FunctionIr* ir, struct List* params,
+                        struct BlockStmtIr* body);
+struct TypeIr* ir_function_type(struct FunctionIr* ir);
 struct TypeIr* ir_function_result_type(struct FunctionIr* ir);
 struct TypeIr* ir_function_result_type(struct FunctionIr* ir);
 struct List* ir_function_param_types(struct FunctionIr* ir);
