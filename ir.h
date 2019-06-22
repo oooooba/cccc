@@ -127,10 +127,6 @@ void ir_block_insert_at_end(struct BlockIr* ir, struct Ir* statement);
 void ir_block_insert_expr_at_end(struct BlockIr* ir, struct ExprIr* expr);
 void ir_block_insert_block_at_end(struct BlockIr* ir, struct BlockIr* block);
 
-struct VarExprIr* ir_block_allocate_location(struct BlockIr* ir,
-                                             strtable_id name_index,
-                                             struct TypeIr* type);
-
 struct Ir* ir_cf_cast(struct CfIr* ir);
 struct BranchCfIr* ir_cf_as_branch(struct CfIr* ir);
 struct ReturnCfIr* ir_cf_as_return(struct CfIr* ir);
@@ -268,6 +264,9 @@ struct BlockStmtIr* ir_new_block_stmt(void);
 struct StmtIr* ir_block_stmt_super(struct BlockStmtIr* ir);
 struct List* ir_block_stmt_statements(struct BlockStmtIr* ir);
 void ir_block_stmt_insert_at_end(struct BlockStmtIr* ir, struct StmtIr* stmt);
+struct VarExprIr* ir_block_stmt_allocate_variable(struct BlockStmtIr* ir,
+                                                  strtable_id name_index,
+                                                  struct TypeIr* type);
 void ir_block_stmt_commit_region_status(struct BlockStmtIr* ir,
                                         size_t region_base);
 size_t ir_block_stmt_region_size(struct BlockStmtIr* ir);

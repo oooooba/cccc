@@ -89,13 +89,13 @@ static void expect(struct Parser* parser, enum TokenTag expected) {
     advance(parser);
 }
 
-static struct BlockIr* to_block(struct Ir* ir) {
-    struct BlockIr* block = ir_as_block(ir);
+static struct StmtIr* to_block_stmt(struct StmtIr* ir) {
+    struct BlockStmtIr* block = ir_stmt_as_block(ir);
     if (!block) {
-        block = ir_new_block();
-        ir_block_insert_at_end(block, ir);
+        block = ir_new_block_stmt();
+        ir_block_stmt_insert_at_end(block, ir);
     }
-    return block;
+    return ir_block_stmt_super(block);
 }
 
 /***** lexical elements *****/
@@ -402,13 +402,13 @@ static void parse_declaration(struct Parser* parser, struct List* result) {
 
 /***** statements and blocks *****/
 
-static struct Ir* parse_statement(struct Parser* parser);
+static struct StmtIr* parse_statement(struct Parser* parser);
 
-static struct BlockIr* parse_compound_statement(struct Parser* parser,
-                                                struct BlockIr* block) {
+static struct BlockStmtIr* parse_compound_statement(struct Parser* parser,
+                                                    struct BlockStmtIr* block) {
     expect(parser, Token_LeftCurry);
 
-    if (!block) block = ir_new_block();
+    if (!block) block = ir_new_block_stmt();
 
     struct Env* env = env_new(parser->current_env);
     parser->current_env = env;
@@ -426,19 +426,21 @@ static struct BlockIr* parse_compound_statement(struct Parser* parser,
                 strtable_id name_index = decl->name_index;
 
                 assert(!env_find(env, name_index));
-                struct VarExprIr* var =
-                    ir_block_allocate_location(block, name_index, decl->type);
+                struct VarExprIr* var = ir_block_stmt_allocate_variable(
+                    block, name_index, decl->type);
                 env_insert(env, name_index, var);
 
                 if (!decl->initializer) continue;
 
                 struct SubstExprIr* subst =
                     ir_new_subst_expr(ir_var_expr_cast(var), decl->initializer);
-                ir_block_insert_expr_at_end(block, ir_subst_expr_cast(subst));
+                struct ExprStmtIr* stmt =
+                    ir_new_expr_stmt(ir_subst_expr_cast(subst));
+                ir_block_stmt_insert_at_end(block, ir_expr_stmt_super(stmt));
             }
         } else {
-            struct Ir* item = parse_statement(parser);
-            if (item) ir_block_insert_at_end(block, item);
+            struct StmtIr* stmt = parse_statement(parser);
+            if (stmt) ir_block_stmt_insert_at_end(block, stmt);
         }
     }
     expect(parser, Token_RightCurry);
@@ -463,22 +465,18 @@ static struct CfIr* parse_selection_statement(struct Parser* parser) {
         struct ExprIr* cond_expr = parse_expression(parser);
         expect(parser, Token_RightParen);
 
-        struct Ir* true_stmt = parse_statement(parser);
-        struct BlockIr* true_block = to_block(true_stmt);
-        struct StmtIr* true_stmt_t = ir_block_stmt_super(
-            ir_block_stmt_convert_for_refactoring(true_block));
+        struct StmtIr* true_stmt = parse_statement(parser);
+        true_stmt = to_block_stmt(true_stmt);
 
-        struct StmtIr* false_stmt_t = NULL;
+        struct StmtIr* false_stmt = NULL;
         if (acceptable(parser, Token_KeywordElse)) {
             advance(parser);
-            struct Ir* false_stmt = parse_statement(parser);
-            struct BlockIr* false_block = to_block(false_stmt);
-            false_stmt_t = ir_block_stmt_super(
-                ir_block_stmt_convert_for_refactoring(false_block));
+            false_stmt = parse_statement(parser);
+            false_stmt = to_block_stmt(false_stmt);
         }
 
         return ir_branch_cf_cast(
-            ir_new_branch_cf(cond_expr, true_stmt_t, false_stmt_t));
+            ir_new_branch_cf(cond_expr, true_stmt, false_stmt));
     }
     assert(false);
 }
@@ -496,15 +494,17 @@ static struct CfIr* parse_jump_statement(struct Parser* parser) {
     assert(false);
 }
 
-static struct Ir* parse_statement(struct Parser* parser) {
+static struct StmtIr* parse_statement(struct Parser* parser) {
     if (acceptable(parser, Token_LeftCurry))
-        return ir_block_cast(parse_compound_statement(parser, NULL));
+        return ir_block_stmt_super(parse_compound_statement(parser, NULL));
     else if (acceptable(parser, Token_KeywordIf))
-        return ir_cf_cast(parse_selection_statement(parser));
+        return ir_cf_stmt_super(
+            ir_new_cf_stmt(parse_selection_statement(parser)));
     else if (acceptable(parser, Token_KeywordReturn))
-        return ir_cf_cast(parse_jump_statement(parser));
+        return ir_cf_stmt_super(ir_new_cf_stmt(parse_jump_statement(parser)));
     else
-        return ir_expr_cast(parse_expression_statement(parser));
+        return ir_expr_stmt_super(
+            ir_new_expr_stmt(parse_expression_statement(parser)));
 }
 
 /***** external definitions *****/
@@ -521,7 +521,7 @@ static struct FunctionIr* parse_function_definition_or_declaration(
     struct Env* env = env_new(parser->current_env);
     parser->current_env = env;
 
-    struct BlockIr* body = ir_new_block();
+    struct BlockStmtIr* body = ir_new_block_stmt();
 
     expect(parser, Token_LeftParen);
     struct List* params = malloc(sizeof(struct List));
@@ -540,8 +540,8 @@ static struct FunctionIr* parse_function_definition_or_declaration(
             struct Declaration* param_decl =
                 (struct Declaration*)list_begin(&param_decls);
             strtable_id name_index = param_decl->name_index;
-            struct VarExprIr* var =
-                ir_block_allocate_location(body, name_index, param_decl->type);
+            struct VarExprIr* var = ir_block_stmt_allocate_variable(
+                body, name_index, param_decl->type);
             env_insert(env, name_index, var);
 
             struct ListItem* param_item = malloc(sizeof(struct ListItem));
@@ -586,10 +586,8 @@ static struct FunctionIr* parse_function_definition_or_declaration(
 
     if (has_func_def) {
         body = parse_compound_statement(parser, body);
-        struct BlockStmtIr* body_block =
-            ir_block_stmt_convert_for_refactoring(body);
         assert(!ir_function_has_defined(function));
-        ir_function_define(function, params, body_block);
+        ir_function_define(function, params, body);
     } else
         expect(parser, Token_Semicolon);
 

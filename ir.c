@@ -265,14 +265,6 @@ void ir_block_insert_block_at_end(struct BlockIr* ir, struct BlockIr* block) {
     ir_block_insert_at_end(ir, ir_block_cast(block));
 }
 
-static struct VarExprIr* ir_new_var_expr(struct Location* location);
-struct VarExprIr* ir_block_allocate_location(struct BlockIr* ir,
-                                             strtable_id name_index,
-                                             struct TypeIr* type) {
-    struct Location* loc = ir_new_location(ir->region, ir, name_index, type);
-    return ir_new_var_expr(loc);
-}
-
 static strtable_id ir_location_name_index(struct Location* loc) {
     return loc->name_index;
 }
@@ -928,6 +920,7 @@ struct BlockStmtIr* ir_new_block_stmt(void) {
     struct BlockStmtIr* ir = malloc(sizeof(struct BlockStmtIr));
     initialize_stmt(ir_block_stmt_super(ir), StmtIrTag_Block);
     list_initialize(&ir->statemetnts);
+    ir->region = ir_new_region();
     return ir;
 }
 
@@ -943,6 +936,13 @@ void ir_block_stmt_insert_at_end(struct BlockStmtIr* ir, struct StmtIr* stmt) {
     struct ListItem* list_item = malloc(sizeof(struct ListItem));
     list_item->item = stmt;
     list_insert_at_end(&ir->statemetnts, list_from(list_item));
+}
+
+struct VarExprIr* ir_block_stmt_allocate_variable(struct BlockStmtIr* ir,
+                                                  strtable_id name_index,
+                                                  struct TypeIr* type) {
+    struct Location* loc = ir_new_location(ir->region, NULL, name_index, type);
+    return ir_new_var_expr(loc);
 }
 
 void ir_block_stmt_commit_region_status(struct BlockStmtIr* ir,
