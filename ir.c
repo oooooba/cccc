@@ -155,8 +155,6 @@ struct List* ir_function_param_types(struct FunctionIr* ir) {
 
 struct Location {
     struct Region* region;
-    bool is_function;
-    struct FunctionIr* function_definition;  // function definition
     strtable_id name_index;
     struct TypeIr* type;
     size_t offset;
@@ -167,7 +165,6 @@ static struct Location* ir_new_location(struct Region* region,
                                         struct TypeIr* type) {
     struct Location* loc = malloc(sizeof(struct Location));
     loc->region = region;
-    loc->is_function = false;
     loc->name_index = name_index;
     loc->type = type;
     size_t size = type_size(type);
@@ -186,21 +183,6 @@ static struct TypeIr* ir_location_type(struct Location* loc) {
 
 static size_t ir_location_offset(struct Location* loc) {
     return ir_region_base(loc->region) + loc->offset;
-}
-
-static bool ir_location_is_function(struct Location* loc) {
-    return loc->is_function;
-}
-
-struct FunctionIr* ir_location_function_definition(struct Location* loc) {
-    assert(ir_location_is_function(loc));
-    return loc->function_definition;
-}
-
-void ir_location_set_function_definition(struct Location* loc,
-                                         struct FunctionIr* function) {
-    assert(ir_location_is_function(loc));
-    loc->function_definition = function;
 }
 
 struct CfIr {
@@ -522,16 +504,17 @@ struct BlockStmtIr* ir_call_expr_post_expr_block(struct CallExprIr* ir) {
 struct VarExprIr {
     struct ExprIr as_expr;
     bool is_function;
-    struct Location* location;
-    struct FunctionIr* function;
+    union {
+        struct Location* location;
+        struct FunctionIr* function;
+    };
 };
 
 static struct VarExprIr* ir_new_var_expr(struct Location* location) {
     struct VarExprIr* ir = malloc(sizeof(struct VarExprIr));
     initialize_expr(ir_var_expr_cast(ir), ExprIrTag_Var);
-    ir->location = location;
     ir->is_function = false;
-    ir->function = NULL;
+    ir->location = location;
     return ir;
 }
 
@@ -543,14 +526,12 @@ struct VarExprIr* ir_var_expr_clone(struct VarExprIr* ir) {
     struct VarExprIr* new_ir = ir_new_var_expr(NULL);
     new_ir->is_function = ir->is_function;
     new_ir->location = ir->location;
-    new_ir->function = ir->function;
     return new_ir;
 }
 
 struct VarExprIr* ir_var_expr_from_function(struct FunctionIr* function) {
     struct VarExprIr* new_ir = ir_new_var_expr(NULL);
     new_ir->is_function = true;
-    new_ir->location = NULL;
     new_ir->function = function;
     return new_ir;
 }
