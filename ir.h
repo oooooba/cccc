@@ -14,7 +14,6 @@ struct FunctionIr;
 
 struct BlockIr;
 struct BlockIterator;
-struct Location;
 
 struct CfIr;
 struct BranchCfIr;
@@ -131,7 +130,6 @@ void ir_block_insert_block_at_end(struct BlockIr* ir, struct BlockIr* block);
 struct VarExprIr* ir_block_allocate_location(struct BlockIr* ir,
                                              strtable_id name_index,
                                              struct TypeIr* type);
-strtable_id ir_location_name_index(struct Location* loc);
 
 struct Ir* ir_cf_cast(struct CfIr* ir);
 struct BranchCfIr* ir_cf_as_branch(struct CfIr* ir);
@@ -204,7 +202,6 @@ struct List* ir_call_expr_args(struct CallExprIr* ir);
 struct BlockStmtIr* ir_call_expr_pre_expr_block(struct CallExprIr* ir);
 struct BlockStmtIr* ir_call_expr_post_expr_block(struct CallExprIr* ir);
 
-struct VarExprIr* ir_new_var_expr(struct Location* location);
 struct ExprIr* ir_var_expr_cast(struct VarExprIr* ir);
 struct VarExprIr* ir_var_expr_clone(struct VarExprIr* ir);
 struct VarExprIr* ir_var_expr_from_function(struct FunctionIr* function);

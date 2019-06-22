@@ -265,6 +265,7 @@ void ir_block_insert_block_at_end(struct BlockIr* ir, struct BlockIr* block) {
     ir_block_insert_at_end(ir, ir_block_cast(block));
 }
 
+static struct VarExprIr* ir_new_var_expr(struct Location* location);
 struct VarExprIr* ir_block_allocate_location(struct BlockIr* ir,
                                              strtable_id name_index,
                                              struct TypeIr* type) {
@@ -272,7 +273,7 @@ struct VarExprIr* ir_block_allocate_location(struct BlockIr* ir,
     return ir_new_var_expr(loc);
 }
 
-strtable_id ir_location_name_index(struct Location* loc) {
+static strtable_id ir_location_name_index(struct Location* loc) {
     return loc->name_index;
 }
 
@@ -622,7 +623,7 @@ struct VarExprIr {
     struct FunctionIr* function;
 };
 
-struct VarExprIr* ir_new_var_expr(struct Location* location) {
+static struct VarExprIr* ir_new_var_expr(struct Location* location) {
     struct VarExprIr* ir = malloc(sizeof(struct VarExprIr));
     initialize_expr(ir_var_expr_cast(ir), ExprIrTag_Var);
     ir->location = location;
