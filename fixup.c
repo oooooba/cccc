@@ -144,17 +144,13 @@ static struct FunctionIr* visit_function(struct FixupVisitor* visitor,
     // move to end of statements
     insert_point = list_end(stmts);
 
-    // insert label for early returns
-    {
-        // this value means epilogue of current function, ToDo: fix
-        struct LabelCfIr* label = ir_new_label_cf(STRTABLE_INVALID_ID);
-        insert(stmts, insert_point, ir_new_cf_stmt(ir_label_cf_cast(label)));
-    }
-
     // insert restoring general purpose registers code
     {
         struct PopStmtIr* pop = ir_new_pop_stmt(
             context_nth_reg(ctx(visitor), 1, RegisterSizeKind_64));
+        ir_stmt_set_label_index(
+            ir_pop_stmt_super(pop),
+            (strtable_id)-1);  // ToDo: fix to avoid adhoc way
         insert(stmts, insert_point, ir_pop_stmt_super(pop));
     }
 

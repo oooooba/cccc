@@ -690,14 +690,22 @@ void ir_cast_expr_set_operand(struct CastExprIr* ir, struct ExprIr* operand) {
 struct StmtIr {
     struct Ir as_ir;
     enum StmtIrTag tag;
+    strtable_id label_index;
 };
 
 static void initialize_stmt(struct StmtIr* ir, enum StmtIrTag tag) {
     initialize_ir(ir_stmt_cast(ir), IrTag_Stmt);
     ir->tag = tag;
+    ir->label_index = STRTABLE_INVALID_ID;
 }
 
 enum StmtIrTag ir_stmt_tag(struct StmtIr* ir) { return ir->tag; }
+
+strtable_id ir_stmt_label_index(struct StmtIr* ir) { return ir->label_index; }
+
+void ir_stmt_set_label_index(struct StmtIr* ir, strtable_id label_index) {
+    ir->label_index = label_index;
+}
 
 struct Ir* ir_stmt_cast(struct StmtIr* ir) {
     return &ir->as_ir;

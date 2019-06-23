@@ -214,6 +214,8 @@ struct ExprIr* ir_cast_expr_operand(struct CastExprIr* ir);
 void ir_cast_expr_set_operand(struct CastExprIr* ir, struct ExprIr* operand);
 
 enum StmtIrTag ir_stmt_tag(struct StmtIr* ir);
+strtable_id ir_stmt_label_index(struct StmtIr* ir);
+void ir_stmt_set_label_index(struct StmtIr* ir, strtable_id label_index);
 struct Ir* ir_stmt_cast(struct StmtIr* ir);
 struct ExprStmtIr* ir_stmt_as_expr(struct StmtIr* ir);
 struct BlockStmtIr* ir_stmt_as_block(struct StmtIr* ir);

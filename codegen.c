@@ -220,6 +220,14 @@ static struct ExprIr* visit_cast_expr2(struct CodegenVisitor* visitor,
     return NULL;
 }
 
+static struct StmtIr* visit_stmt_pre(struct CodegenVisitor* visitor,
+                                     struct StmtIr* ir) {
+    strtable_id label_index = ir_stmt_label_index(ir);
+    if (label_index == (strtable_id)-1)
+        fprintf(visitor->stream, "lab_%p_end:\n", visitor->function);
+    return NULL;
+}
+
 static struct StmtIr* visit_if_stmt(struct CodegenVisitor* visitor,
                                     struct IfStmtIr* ir) {
     struct ExprIr* cond_expr = ir_if_stmt_cond_expr(ir);
@@ -309,6 +317,8 @@ struct CodegenVisitor* new_codegen_visitor(struct Context* context,
                      visit_member_expr2);
     register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr2);
     register_visitor(visitor->as_visitor, visit_cast_expr, visit_cast_expr2);
+
+    register_visitor(visitor->as_visitor, visit_stmt_pre, visit_stmt_pre);
 
     register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);
     register_visitor(visitor->as_visitor, visit_push_stmt, visit_push_stmt);
