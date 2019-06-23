@@ -11,8 +11,6 @@ struct Ir* visitor_visit_ir(struct Visitor* visitor, struct Ir* ir) {
         case IrTag_Function:
             return ir_function_cast(
                 visitor_visit_function(visitor, ir_as_function(ir)));
-        case IrTag_Cf:
-            return ir_cf_cast(visitor_visit_cf(visitor, ir_as_cf(ir)));
         default:
             assert(false);
     }
@@ -71,9 +69,6 @@ struct StmtIr* visitor_visit_stmt(struct Visitor* visitor, struct StmtIr* ir) {
         case StmtIrTag_Return:
             stmt = visitor->visit_return_stmt(visitor, ir_stmt_as_return(ir));
             break;
-        case StmtIrTag_Cf:
-            stmt = visitor->visit_cf_stmt(visitor, ir_stmt_as_cf(ir));
-            break;
         case StmtIrTag_Push:
             stmt = visitor->visit_push_stmt(visitor, ir_stmt_as_push(ir));
             break;
@@ -90,15 +85,6 @@ struct StmtIr* visitor_visit_stmt(struct Visitor* visitor, struct StmtIr* ir) {
 struct FunctionIr* visitor_visit_function(struct Visitor* visitor,
                                           struct FunctionIr* ir) {
     return visitor->visit_function(visitor, ir);
-}
-
-struct CfIr* visitor_visit_cf(struct Visitor* visitor, struct CfIr* ir) {
-    (void)visitor;
-    switch (ir_cf_tag(ir)) {
-        default:
-            assert(false);
-    }
-    return NULL;
 }
 
 struct StmtIr* visitor_visit_expr_stmt(struct Visitor* visitor,
@@ -163,17 +149,6 @@ struct StmtIr* visitor_visit_return_stmt(struct Visitor* visitor,
         return NULL;
 }
 
-// ToDo: for refactoring
-struct StmtIr* visitor_visit_cf_stmt(struct Visitor* visitor,
-                                     struct CfStmtIr* ir) {
-    struct CfIr* cf = visitor_visit_cf(visitor, ir_cf_stmt_cf(ir));
-    if (cf) {
-        ir_cf_stmt_set_cf(ir, cf);
-        return ir_cf_stmt_super(ir);
-    } else
-        return NULL;
-}
-
 void visitor_initialize(struct Visitor* visitor, struct Context* context) {
     visitor->context = context;
 
@@ -194,7 +169,6 @@ void visitor_initialize(struct Visitor* visitor, struct Context* context) {
     register_visitor(*visitor, visit_block_stmt, visitor_visit_block_stmt);
     register_visitor(*visitor, visit_if_stmt, visitor_visit_if_stmt);
     register_visitor(*visitor, visit_return_stmt, visitor_visit_return_stmt);
-    register_visitor(*visitor, visit_cf_stmt, visitor_visit_cf_stmt);
     register_visitor(*visitor, visit_push_stmt, NULL);
     register_visitor(*visitor, visit_pop_stmt, NULL);
 

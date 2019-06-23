@@ -12,9 +12,6 @@ struct Ir;
 
 struct FunctionIr;
 
-struct CfIr;
-struct ReturnCfIr;
-
 struct ExprIr;
 struct ConstExprIr;
 struct BinopExprIr;
@@ -32,20 +29,13 @@ struct ExprStmt;
 struct BlockStmt;
 struct IfStmt;
 struct ReturnStmt;
-struct CfStmt;  // for refactoring
 struct PushStmt;
 struct PopStmt;
 
 enum IrTag {
     IrTag_Expr,
-    IrTag_Var,
-    IrTag_Function,
-    IrTag_Cf,
     IrTag_Stmt,
-};
-
-enum CfIrTag {
-    CfIrTag_Return,
+    IrTag_Function,
 };
 
 enum ExprIrTag {
@@ -66,7 +56,6 @@ enum StmtIrTag {
     StmtIrTag_Block,
     StmtIrTag_If,
     StmtIrTag_Return,
-    StmtIrTag_Cf,  // ToDo: for refactoring
     StmtIrTag_Push,
     StmtIrTag_Pop,
 };
@@ -88,7 +77,6 @@ enum UnopExprIrTag {
 
 struct ExprIr* ir_as_expr(struct Ir* ir);
 struct FunctionIr* ir_as_function(struct Ir* ir);
-struct CfIr* ir_as_cf(struct Ir* ir);
 enum IrTag ir_tag(struct Ir* ir);
 
 struct FunctionIr* ir_new_function(strtable_id name_index,
@@ -107,15 +95,6 @@ struct TypeIr* ir_function_type(struct FunctionIr* ir);
 struct TypeIr* ir_function_result_type(struct FunctionIr* ir);
 struct TypeIr* ir_function_result_type(struct FunctionIr* ir);
 struct List* ir_function_param_types(struct FunctionIr* ir);
-
-struct Ir* ir_cf_cast(struct CfIr* ir);
-struct ReturnCfIr* ir_cf_as_return(struct CfIr* ir);
-enum CfIrTag ir_cf_tag(struct CfIr* ir);
-
-struct ReturnCfIr* ir_new_return_cf(struct ExprIr* expr);
-struct CfIr* ir_return_cf_cast(struct ReturnCfIr* ir);
-struct ExprIr* ir_return_cf_expr(struct ReturnCfIr* ir);
-void ir_return_cf_set_expr(struct ReturnCfIr* ir, struct ExprIr* expr);
 
 struct Ir* ir_expr_cast(struct ExprIr* ir);
 struct ConstExprIr* ir_expr_as_const(struct ExprIr* ir);
@@ -216,7 +195,6 @@ struct ExprStmtIr* ir_stmt_as_expr(struct StmtIr* ir);
 struct BlockStmtIr* ir_stmt_as_block(struct StmtIr* ir);
 struct IfStmtIr* ir_stmt_as_if(struct StmtIr* ir);
 struct ReturnStmtIr* ir_stmt_as_return(struct StmtIr* ir);
-struct CfStmtIr* ir_stmt_as_cf(struct StmtIr* ir);  // ToDo: for refactoring
 struct PushStmtIr* ir_stmt_as_push(struct StmtIr* ir);
 struct PopStmtIr* ir_stmt_as_pop(struct StmtIr* ir);
 
@@ -251,12 +229,6 @@ struct ReturnStmtIr* ir_new_return_stmt(struct ExprIr* expr);
 struct StmtIr* ir_return_stmt_super(struct ReturnStmtIr* ir);
 struct ExprIr* ir_return_stmt_expr(struct ReturnStmtIr* ir);
 void ir_return_stmt_set_expr(struct ReturnStmtIr* ir, struct ExprIr* expr);
-
-// ToDo: for refactoring
-struct CfStmtIr* ir_new_cf_stmt(struct CfIr* cf);
-struct StmtIr* ir_cf_stmt_super(struct CfStmtIr* ir);
-struct CfIr* ir_cf_stmt_cf(struct CfStmtIr* ir);
-void ir_cf_stmt_set_cf(struct CfStmtIr* ir, struct CfIr* cf);
 
 struct PushStmtIr* ir_new_push_stmt(strtable_id reg_id);
 struct StmtIr* ir_push_stmt_super(struct PushStmtIr* ir);

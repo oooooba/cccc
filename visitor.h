@@ -39,9 +39,6 @@ struct Visitor {
                                     struct IfStmtIr* ir);
     struct StmtIr* (*visit_return_stmt)(struct Visitor* visitor,
                                         struct ReturnStmtIr* ir);
-    // ToDo: for refactoring
-    struct StmtIr* (*visit_cf_stmt)(struct Visitor* visitor,
-                                    struct CfStmtIr* ir);
 
     struct StmtIr* (*visit_push_stmt)(struct Visitor* visitor,
                                       struct PushStmtIr* ir);
@@ -60,8 +57,6 @@ struct StmtIr* visitor_visit_stmt(struct Visitor* visitor, struct StmtIr* ir);
 
 struct FunctionIr* visitor_visit_function(struct Visitor* visitor,
                                           struct FunctionIr* ir);
-
-struct CfIr* visitor_visit_cf(struct Visitor* visitor, struct CfIr* ir);
 
 struct StmtIr* visitor_visit_expr_stmt(struct Visitor* visitor,
                                        struct ExprStmtIr* ir);

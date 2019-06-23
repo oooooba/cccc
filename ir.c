@@ -69,10 +69,6 @@ struct FunctionIr* ir_as_function(struct Ir* ir) {
     return ir->tag == IrTag_Function ? (struct FunctionIr*)ir : NULL;
 }
 
-struct CfIr* ir_as_cf(struct Ir* ir) {
-    return ir->tag == IrTag_Cf ? (struct CfIr*)ir : NULL;
-}
-
 enum IrTag ir_tag(struct Ir* ir) { return ir->tag; }
 
 struct FunctionIr {
@@ -183,17 +179,6 @@ static struct TypeIr* ir_location_type(struct Location* loc) {
 
 static size_t ir_location_offset(struct Location* loc) {
     return ir_region_base(loc->region) + loc->offset;
-}
-
-struct CfIr {
-    struct Ir as_ir;
-    enum CfIrTag tag;
-};
-
-enum CfIrTag ir_cf_tag(struct CfIr* ir) { return ir->tag; }
-
-struct Ir* ir_cf_cast(struct CfIr* ir) {
-    return &ir->as_ir;
 }
 
 struct ExprIr {
@@ -672,11 +657,6 @@ struct ReturnStmtIr* ir_stmt_as_return(struct StmtIr* ir) {
     return ir->tag == StmtIrTag_Return ? (struct ReturnStmtIr*)ir : NULL;
 }
 
-// ToDo: for refactoring
-struct CfStmtIr* ir_stmt_as_cf(struct StmtIr* ir) {
-    return ir->tag == StmtIrTag_Cf ? (struct CfStmtIr*)ir : NULL;
-}
-
 struct PushStmtIr* ir_stmt_as_push(struct StmtIr* ir) {
     return ir->tag == StmtIrTag_Push ? (struct PushStmtIr*)ir : NULL;
 }
@@ -824,28 +804,6 @@ struct ExprIr* ir_return_stmt_expr(struct ReturnStmtIr* ir) {
 void ir_return_stmt_set_expr(struct ReturnStmtIr* ir, struct ExprIr* expr) {
     ir->expr = expr;
 }
-
-struct CfStmtIr {
-    struct StmtIr super;
-    struct CfIr* cf;
-};
-
-struct CfStmtIr* ir_new_cf_stmt(struct CfIr* cf) {
-    struct CfStmtIr* ir = malloc(sizeof(struct CfStmtIr));
-    initialize_stmt(ir_cf_stmt_super(ir), StmtIrTag_Cf);
-    ir->cf = cf;
-    return ir;
-}
-
-struct StmtIr* ir_cf_stmt_super(struct CfStmtIr* ir) {
-    return &ir->super;
-}
-
-struct CfIr* ir_cf_stmt_cf(struct CfStmtIr* ir) {
-    return ir->cf;
-}
-
-void ir_cf_stmt_set_cf(struct CfStmtIr* ir, struct CfIr* cf) { ir->cf = cf; }
 
 struct PushStmtIr {
     struct StmtIr super;
