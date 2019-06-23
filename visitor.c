@@ -68,6 +68,9 @@ struct StmtIr* visitor_visit_stmt(struct Visitor* visitor, struct StmtIr* ir) {
         case StmtIrTag_If:
             stmt = visitor->visit_if_stmt(visitor, ir_stmt_as_if(ir));
             break;
+        case StmtIrTag_Return:
+            stmt = visitor->visit_return_stmt(visitor, ir_stmt_as_return(ir));
+            break;
         case StmtIrTag_Cf:
             stmt = visitor->visit_cf_stmt(visitor, ir_stmt_as_cf(ir));
             break;
@@ -149,6 +152,18 @@ struct StmtIr* visitor_visit_if_stmt(struct Visitor* visitor,
     return changed ? ir_if_stmt_super(ir) : NULL;
 }
 
+struct StmtIr* visitor_visit_return_stmt(struct Visitor* visitor,
+                                         struct ReturnStmtIr* ir) {
+    struct ExprIr* expr = ir_return_stmt_expr(ir);
+    if (!expr) return NULL;
+    expr = visitor_visit_expr(visitor, expr);
+    if (expr) {
+        ir_return_stmt_set_expr(ir, expr);
+        return ir_return_stmt_super(ir);
+    } else
+        return NULL;
+}
+
 // ToDo: for refactoring
 struct StmtIr* visitor_visit_cf_stmt(struct Visitor* visitor,
                                      struct CfStmtIr* ir) {
@@ -179,6 +194,7 @@ void visitor_initialize(struct Visitor* visitor, struct Context* context) {
     register_visitor(*visitor, visit_expr_stmt, visitor_visit_expr_stmt);
     register_visitor(*visitor, visit_block_stmt, visitor_visit_block_stmt);
     register_visitor(*visitor, visit_if_stmt, visitor_visit_if_stmt);
+    register_visitor(*visitor, visit_return_stmt, visitor_visit_return_stmt);
     register_visitor(*visitor, visit_cf_stmt, visitor_visit_cf_stmt);
     register_visitor(*visitor, visit_push_stmt, NULL);
     register_visitor(*visitor, visit_pop_stmt, NULL);

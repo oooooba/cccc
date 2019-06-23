@@ -31,6 +31,7 @@ struct StmtIr;
 struct ExprStmt;
 struct BlockStmt;
 struct IfStmt;
+struct ReturnStmt;
 struct CfStmt;  // for refactoring
 struct PushStmt;
 struct PopStmt;
@@ -64,6 +65,7 @@ enum StmtIrTag {
     StmtIrTag_Expr,
     StmtIrTag_Block,
     StmtIrTag_If,
+    StmtIrTag_Return,
     StmtIrTag_Cf,  // ToDo: for refactoring
     StmtIrTag_Push,
     StmtIrTag_Pop,
@@ -213,6 +215,7 @@ struct Ir* ir_stmt_cast(struct StmtIr* ir);
 struct ExprStmtIr* ir_stmt_as_expr(struct StmtIr* ir);
 struct BlockStmtIr* ir_stmt_as_block(struct StmtIr* ir);
 struct IfStmtIr* ir_stmt_as_if(struct StmtIr* ir);
+struct ReturnStmtIr* ir_stmt_as_return(struct StmtIr* ir);
 struct CfStmtIr* ir_stmt_as_cf(struct StmtIr* ir);  // ToDo: for refactoring
 struct PushStmtIr* ir_stmt_as_push(struct StmtIr* ir);
 struct PopStmtIr* ir_stmt_as_pop(struct StmtIr* ir);
@@ -243,6 +246,11 @@ struct StmtIr* ir_if_stmt_true_stmt(struct IfStmtIr* ir);
 void ir_if_stmt_set_true_stmt(struct IfStmtIr* ir, struct StmtIr* true_stmt);
 struct StmtIr* ir_if_stmt_false_stmt(struct IfStmtIr* ir);
 void ir_if_stmt_set_false_stmt(struct IfStmtIr* ir, struct StmtIr* false_stmt);
+
+struct ReturnStmtIr* ir_new_return_stmt(struct ExprIr* expr);
+struct StmtIr* ir_return_stmt_super(struct ReturnStmtIr* ir);
+struct ExprIr* ir_return_stmt_expr(struct ReturnStmtIr* ir);
+void ir_return_stmt_set_expr(struct ReturnStmtIr* ir, struct ExprIr* expr);
 
 // ToDo: for refactoring
 struct CfStmtIr* ir_new_cf_stmt(struct CfIr* cf);

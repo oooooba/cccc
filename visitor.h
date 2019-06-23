@@ -37,6 +37,8 @@ struct Visitor {
                                        struct BlockStmtIr* ir);
     struct StmtIr* (*visit_if_stmt)(struct Visitor* visitor,
                                     struct IfStmtIr* ir);
+    struct StmtIr* (*visit_return_stmt)(struct Visitor* visitor,
+                                        struct ReturnStmtIr* ir);
     // ToDo: for refactoring
     struct StmtIr* (*visit_cf_stmt)(struct Visitor* visitor,
                                     struct CfStmtIr* ir);

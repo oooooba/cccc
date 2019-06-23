@@ -701,6 +701,10 @@ struct IfStmtIr* ir_stmt_as_if(struct StmtIr* ir) {
     return ir->tag == StmtIrTag_If ? (struct IfStmtIr*)ir : NULL;
 }
 
+struct ReturnStmtIr* ir_stmt_as_return(struct StmtIr* ir) {
+    return ir->tag == StmtIrTag_Return ? (struct ReturnStmtIr*)ir : NULL;
+}
+
 // ToDo: for refactoring
 struct CfStmtIr* ir_stmt_as_cf(struct StmtIr* ir) {
     return ir->tag == StmtIrTag_Cf ? (struct CfStmtIr*)ir : NULL;
@@ -828,6 +832,30 @@ struct StmtIr* ir_if_stmt_false_stmt(struct IfStmtIr* ir) {
 
 void ir_if_stmt_set_false_stmt(struct IfStmtIr* ir, struct StmtIr* false_stmt) {
     ir->false_stmt = false_stmt;
+}
+
+struct ReturnStmtIr {
+    struct StmtIr super;
+    struct ExprIr* expr;
+};
+
+struct ReturnStmtIr* ir_new_return_stmt(struct ExprIr* expr) {
+    struct ReturnStmtIr* ir = malloc(sizeof(struct ReturnStmtIr));
+    initialize_stmt(ir_return_stmt_super(ir), StmtIrTag_Return);
+    ir->expr = expr;
+    return ir;
+}
+
+struct StmtIr* ir_return_stmt_super(struct ReturnStmtIr* ir) {
+    return &ir->super;
+}
+
+struct ExprIr* ir_return_stmt_expr(struct ReturnStmtIr* ir) {
+    return ir->expr;
+}
+
+void ir_return_stmt_set_expr(struct ReturnStmtIr* ir, struct ExprIr* expr) {
+    ir->expr = expr;
 }
 
 struct CfStmtIr {
