@@ -210,6 +210,20 @@ static struct StmtIr* visit_if_stmt(struct TypingVisitor* visitor,
     return ir_if_stmt_super(ir);
 }
 
+static struct StmtIr* visit_return_stmt(struct TypingVisitor* visitor,
+                                        struct ReturnStmtIr* ir) {
+    struct ExprIr* expr = ir_return_stmt_expr(ir);
+    if (expr) {
+        expr = visitor_visit_expr(as_visitor(visitor), expr);
+        struct TypeIr* result_type = ir_function_result_type(visitor->function);
+        if (!type_equal(ir_expr_type(expr), result_type))
+            expr = ir_cast_expr_cast(ir_new_cast_expr(expr, result_type));
+        ir_return_stmt_set_expr(ir, expr);
+    } else
+        assert(false && "unimplemented");  // ToDo: compare to void
+    return ir_return_stmt_super(ir);
+}
+
 static struct FunctionIr* visit_function(struct TypingVisitor* visitor,
                                          struct FunctionIr* ir) {
     visitor->function = ir;
@@ -260,6 +274,7 @@ struct TypingVisitor* new_typing_visitor(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_cast_expr, visit_cast_expr);
 
     register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);
+    register_visitor(visitor->as_visitor, visit_return_stmt, visit_return_stmt);
 
     register_visitor(visitor->as_visitor, visit_function, visit_function);
     register_visitor(visitor->as_visitor, visit_return_cf, visit_return_cf);

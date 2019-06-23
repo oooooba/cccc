@@ -167,6 +167,16 @@ static struct StmtIr* visit_if_stmt(struct SimplifyVisitor* visitor,
     return NULL;
 }
 
+static struct StmtIr* visit_return_stmt(struct SimplifyVisitor* visitor,
+                                        struct ReturnStmtIr* ir) {
+    struct ExprIr* expr = ir_return_stmt_expr(ir);
+    if (expr) {
+        struct ExprIr* new_expr = visitor_visit_expr(as_visitor(visitor), expr);
+        if (new_expr) ir_return_stmt_set_expr(ir, new_expr);
+    }
+    return NULL;
+}
+
 static struct FunctionIr* visit_function(struct SimplifyVisitor* visitor,
                                          struct FunctionIr* ir) {
     struct BlockStmtIr* body = ir_function_body2(ir);
@@ -200,6 +210,7 @@ struct SimplifyVisitor* new_simplify_visitor(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_cast_expr, visit_cast_expr);
 
     register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);
+    register_visitor(visitor->as_visitor, visit_return_stmt, visit_return_stmt);
 
     register_visitor(visitor->as_visitor, visit_function, visit_function);
     register_visitor(visitor->as_visitor, visit_return_cf, visit_return_cf);

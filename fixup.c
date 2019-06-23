@@ -54,6 +54,13 @@ static struct StmtIr* visit_if_stmt(struct FixupVisitor* visitor,
     return NULL;
 }
 
+static struct StmtIr* visit_return_stmt(struct FixupVisitor* visitor,
+                                        struct ReturnStmtIr* ir) {
+    (void)visitor;
+    (void)ir;
+    return NULL;
+}
+
 static struct StmtIr* visit_cf_stmt(struct FixupVisitor* visitor,
                                     struct CfStmtIr* ir) {
     (void)visitor;
@@ -175,6 +182,7 @@ struct FixupVisitor* new_fixup_visitor(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_expr_stmt, visit_expr_stmt);
     register_visitor(visitor->as_visitor, visit_block_stmt, visit_block_stmt);
     register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);
+    register_visitor(visitor->as_visitor, visit_return_stmt, visit_return_stmt);
     register_visitor(visitor->as_visitor, visit_cf_stmt,
                      visit_cf_stmt);  // ToDo: for refactoring
     register_visitor(visitor->as_visitor, visit_function, visit_function);

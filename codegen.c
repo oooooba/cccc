@@ -249,6 +249,16 @@ static struct StmtIr* visit_if_stmt(struct CodegenVisitor* visitor,
     return NULL;
 }
 
+static struct StmtIr* visit_return_stmt(struct CodegenVisitor* visitor,
+                                        struct ReturnStmtIr* ir) {
+    struct ExprIr* expr = ir_return_stmt_expr(ir);
+    if (expr) {
+        visitor_visit_expr(as_visitor(visitor), expr);
+    }
+    fprintf(visitor->stream, "\tjmp\tlab_%p_end\n", visitor->function);
+    return NULL;
+}
+
 static struct StmtIr* visit_push_stmt(struct CodegenVisitor* visitor,
                                       struct PushStmtIr* ir) {
     strtable_id reg_id = ir_push_stmt_reg_id(ir);
@@ -311,6 +321,7 @@ struct CodegenVisitor* new_codegen_visitor(struct Context* context,
     register_visitor(visitor->as_visitor, visit_stmt_pre, visit_stmt_pre);
 
     register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);
+    register_visitor(visitor->as_visitor, visit_return_stmt, visit_return_stmt);
     register_visitor(visitor->as_visitor, visit_push_stmt, visit_push_stmt);
     register_visitor(visitor->as_visitor, visit_pop_stmt, visit_pop_stmt);
 

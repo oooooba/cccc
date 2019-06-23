@@ -194,6 +194,18 @@ static struct StmtIr* visit_if_stmt(struct DumpVisitor* visitor,
     return NULL;
 }
 
+static struct StmtIr* visit_return_stmt(struct DumpVisitor* visitor,
+                                        struct ReturnStmtIr* ir) {
+    struct ExprIr* expr = ir_return_stmt_expr(ir);
+    if (expr) {
+        visitor_visit_expr(as_visitor(visitor), expr);
+        fprintf(visitor->stream, "return v%p", expr);
+    } else
+        fprintf(visitor->stream, "return");
+    fprintf(visitor->stream, "\n");
+    return NULL;
+}
+
 static struct FunctionIr* visit_function2(struct DumpVisitor* visitor,
                                           struct FunctionIr* ir) {
     const char* name =
@@ -250,6 +262,7 @@ struct DumpVisitor* new_dump_visitor(struct Context* context, FILE* stream) {
 
     register_visitor(visitor->as_visitor, visit_block_stmt, visit_block_stmt);
     register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);
+    register_visitor(visitor->as_visitor, visit_return_stmt, visit_return_stmt);
 
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
     register_visitor(visitor->as_visitor, visit_return_cf, visit_return_cf2);

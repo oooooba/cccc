@@ -481,7 +481,7 @@ static struct StmtIr* parse_selection_statement(struct Parser* parser) {
     assert(false);
 }
 
-static struct CfIr* parse_jump_statement(struct Parser* parser) {
+static struct StmtIr* parse_jump_statement(struct Parser* parser) {
     if (acceptable(parser, Token_KeywordReturn)) {
         advance(parser);
         struct ExprIr* expr = NULL;
@@ -489,7 +489,7 @@ static struct CfIr* parse_jump_statement(struct Parser* parser) {
             expr = parse_expression(parser);
             expect(parser, Token_Semicolon);
         }
-        return ir_return_cf_cast(ir_new_return_cf(expr));
+        return ir_return_stmt_super(ir_new_return_stmt(expr));
     }
     assert(false);
 }
@@ -500,7 +500,7 @@ static struct StmtIr* parse_statement(struct Parser* parser) {
     else if (acceptable(parser, Token_KeywordIf))
         return parse_selection_statement(parser);
     else if (acceptable(parser, Token_KeywordReturn))
-        return ir_cf_stmt_super(ir_new_cf_stmt(parse_jump_statement(parser)));
+        return parse_jump_statement(parser);
     else
         return ir_expr_stmt_super(
             ir_new_expr_stmt(parse_expression_statement(parser)));

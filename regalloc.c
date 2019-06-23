@@ -217,6 +217,16 @@ static struct StmtIr* visit_if_stmt(struct RegallocVisitor* visitor,
     return NULL;
 }
 
+static struct StmtIr* visit_return_stmt(struct RegallocVisitor* visitor,
+                                        struct ReturnStmtIr* ir) {
+    struct ExprIr* expr = ir_return_stmt_expr(ir);
+    if (expr) {
+        visitor_visit_expr(as_visitor(visitor), expr);
+        release_register(visitor);
+    }
+    return NULL;
+}
+
 static struct FunctionIr* visit_function2(struct RegallocVisitor* visitor,
                                           struct FunctionIr* ir) {
     struct BlockStmtIr* body = ir_function_body2(ir);
@@ -251,6 +261,7 @@ struct RegallocVisitor* new_regalloc_visitor(struct Context* context) {
 
     register_visitor(visitor->as_visitor, visit_expr_stmt, visit_expr_stmt);
     register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);
+    register_visitor(visitor->as_visitor, visit_return_stmt, visit_return_stmt);
 
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
     register_visitor(visitor->as_visitor, visit_return_cf, visit_return_cf2);
