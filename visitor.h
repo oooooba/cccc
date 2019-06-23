@@ -27,6 +27,10 @@ struct Visitor {
                                         struct AddrofExprIr* ir);
     struct ExprIr* (*visit_cast_expr)(struct Visitor* visitor,
                                       struct CastExprIr* ir);
+
+    struct StmtIr* (*visit_stmt_pre)(struct Visitor* visitor,
+                                     struct StmtIr* ir);
+
     struct StmtIr* (*visit_expr_stmt)(struct Visitor* visitor,
                                       struct ExprStmtIr* ir);
     struct StmtIr* (*visit_block_stmt)(struct Visitor* visitor,

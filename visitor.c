@@ -47,8 +47,17 @@ struct ExprIr* visitor_visit_expr(struct Visitor* visitor, struct ExprIr* ir) {
     return NULL;
 }
 
+struct StmtIr* visitor_visit_stmt_pre(struct Visitor* visitor,
+                                      struct StmtIr* ir) {
+    (void)visitor;
+    (void)ir;
+    return NULL;
+}
+
 struct StmtIr* visitor_visit_stmt(struct Visitor* visitor, struct StmtIr* ir) {
     struct StmtIr* stmt;
+    struct StmtIr* new_ir = visitor->visit_stmt_pre(visitor, ir);
+    if (new_ir) ir = new_ir;
     switch (ir_stmt_tag(ir)) {
         case StmtIrTag_Expr:
             stmt = visitor->visit_expr_stmt(visitor, ir_stmt_as_expr(ir));
@@ -166,6 +175,8 @@ void visitor_initialize(struct Visitor* visitor, struct Context* context) {
     register_visitor(*visitor, visit_deref_expr, NULL);
     register_visitor(*visitor, visit_addrof_expr, NULL);
     register_visitor(*visitor, visit_cast_expr, NULL);
+
+    register_visitor(*visitor, visit_stmt_pre, visitor_visit_stmt_pre);
 
     register_visitor(*visitor, visit_expr_stmt, visitor_visit_expr_stmt);
     register_visitor(*visitor, visit_block_stmt, visitor_visit_block_stmt);
