@@ -457,7 +457,7 @@ static struct ExprIr* parse_expression_statement(struct Parser* parser) {
     return expr;
 }
 
-static struct CfIr* parse_selection_statement(struct Parser* parser) {
+static struct StmtIr* parse_selection_statement(struct Parser* parser) {
     if (acceptable(parser, Token_KeywordIf)) {
         advance(parser);
 
@@ -475,8 +475,8 @@ static struct CfIr* parse_selection_statement(struct Parser* parser) {
             false_stmt = to_block_stmt(false_stmt);
         }
 
-        return ir_branch_cf_cast(
-            ir_new_branch_cf(cond_expr, true_stmt, false_stmt));
+        return ir_if_stmt_super(
+            ir_new_if_stmt(cond_expr, true_stmt, false_stmt));
     }
     assert(false);
 }
@@ -498,8 +498,7 @@ static struct StmtIr* parse_statement(struct Parser* parser) {
     if (acceptable(parser, Token_LeftCurry))
         return ir_block_stmt_super(parse_compound_statement(parser, NULL));
     else if (acceptable(parser, Token_KeywordIf))
-        return ir_cf_stmt_super(
-            ir_new_cf_stmt(parse_selection_statement(parser)));
+        return parse_selection_statement(parser);
     else if (acceptable(parser, Token_KeywordReturn))
         return ir_cf_stmt_super(ir_new_cf_stmt(parse_jump_statement(parser)));
     else

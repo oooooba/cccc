@@ -153,6 +153,20 @@ static struct ExprIr* visit_cast_expr(struct SimplifyVisitor* visitor,
     return NULL;
 }
 
+static struct StmtIr* visit_if_stmt(struct SimplifyVisitor* visitor,
+                                    struct IfStmtIr* ir) {
+    struct ExprIr* cond_expr =
+        visitor_visit_expr(as_visitor(visitor), ir_if_stmt_cond_expr(ir));
+    if (cond_expr) {
+        ir_if_stmt_set_cond_expr(ir, cond_expr);
+    }
+
+    visitor_visit_stmt(as_visitor(visitor), ir_if_stmt_true_stmt(ir));
+    visitor_visit_stmt(as_visitor(visitor), ir_if_stmt_false_stmt(ir));
+
+    return NULL;
+}
+
 static struct FunctionIr* visit_function(struct SimplifyVisitor* visitor,
                                          struct FunctionIr* ir) {
     struct BlockStmtIr* body = ir_function_body2(ir);
@@ -198,6 +212,9 @@ struct SimplifyVisitor* new_simplify_visitor(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr);
     register_visitor(visitor->as_visitor, visit_addrof_expr, visit_addrof_expr);
     register_visitor(visitor->as_visitor, visit_cast_expr, visit_cast_expr);
+
+    register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);
+
     register_visitor(visitor->as_visitor, visit_function, visit_function);
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf);
     register_visitor(visitor->as_visitor, visit_return_cf, visit_return_cf);

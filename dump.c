@@ -178,6 +178,22 @@ static struct BlockStmtIr* visit_block_stmt(struct DumpVisitor* visitor,
     return NULL;
 }
 
+static struct StmtIr* visit_if_stmt(struct DumpVisitor* visitor,
+                                    struct IfStmtIr* ir) {
+    struct ExprIr* cond_expr = ir_if_stmt_cond_expr(ir);
+    visitor_visit_expr(as_visitor(visitor), cond_expr);
+    fprintf(visitor->stream, "if (v%p) ", cond_expr);
+
+    struct StmtIr* true_stmt = ir_if_stmt_true_stmt(ir);
+    visitor_visit_stmt(as_visitor(visitor), true_stmt);
+
+    fprintf(visitor->stream, "else ");
+    struct StmtIr* false_stmt = ir_if_stmt_false_stmt(ir);
+    visitor_visit_stmt(as_visitor(visitor), false_stmt);
+
+    return NULL;
+}
+
 static struct FunctionIr* visit_function2(struct DumpVisitor* visitor,
                                           struct FunctionIr* ir) {
     const char* name =
@@ -247,7 +263,10 @@ struct DumpVisitor* new_dump_visitor(struct Context* context, FILE* stream) {
     register_visitor(visitor->as_visitor, visit_addrof_expr,
                      visit_addrof_expr2);
     register_visitor(visitor->as_visitor, visit_cast_expr, visit_cast_expr2);
+
     register_visitor(visitor->as_visitor, visit_block_stmt, visit_block_stmt);
+    register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);
+
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
     register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf2);
     register_visitor(visitor->as_visitor, visit_return_cf, visit_return_cf2);
