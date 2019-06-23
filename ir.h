@@ -14,7 +14,6 @@ struct FunctionIr;
 
 struct CfIr;
 struct ReturnCfIr;
-struct LabelCfIr;
 
 struct ExprIr;
 struct ConstExprIr;
@@ -46,7 +45,6 @@ enum IrTag {
 
 enum CfIrTag {
     CfIrTag_Return,
-    CfIrTag_Label,
 };
 
 enum ExprIrTag {
@@ -110,17 +108,12 @@ struct List* ir_function_param_types(struct FunctionIr* ir);
 
 struct Ir* ir_cf_cast(struct CfIr* ir);
 struct ReturnCfIr* ir_cf_as_return(struct CfIr* ir);
-struct LabelCfIr* ir_cf_as_label(struct CfIr* ir);
 enum CfIrTag ir_cf_tag(struct CfIr* ir);
 
 struct ReturnCfIr* ir_new_return_cf(struct ExprIr* expr);
 struct CfIr* ir_return_cf_cast(struct ReturnCfIr* ir);
 struct ExprIr* ir_return_cf_expr(struct ReturnCfIr* ir);
 void ir_return_cf_set_expr(struct ReturnCfIr* ir, struct ExprIr* expr);
-
-struct LabelCfIr* ir_new_label_cf(strtable_id index);
-struct CfIr* ir_label_cf_cast(struct LabelCfIr* ir);
-strtable_id ir_label_cf_index(struct LabelCfIr* ir);
 
 struct Ir* ir_expr_cast(struct ExprIr* ir);
 struct ConstExprIr* ir_expr_as_const(struct ExprIr* ir);

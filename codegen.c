@@ -292,16 +292,6 @@ static struct CfIr* visit_return_cf2(struct CodegenVisitor* visitor,
     return NULL;
 }
 
-static struct CfIr* visit_label_cf2(struct CodegenVisitor* visitor,
-                                    struct LabelCfIr* ir) {
-    strtable_id index = ir_label_cf_index(ir);
-    if (index == STRTABLE_INVALID_ID)
-        fprintf(visitor->stream, "lab_%p_end:\n", visitor->function);
-    else
-        assert(false);
-    return NULL;
-}
-
 struct CodegenVisitor* new_codegen_visitor(struct Context* context,
                                            FILE* stream) {
     struct CodegenVisitor* visitor = malloc(sizeof(struct CodegenVisitor));
@@ -326,7 +316,6 @@ struct CodegenVisitor* new_codegen_visitor(struct Context* context,
 
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
     register_visitor(visitor->as_visitor, visit_return_cf, visit_return_cf2);
-    register_visitor(visitor->as_visitor, visit_label_cf, visit_label_cf2);
 
     visitor->stream = stream;
 
