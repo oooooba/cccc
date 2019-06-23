@@ -50,8 +50,6 @@ struct Visitor {
 
     struct FunctionIr* (*visit_function)(struct Visitor* visitor,
                                          struct FunctionIr* ir);
-    struct CfIr* (*visit_return_cf)(struct Visitor* visitor,
-                                    struct ReturnCfIr* ir);
 };
 
 struct Ir* visitor_visit_ir(struct Visitor* visitor, struct Ir* ir);

@@ -190,43 +190,10 @@ struct CfIr {
     enum CfIrTag tag;
 };
 
-static void initialize_cf(struct CfIr* ir, enum CfIrTag tag) {
-    initialize_ir(ir_cf_cast(ir), IrTag_Cf);
-    ir->tag = tag;
-}
-
 enum CfIrTag ir_cf_tag(struct CfIr* ir) { return ir->tag; }
 
 struct Ir* ir_cf_cast(struct CfIr* ir) {
     return &ir->as_ir;
-}
-
-struct ReturnCfIr* ir_cf_as_return(struct CfIr* ir) {
-    return ir->tag == CfIrTag_Return ? (struct ReturnCfIr*)ir : NULL;
-}
-
-struct ReturnCfIr {
-    struct CfIr as_cf;
-    struct ExprIr* expr;
-};
-
-struct ReturnCfIr* ir_new_return_cf(struct ExprIr* expr) {
-    struct ReturnCfIr* ir = malloc(sizeof(struct ReturnCfIr));
-    initialize_cf(ir_return_cf_cast(ir), CfIrTag_Return);
-    ir->expr = expr;
-    return ir;
-}
-
-struct CfIr* ir_return_cf_cast(struct ReturnCfIr* ir) {
-    return &ir->as_cf;
-}
-
-struct ExprIr* ir_return_cf_expr(struct ReturnCfIr* ir) {
-    return ir->expr;
-}
-
-void ir_return_cf_set_expr(struct ReturnCfIr* ir, struct ExprIr* expr) {
-    ir->expr = expr;
 }
 
 struct ExprIr {

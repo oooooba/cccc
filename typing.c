@@ -244,20 +244,6 @@ static struct FunctionIr* visit_function(struct TypingVisitor* visitor,
     return ir;
 }
 
-static struct CfIr* visit_return_cf(struct TypingVisitor* visitor,
-                                    struct ReturnCfIr* ir) {
-    struct ExprIr* expr = ir_return_cf_expr(ir);
-    if (expr) {
-        expr = visitor_visit_expr(as_visitor(visitor), expr);
-        struct TypeIr* result_type = ir_function_result_type(visitor->function);
-        if (!type_equal(ir_expr_type(expr), result_type))
-            expr = ir_cast_expr_cast(ir_new_cast_expr(expr, result_type));
-        ir_return_cf_set_expr(ir, expr);
-    } else
-        assert(false && "unimplemented");  // ToDo: compare to void
-    return ir_return_cf_cast(ir);
-}
-
 struct TypingVisitor* new_typing_visitor(struct Context* context) {
     struct TypingVisitor* visitor = malloc(sizeof(struct TypingVisitor));
     visitor_initialize(as_visitor(visitor), context);
@@ -277,7 +263,6 @@ struct TypingVisitor* new_typing_visitor(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_return_stmt, visit_return_stmt);
 
     register_visitor(visitor->as_visitor, visit_function, visit_function);
-    register_visitor(visitor->as_visitor, visit_return_cf, visit_return_cf);
 
     return visitor;
 }

@@ -234,16 +234,6 @@ static struct FunctionIr* visit_function2(struct RegallocVisitor* visitor,
     return ir;
 }
 
-static struct CfIr* visit_return_cf2(struct RegallocVisitor* visitor,
-                                     struct ReturnCfIr* ir) {
-    struct ExprIr* expr = ir_return_cf_expr(ir);
-    if (expr) {
-        visitor_visit_expr(as_visitor(visitor), expr);
-        release_register(visitor);
-    }
-    return NULL;
-}
-
 struct RegallocVisitor* new_regalloc_visitor(struct Context* context) {
     struct RegallocVisitor* visitor = malloc(sizeof(struct RegallocVisitor));
     visitor_initialize(as_visitor(visitor), context);
@@ -264,7 +254,6 @@ struct RegallocVisitor* new_regalloc_visitor(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_return_stmt, visit_return_stmt);
 
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
-    register_visitor(visitor->as_visitor, visit_return_cf, visit_return_cf2);
 
     visitor->free_register_index = 0;
     return visitor;

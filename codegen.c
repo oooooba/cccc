@@ -292,16 +292,6 @@ static struct FunctionIr* visit_function2(struct CodegenVisitor* visitor,
     return NULL;
 }
 
-static struct CfIr* visit_return_cf2(struct CodegenVisitor* visitor,
-                                     struct ReturnCfIr* ir) {
-    struct ExprIr* expr = ir_return_cf_expr(ir);
-    if (expr) {
-        visitor_visit_expr(as_visitor(visitor), expr);
-    }
-    fprintf(visitor->stream, "\tjmp\tlab_%p_end\n", visitor->function);
-    return NULL;
-}
-
 struct CodegenVisitor* new_codegen_visitor(struct Context* context,
                                            FILE* stream) {
     struct CodegenVisitor* visitor = malloc(sizeof(struct CodegenVisitor));
@@ -326,7 +316,6 @@ struct CodegenVisitor* new_codegen_visitor(struct Context* context,
     register_visitor(visitor->as_visitor, visit_pop_stmt, visit_pop_stmt);
 
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
-    register_visitor(visitor->as_visitor, visit_return_cf, visit_return_cf2);
 
     visitor->stream = stream;
 
