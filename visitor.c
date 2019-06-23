@@ -56,6 +56,9 @@ struct StmtIr* visitor_visit_stmt(struct Visitor* visitor, struct StmtIr* ir) {
         case StmtIrTag_Block:
             stmt = visitor->visit_block_stmt(visitor, ir_stmt_as_block(ir));
             break;
+        case StmtIrTag_If:
+            stmt = visitor->visit_if_stmt(visitor, ir_stmt_as_if(ir));
+            break;
         case StmtIrTag_Cf:
             stmt = visitor->visit_cf_stmt(visitor, ir_stmt_as_cf(ir));
             break;
@@ -118,6 +121,29 @@ struct StmtIr* visitor_visit_block_stmt(struct Visitor* visitor,
     return changed ? ir_block_stmt_super(ir) : NULL;
 }
 
+struct StmtIr* visitor_visit_if_stmt(struct Visitor* visitor,
+                                     struct IfStmtIr* ir) {
+    bool changed = false;
+    struct ExprIr* cond = visitor_visit_expr(visitor, ir_if_stmt_cond_expr(ir));
+    if (cond) {
+        ir_if_stmt_set_cond_expr(ir, cond);
+        changed = true;
+    }
+    struct StmtIr* true_stmt =
+        visitor_visit_stmt(visitor, ir_if_stmt_true_stmt(ir));
+    if (true_stmt) {
+        ir_if_stmt_set_true_stmt(ir, true_stmt);
+        changed = true;
+    }
+    struct StmtIr* false_stmt =
+        visitor_visit_stmt(visitor, ir_if_stmt_false_stmt(ir));
+    if (false_stmt) {
+        ir_if_stmt_set_false_stmt(ir, false_stmt);
+        changed = true;
+    }
+    return changed ? ir_if_stmt_super(ir) : NULL;
+}
+
 // ToDo: for refactoring
 struct StmtIr* visitor_visit_cf_stmt(struct Visitor* visitor,
                                      struct CfStmtIr* ir) {
@@ -145,6 +171,7 @@ void visitor_initialize(struct Visitor* visitor, struct Context* context) {
 
     register_visitor(*visitor, visit_expr_stmt, visitor_visit_expr_stmt);
     register_visitor(*visitor, visit_block_stmt, visitor_visit_block_stmt);
+    register_visitor(*visitor, visit_if_stmt, visitor_visit_if_stmt);
     register_visitor(*visitor, visit_cf_stmt, visitor_visit_cf_stmt);
     register_visitor(*visitor, visit_push_stmt, NULL);
     register_visitor(*visitor, visit_pop_stmt, NULL);

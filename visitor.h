@@ -31,6 +31,8 @@ struct Visitor {
                                       struct ExprStmtIr* ir);
     struct StmtIr* (*visit_block_stmt)(struct Visitor* visitor,
                                        struct BlockStmtIr* ir);
+    struct StmtIr* (*visit_if_stmt)(struct Visitor* visitor,
+                                    struct IfStmtIr* ir);
     // ToDo: for refactoring
     struct StmtIr* (*visit_cf_stmt)(struct Visitor* visitor,
                                     struct CfStmtIr* ir);

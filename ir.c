@@ -764,6 +764,10 @@ struct BlockStmtIr* ir_stmt_as_block(struct StmtIr* ir) {
     return ir->tag == StmtIrTag_Block ? (struct BlockStmtIr*)ir : NULL;
 }
 
+struct IfStmtIr* ir_stmt_as_if(struct StmtIr* ir) {
+    return ir->tag == StmtIrTag_If ? (struct IfStmtIr*)ir : NULL;
+}
+
 // ToDo: for refactoring
 struct CfStmtIr* ir_stmt_as_cf(struct StmtIr* ir) {
     return ir->tag == StmtIrTag_Cf ? (struct CfStmtIr*)ir : NULL;
@@ -845,6 +849,52 @@ void ir_block_stmt_commit_region_status(struct BlockStmtIr* ir,
 
 size_t ir_block_stmt_region_size(struct BlockStmtIr* ir) {
     return ir_region_size(ir->region);
+}
+
+struct IfStmtIr {
+    struct StmtIr super;
+    struct ExprIr* cond_expr;
+    struct StmtIr* true_stmt;
+    struct StmtIr* false_stmt;
+};
+
+struct IfStmtIr* ir_new_if_stmt(struct ExprIr* cond_expr,
+                                struct StmtIr* true_stmt,
+                                struct StmtIr* false_stmt) {
+    struct IfStmtIr* ir = malloc(sizeof(struct IfStmtIr));
+    initialize_stmt(ir_if_stmt_super(ir), StmtIrTag_If);
+    ir->cond_expr = cond_expr;
+    ir->true_stmt = true_stmt;
+    ir->false_stmt = false_stmt;
+    return ir;
+}
+
+struct StmtIr* ir_if_stmt_super(struct IfStmtIr* ir) {
+    return &ir->super;
+}
+
+struct ExprIr* ir_if_stmt_cond_expr(struct IfStmtIr* ir) {
+    return ir->cond_expr;
+}
+
+void ir_if_stmt_set_cond_expr(struct IfStmtIr* ir, struct ExprIr* cond_expr) {
+    ir->cond_expr = cond_expr;
+}
+
+struct StmtIr* ir_if_stmt_true_stmt(struct IfStmtIr* ir) {
+    return ir->true_stmt;
+}
+
+void ir_if_stmt_set_true_stmt(struct IfStmtIr* ir, struct StmtIr* true_stmt) {
+    ir->true_stmt = true_stmt;
+}
+
+struct StmtIr* ir_if_stmt_false_stmt(struct IfStmtIr* ir) {
+    return ir->false_stmt;
+}
+
+void ir_if_stmt_set_false_stmt(struct IfStmtIr* ir, struct StmtIr* false_stmt) {
+    ir->false_stmt = false_stmt;
 }
 
 struct CfStmtIr {

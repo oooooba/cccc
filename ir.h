@@ -32,6 +32,7 @@ struct CastExprIr;
 struct StmtIr;
 struct ExprStmt;
 struct BlockStmt;
+struct IfStmt;
 struct CfStmt;  // for refactoring
 struct PushStmt;
 struct PopStmt;
@@ -66,6 +67,7 @@ enum ExprIrTag {
 enum StmtIrTag {
     StmtIrTag_Expr,
     StmtIrTag_Block,
+    StmtIrTag_If,
     StmtIrTag_Cf,  // ToDo: for refactoring
     StmtIrTag_Push,
     StmtIrTag_Pop,
@@ -232,6 +234,7 @@ enum StmtIrTag ir_stmt_tag(struct StmtIr* ir);
 struct Ir* ir_stmt_cast(struct StmtIr* ir);
 struct ExprStmtIr* ir_stmt_as_expr(struct StmtIr* ir);
 struct BlockStmtIr* ir_stmt_as_block(struct StmtIr* ir);
+struct IfStmtIr* ir_stmt_as_if(struct StmtIr* ir);
 struct CfStmtIr* ir_stmt_as_cf(struct StmtIr* ir);  // ToDo: for refactoring
 struct PushStmtIr* ir_stmt_as_push(struct StmtIr* ir);
 struct PopStmtIr* ir_stmt_as_pop(struct StmtIr* ir);
@@ -251,6 +254,17 @@ struct VarExprIr* ir_block_stmt_allocate_variable(struct BlockStmtIr* ir,
 void ir_block_stmt_commit_region_status(struct BlockStmtIr* ir,
                                         size_t region_base);
 size_t ir_block_stmt_region_size(struct BlockStmtIr* ir);
+
+struct IfStmtIr* ir_new_if_stmt(struct ExprIr* cond_expr,
+                                struct StmtIr* true_stmt,
+                                struct StmtIr* false_stmt);
+struct StmtIr* ir_if_stmt_super(struct IfStmtIr* ir);
+struct ExprIr* ir_if_stmt_cond_expr(struct IfStmtIr* ir);
+void ir_if_stmt_set_cond_expr(struct IfStmtIr* ir, struct ExprIr* cond_expr);
+struct StmtIr* ir_if_stmt_true_stmt(struct IfStmtIr* ir);
+void ir_if_stmt_set_true_stmt(struct IfStmtIr* ir, struct StmtIr* true_stmt);
+struct StmtIr* ir_if_stmt_false_stmt(struct IfStmtIr* ir);
+void ir_if_stmt_set_false_stmt(struct IfStmtIr* ir, struct StmtIr* false_stmt);
 
 // ToDo: for refactoring
 struct CfStmtIr* ir_new_cf_stmt(struct CfIr* cf);
