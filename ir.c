@@ -201,65 +201,12 @@ struct Ir* ir_cf_cast(struct CfIr* ir) {
     return &ir->as_ir;
 }
 
-struct BranchCfIr* ir_cf_as_branch(struct CfIr* ir) {
-    return ir->tag == CfIrTag_Branch ? (struct BranchCfIr*)ir : NULL;
-}
-
 struct ReturnCfIr* ir_cf_as_return(struct CfIr* ir) {
     return ir->tag == CfIrTag_Return ? (struct ReturnCfIr*)ir : NULL;
 }
 
 struct LabelCfIr* ir_cf_as_label(struct CfIr* ir) {
     return ir->tag == CfIrTag_Label ? (struct LabelCfIr*)ir : NULL;
-}
-
-struct BranchCfIr {
-    struct CfIr as_cf;
-    struct ExprIr* cond_expr;
-    struct StmtIr* true_stmt;
-    struct StmtIr* false_stmt;
-};
-
-struct BranchCfIr* ir_new_branch_cf(struct ExprIr* cond_expr,
-                                    struct StmtIr* true_stmt,
-                                    struct StmtIr* false_stmt) {
-    struct BranchCfIr* ir = malloc(sizeof(struct BranchCfIr));
-    initialize_cf(ir_branch_cf_cast(ir), CfIrTag_Branch);
-    ir->cond_expr = cond_expr;
-    ir->true_stmt = true_stmt;
-    ir->false_stmt = false_stmt;
-    return ir;
-}
-
-struct CfIr* ir_branch_cf_cast(struct BranchCfIr* ir) {
-    return &ir->as_cf;
-}
-
-struct ExprIr* ir_branch_cf_cond_expr(struct BranchCfIr* ir) {
-    return ir->cond_expr;
-}
-
-void ir_branch_cf_set_cond_expr(struct BranchCfIr* ir,
-                                struct ExprIr* cond_expr) {
-    ir->cond_expr = cond_expr;
-}
-
-struct StmtIr* ir_branch_cf_true_stmt(struct BranchCfIr* ir) {
-    return ir->true_stmt;
-}
-
-void ir_branch_cf_set_true_stmt(struct BranchCfIr* ir,
-                                struct StmtIr* true_stmt) {
-    ir->true_stmt = true_stmt;
-}
-
-struct StmtIr* ir_branch_cf_false_stmt(struct BranchCfIr* ir) {
-    return ir->false_stmt;
-}
-
-void ir_branch_cf_set_false_stmt(struct BranchCfIr* ir,
-                                 struct StmtIr* false_stmt) {
-    ir->false_stmt = false_stmt;
 }
 
 struct ReturnCfIr {

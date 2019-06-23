@@ -82,8 +82,6 @@ struct FunctionIr* visitor_visit_function(struct Visitor* visitor,
 
 struct CfIr* visitor_visit_cf(struct Visitor* visitor, struct CfIr* ir) {
     switch (ir_cf_tag(ir)) {
-        case CfIrTag_Branch:
-            return visitor->visit_branch_cf(visitor, ir_cf_as_branch(ir));
         case CfIrTag_Return:
             return visitor->visit_return_cf(visitor, ir_cf_as_return(ir));
         case CfIrTag_Label:
@@ -177,7 +175,6 @@ void visitor_initialize(struct Visitor* visitor, struct Context* context) {
     register_visitor(*visitor, visit_pop_stmt, NULL);
 
     register_visitor(*visitor, visit_function, NULL);
-    register_visitor(*visitor, visit_branch_cf, NULL);
     register_visitor(*visitor, visit_return_cf, NULL);
     register_visitor(*visitor, visit_label_cf, NULL);
 }

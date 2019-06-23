@@ -13,7 +13,6 @@ struct Ir;
 struct FunctionIr;
 
 struct CfIr;
-struct BranchCfIr;
 struct ReturnCfIr;
 struct LabelCfIr;
 
@@ -46,7 +45,6 @@ enum IrTag {
 };
 
 enum CfIrTag {
-    CfIrTag_Branch,
     CfIrTag_Return,
     CfIrTag_Label,
 };
@@ -111,24 +109,9 @@ struct TypeIr* ir_function_result_type(struct FunctionIr* ir);
 struct List* ir_function_param_types(struct FunctionIr* ir);
 
 struct Ir* ir_cf_cast(struct CfIr* ir);
-struct BranchCfIr* ir_cf_as_branch(struct CfIr* ir);
 struct ReturnCfIr* ir_cf_as_return(struct CfIr* ir);
 struct LabelCfIr* ir_cf_as_label(struct CfIr* ir);
 enum CfIrTag ir_cf_tag(struct CfIr* ir);
-
-struct BranchCfIr* ir_new_branch_cf(struct ExprIr* cond_expr,
-                                    struct StmtIr* true_stmt,
-                                    struct StmtIr* false_stmt);
-struct CfIr* ir_branch_cf_cast(struct BranchCfIr* ir);
-struct ExprIr* ir_branch_cf_cond_expr(struct BranchCfIr* ir);
-void ir_branch_cf_set_cond_expr(struct BranchCfIr* ir,
-                                struct ExprIr* cond_expr);
-struct StmtIr* ir_branch_cf_true_stmt(struct BranchCfIr* ir);
-void ir_branch_cf_set_true_stmt(struct BranchCfIr* ir,
-                                struct StmtIr* true_stmt);
-struct StmtIr* ir_branch_cf_false_stmt(struct BranchCfIr* ir);
-void ir_branch_cf_set_false_stmt(struct BranchCfIr* ir,
-                                 struct StmtIr* false_stmt);
 
 struct ReturnCfIr* ir_new_return_cf(struct ExprIr* expr);
 struct CfIr* ir_return_cf_cast(struct ReturnCfIr* ir);

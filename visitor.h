@@ -44,8 +44,6 @@ struct Visitor {
 
     struct FunctionIr* (*visit_function)(struct Visitor* visitor,
                                          struct FunctionIr* ir);
-    struct CfIr* (*visit_branch_cf)(struct Visitor* visitor,
-                                    struct BranchCfIr* ir);
     struct CfIr* (*visit_return_cf)(struct Visitor* visitor,
                                     struct ReturnCfIr* ir);
     struct CfIr* (*visit_label_cf)(struct Visitor* visitor,

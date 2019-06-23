@@ -224,17 +224,6 @@ static struct FunctionIr* visit_function2(struct RegallocVisitor* visitor,
     return ir;
 }
 
-static struct CfIr* visit_branch_cf2(struct RegallocVisitor* visitor,
-                                     struct BranchCfIr* ir) {
-    visitor_visit_expr(as_visitor(visitor), ir_branch_cf_cond_expr(ir));
-    release_register(visitor);
-
-    visitor_visit_stmt(as_visitor(visitor), ir_branch_cf_true_stmt(ir));
-    visitor_visit_stmt(as_visitor(visitor), ir_branch_cf_false_stmt(ir));
-
-    return NULL;
-}
-
 static struct CfIr* visit_return_cf2(struct RegallocVisitor* visitor,
                                      struct ReturnCfIr* ir) {
     struct ExprIr* expr = ir_return_cf_expr(ir);
@@ -264,7 +253,6 @@ struct RegallocVisitor* new_regalloc_visitor(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);
 
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
-    register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf2);
     register_visitor(visitor->as_visitor, visit_return_cf, visit_return_cf2);
 
     visitor->free_register_index = 0;

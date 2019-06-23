@@ -230,18 +230,6 @@ static struct FunctionIr* visit_function(struct TypingVisitor* visitor,
     return ir;
 }
 
-static struct CfIr* visit_branch_cf(struct TypingVisitor* visitor,
-                                    struct BranchCfIr* ir) {
-    struct ExprIr* cond_expr = ir_branch_cf_cond_expr(ir);
-    cond_expr = visitor_visit_expr(as_visitor(visitor), cond_expr);
-    ir_branch_cf_set_cond_expr(ir, cond_expr);
-
-    visitor_visit_stmt(as_visitor(visitor), ir_branch_cf_true_stmt(ir));
-    visitor_visit_stmt(as_visitor(visitor), ir_branch_cf_false_stmt(ir));
-
-    return ir_branch_cf_cast(ir);
-}
-
 static struct CfIr* visit_return_cf(struct TypingVisitor* visitor,
                                     struct ReturnCfIr* ir) {
     struct ExprIr* expr = ir_return_cf_expr(ir);
@@ -274,7 +262,6 @@ struct TypingVisitor* new_typing_visitor(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);
 
     register_visitor(visitor->as_visitor, visit_function, visit_function);
-    register_visitor(visitor->as_visitor, visit_branch_cf, visit_branch_cf);
     register_visitor(visitor->as_visitor, visit_return_cf, visit_return_cf);
 
     return visitor;
