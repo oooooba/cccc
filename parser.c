@@ -98,25 +98,41 @@ static struct StmtIr* to_block_stmt(struct StmtIr* ir) {
     return ir_block_stmt_super(block);
 }
 
-enum DeclaratorTag {
-    DeclaratorTag_Identifier,
-    DeclaratorTag_Declarator,
+struct Declarator;
+
+enum DirectDeclaratorTag {
+    DirectDeclaratorTag_Identifier,
+    DirectDeclaratorTag_Declarator,
 };
 
-struct Declarator {
-    bool has_pointer;
-    enum DeclaratorTag tag;
+struct DirectDeclarator {
+    enum DirectDeclaratorTag tag;
     union {
         strtable_id identifier;
         struct Declarator* declarator;
     };
 };
 
-static struct Declarator* new_declarator(bool has_pointer,
-                                         enum DeclaratorTag tag) {
+static struct DirectDeclarator* new_direct_declarator(
+    enum DirectDeclaratorTag tag) {
+    struct DirectDeclarator* direct_declarator =
+        malloc(sizeof(struct DirectDeclarator));
+    *direct_declarator = (struct DirectDeclarator){
+        .tag = tag,
+    };
+    return direct_declarator;
+}
+
+struct Declarator {
+    bool has_pointer;  // ToDo: fix to handle precisely
+    struct DirectDeclarator* direct_declarator;
+};
+
+static struct Declarator* new_declarator(
+    bool has_pointer, struct DirectDeclarator* direct_declarator) {
     struct Declarator* declarator = malloc(sizeof(struct Declarator));
     *declarator = (struct Declarator){
-        .has_pointer = has_pointer, .tag = tag,
+        .has_pointer = has_pointer, .direct_declarator = direct_declarator,
     };
     return declarator;
 }
@@ -191,8 +207,10 @@ static void process_declaration(struct Declaration2* declaration,
          it != eit; it = list_next(it)) {
         struct InitDeclarator* init_declarator = (struct InitDeclarator*)it;
         struct Declarator* declarator = init_declarator->declarator;
-        assert(declarator->tag == DeclaratorTag_Identifier);
-        strtable_id name_index = declarator->identifier;
+        struct DirectDeclarator* direct_declarator =
+            declarator->direct_declarator;
+        assert(direct_declarator->tag == DirectDeclaratorTag_Identifier);
+        strtable_id name_index = direct_declarator->identifier;
 
         assert(!env_find(env, name_index));
         struct TypeIr* type =
@@ -450,6 +468,7 @@ static struct InitDeclarator* parse_init_declarator(struct Parser* parser);
 static struct TypeIr* parse_type_specifier(struct Parser* parser);
 static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser);
 static struct Declarator* parse_declarator2(struct Parser* parser);
+static struct DirectDeclarator* parse_direct_declarator(struct Parser* parser);
 static struct TypeIr* parse_type_name(struct Parser* parser);
 
 static struct Declaration2* parse_declaration2(struct Parser* parser) {
@@ -588,27 +607,33 @@ static struct Declarator* parse_declarator2(struct Parser* parser) {
         has_pointer = true;
     }
 
+    struct DirectDeclarator* direct_declarator =
+        parse_direct_declarator(parser);
+    return direct_declarator ? new_declarator(has_pointer, direct_declarator)
+                             : NULL;
+}
+
+static struct DirectDeclarator* parse_direct_declarator(struct Parser* parser) {
+    struct DirectDeclarator* direct_declarator = NULL;
     if (acceptable(parser, Token_Id)) {
         strtable_id id = parse_identifier(parser);
-        struct Declarator* declarator =
-            new_declarator(has_pointer, DeclaratorTag_Identifier);
-        declarator->identifier = id;
-        return declarator;
+        direct_declarator =
+            new_direct_declarator(DirectDeclaratorTag_Identifier);
+        direct_declarator->identifier = id;
     } else if (acceptable(parser, Token_LeftParen)) {
         advance(parser);
 
-        struct Declarator* inner_declarator = parse_declarator2(parser);
-        if (!inner_declarator) return NULL;
+        struct Declarator* declarator = parse_declarator2(parser);
+        if (!declarator) return NULL;
 
         if (!acceptable(parser, Token_RightParen)) return NULL;
         advance(parser);
 
-        struct Declarator* declarator =
-            new_declarator(has_pointer, DeclaratorTag_Declarator);
-        declarator->declarator = inner_declarator;
-        return declarator;
+        direct_declarator =
+            new_direct_declarator(DirectDeclaratorTag_Declarator);
+        direct_declarator->declarator = declarator;
     }
-    return NULL;
+    return direct_declarator;
 }
 
 static struct TypeIr* parse_type_name(
