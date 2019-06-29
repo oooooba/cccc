@@ -103,6 +103,7 @@ struct Declarator;
 enum DirectDeclaratorTag {
     DirectDeclaratorTag_Identifier,
     DirectDeclaratorTag_Declarator,
+    DirectDeclaratorTag_Parameters,
 };
 
 struct DirectDeclarator {
@@ -110,6 +111,11 @@ struct DirectDeclarator {
     union {
         strtable_id identifier;
         struct Declarator* declarator;
+        struct {
+            struct DirectDeclarator* direct_declarator;
+            struct List*
+                list;  // struct ListItem list, item: struct Declaration*
+        } parameters;
     };
 };
 
@@ -177,7 +183,7 @@ static struct DeclarationSpecifier* new_declaration_specifier(
 
 struct Declaration2 {
     struct DeclarationSpecifier* declaration_specifiers;
-    struct List* init_declarator_list;  // struct InitDeclarator* list
+    struct List* init_declarator_list;  // struct InitDeclarator list
 };
 
 static struct Declaration2* new_declaration(
@@ -469,6 +475,10 @@ static struct TypeIr* parse_type_specifier(struct Parser* parser);
 static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser);
 static struct Declarator* parse_declarator2(struct Parser* parser);
 static struct DirectDeclarator* parse_direct_declarator(struct Parser* parser);
+static struct List* parse_parameter_type_list(struct Parser* parser);
+static struct List* parse_parameter_type_list(struct Parser* parser);
+static struct List* parse_parameter_list(struct Parser* parser);
+static struct ListItem* parse_parameter_declaration(struct Parser* parser);
 static struct TypeIr* parse_type_name(struct Parser* parser);
 
 static struct Declaration2* parse_declaration2(struct Parser* parser) {
@@ -614,12 +624,14 @@ static struct Declarator* parse_declarator2(struct Parser* parser) {
 }
 
 static struct DirectDeclarator* parse_direct_declarator(struct Parser* parser) {
-    struct DirectDeclarator* direct_declarator = NULL;
     if (acceptable(parser, Token_Id)) {
         strtable_id id = parse_identifier(parser);
-        direct_declarator =
+        if (id == STRTABLE_INVALID_ID) return NULL;
+
+        struct DirectDeclarator* direct_declarator =
             new_direct_declarator(DirectDeclaratorTag_Identifier);
         direct_declarator->identifier = id;
+        return direct_declarator;
     } else if (acceptable(parser, Token_LeftParen)) {
         advance(parser);
 
@@ -629,11 +641,75 @@ static struct DirectDeclarator* parse_direct_declarator(struct Parser* parser) {
         if (!acceptable(parser, Token_RightParen)) return NULL;
         advance(parser);
 
-        direct_declarator =
+        struct DirectDeclarator* direct_declarator =
             new_direct_declarator(DirectDeclaratorTag_Declarator);
         direct_declarator->declarator = declarator;
+        return direct_declarator;
+    } else {
+        struct DirectDeclarator* inner_direct_declarator =
+            parse_direct_declarator(parser);
+        if (!inner_direct_declarator) return NULL;
+
+        if (acceptable(parser, Token_LeftParen)) {
+            advance(parser);
+            struct List* parameter_type_list =
+                parse_parameter_type_list(parser);
+            if (!acceptable(parser, Token_RightParen)) return NULL;
+            expect(parser, Token_RightParen);
+
+            struct DirectDeclarator* direct_declarator =
+                new_direct_declarator(DirectDeclaratorTag_Parameters);
+            direct_declarator->parameters.direct_declarator =
+                inner_direct_declarator;
+            direct_declarator->parameters.list = parameter_type_list;
+            return direct_declarator;
+        }
     }
-    return direct_declarator;
+    return NULL;
+}
+
+static struct List* parse_parameter_type_list(struct Parser* parser) {
+    struct List* parameter_list = parse_parameter_list(parser);
+    return parameter_list;
+}
+
+static struct List* parse_parameter_list(struct Parser* parser) {
+    struct ListItem* parameter = parse_parameter_declaration(parser);
+    if (!parameter) return NULL;
+
+    struct List* parameter_list = malloc(sizeof(struct List));
+    list_initialize(parameter_list);
+    list_insert_at_end(parameter_list, list_from(parameter));
+
+    while (acceptable(parser, Token_Comma)) {
+        advance(parser);
+        parameter = parse_parameter_declaration(parser);
+        if (!parameter) return NULL;
+        list_insert_at_end(parameter_list, list_from(parameter));
+    }
+
+    return parameter_list;
+}
+
+static struct ListItem* parse_parameter_declaration(struct Parser* parser) {
+    struct DeclarationSpecifier* declaration_specifiers =
+        parse_declaration_specifiers(parser);
+    if (!declaration_specifiers) return NULL;
+
+    struct Declarator* declarator = parse_declarator2(parser);
+    if (!declarator) return NULL;
+
+    struct InitDeclarator* init_declarator =
+        new_init_declarator(declarator, NULL);
+    struct List* init_declarator_list = malloc(sizeof(struct List));
+    list_initialize(init_declarator_list);
+    list_insert_at_end(init_declarator_list, list_from(init_declarator));
+
+    struct Declaration2* declaration =
+        new_declaration(declaration_specifiers, init_declarator_list);
+    struct ListItem* param = malloc(sizeof(struct ListItem));
+    param->item = declaration;
+    return param;
 }
 
 static struct TypeIr* parse_type_name(
