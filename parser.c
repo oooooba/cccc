@@ -73,7 +73,7 @@ static bool acceptable(struct Parser* parser, enum TokenTag expected) {
         return false;
 }
 
-static bool acceptable_type(struct Parser* parser) {
+static bool acceptable_type_specifier(struct Parser* parser) {
     return acceptable(parser, Token_KeywordLong) ||
            acceptable(parser, Token_KeywordInt) ||
            acceptable(parser, Token_KeywordChar) ||
@@ -96,6 +96,120 @@ static struct StmtIr* to_block_stmt(struct StmtIr* ir) {
         ir_block_stmt_insert_at_end(block, ir);
     }
     return ir_block_stmt_super(block);
+}
+
+enum DeclaratorTag {
+    DeclaratorTag_Identifier,
+    DeclaratorTag_Declarator,
+};
+
+struct Declarator {
+    bool has_pointer;
+    enum DeclaratorTag tag;
+    union {
+        strtable_id identifier;
+        struct Declarator* declarator;
+    };
+};
+
+static struct Declarator* new_declarator(bool has_pointer,
+                                         enum DeclaratorTag tag) {
+    struct Declarator* declarator = malloc(sizeof(struct Declarator));
+    *declarator = (struct Declarator){
+        .has_pointer = has_pointer, .tag = tag,
+    };
+    return declarator;
+}
+
+struct InitDeclarator {
+    struct ListHeader as_list;
+    struct Declarator* declarator;
+    struct ExprIr* assign_expression;
+};
+
+static struct InitDeclarator* new_init_declarator(
+    struct Declarator* declarator, struct ExprIr* assign_expression) {
+    struct InitDeclarator* init_declarator =
+        malloc(sizeof(struct InitDeclarator));
+    *init_declarator = (struct InitDeclarator){
+        .declarator = declarator, .assign_expression = assign_expression,
+    };
+    return init_declarator;
+}
+
+enum DeclarationSpecifierTag {
+    DeclarationSpecifierTag_Type,
+};
+
+struct DeclarationSpecifier {
+    struct DeclarationSpecifier* outer;
+    enum DeclarationSpecifierTag tag;
+    union {
+        struct TypeIr* type;
+    };
+};
+
+static struct DeclarationSpecifier* new_declaration_specifier(
+    struct DeclarationSpecifier* outer, enum DeclarationSpecifierTag tag) {
+    struct DeclarationSpecifier* specifier =
+        malloc(sizeof(struct DeclarationSpecifier));
+    *specifier = (struct DeclarationSpecifier){
+        .outer = outer, .tag = tag,
+    };
+    return specifier;
+}
+
+struct Declaration2 {
+    struct DeclarationSpecifier* declaration_specifiers;
+    struct List* init_declarator_list;  // struct InitDeclarator* list
+};
+
+static struct Declaration2* new_declaration(
+    struct DeclarationSpecifier* declaration_specifiers,
+    struct List* init_declarator_list) {
+    assert(declaration_specifiers);
+
+    struct Declaration2* declaration = malloc(sizeof(struct Declaration2));
+    *declaration = (struct Declaration2){
+        .declaration_specifiers = declaration_specifiers,
+        .init_declarator_list = init_declarator_list,
+    };
+    return declaration;
+}
+
+static void process_declaration(struct Declaration2* declaration,
+                                struct Context* context,
+                                struct BlockStmtIr* block, struct Env* env) {
+    (void)context;
+    assert(block);
+    assert(declaration->declaration_specifiers->tag ==
+           DeclarationSpecifierTag_Type);
+    struct TypeIr* base_type = declaration->declaration_specifiers->type;
+
+    for (struct ListHeader *it = list_begin(declaration->init_declarator_list),
+                           *eit = list_end(declaration->init_declarator_list);
+         it != eit; it = list_next(it)) {
+        struct InitDeclarator* init_declarator = (struct InitDeclarator*)it;
+        struct Declarator* declarator = init_declarator->declarator;
+        assert(declarator->tag == DeclaratorTag_Identifier);
+        strtable_id name_index = declarator->identifier;
+
+        assert(!env_find(env, name_index));
+        struct TypeIr* type =
+            declarator->has_pointer
+                ? type_pointer_super(type_new_pointer(base_type))
+                : base_type;
+        struct VarExprIr* var =
+            ir_block_stmt_allocate_variable(block, name_index, type);
+        env_insert(env, name_index, var);
+
+        if (!init_declarator->assign_expression) continue;
+
+        struct SubstExprIr* subst = ir_new_subst_expr(
+            ir_var_expr_cast(var), init_declarator->assign_expression);
+        struct ExprStmtIr* stmt = ir_new_expr_stmt(ir_subst_expr_cast(subst));
+        ir_block_stmt_insert_at_end(block, ir_expr_stmt_super(stmt));
+    }
 }
 
 /***** lexical elements *****/
@@ -274,6 +388,7 @@ static struct ExprIr* parse_expression(struct Parser* parser) {
 
 /***** declarations *****/
 
+#if 1  // legacy code
 struct Declaration {
     struct ListHeader as_list;
     strtable_id name_index;
@@ -290,45 +405,116 @@ static struct ExprIr* parse_initializer(struct Parser* parser) {
     return parse_expression(parser);
 }
 
-static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser) {
-    expect(parser, Token_KeywordStruct);
-
-    // ToDo: currently, anonymous struct is not supported
-    assert(acceptable(parser, Token_Id));
-    strtable_id name_index = parse_identifier(parser);
-
-    struct TypeIr* type =
-        context_find_user_defined_type(parser->context, name_index);
-    if (!type) {
-        type = type_struct_super(type_new_struct(name_index, NULL));
-        context_insert_user_defined_type(parser->context, name_index, type);
-    }
-
-    if (acceptable(parser, Token_LeftCurry)) {
+static strtable_id parse_declarator(struct Parser* parser,
+                                    struct TypeIr* base_type,
+                                    struct TypeIr** result_type) {
+    if (acceptable(parser, Token_Asterisk)) {
         advance(parser);
+        *result_type = type_pointer_super(type_new_pointer(base_type));
+    } else
+        *result_type = base_type;
 
-        struct List* elem_types = malloc(sizeof(struct List));
-        list_initialize(elem_types);
+    assert(acceptable(parser, Token_Id));
+    struct Token* token = peek(parser);
+    strtable_id name_index = token->strtable_index;
+    advance(parser);
 
-        while (!acceptable(parser, Token_RightCurry)) {
-            struct TypeIr* base_type = parse_type_specifier(parser);
-            struct TypeIr* type;
-            strtable_id member_index =
-                parse_declarator(parser, base_type, &type);
+    return name_index;
+}
 
-            struct MemberEntry* entry =
-                type_new_member_entry(member_index, type);
-            list_insert_at_end(elem_types,
-                               type_member_entry_as_list_header(entry));
+static void parse_declaration(struct Parser* parser, struct List* result) {
+    struct TypeIr* base_type = parse_type_specifier(parser);
 
-            expect(parser, Token_Semicolon);
-        }
-        expect(parser, Token_RightCurry);
+    struct TypeIr* type;
+    strtable_id var_index = parse_declarator(parser, base_type, &type);
 
-        type_struct_set_elem_types(type_as_struct(type), elem_types);
+    struct ExprIr* initializer = NULL;
+    if (acceptable(parser, Token_Equal)) {
+        advance(parser);
+        initializer = parse_initializer(parser);
     }
 
-    return type;
+    struct Declaration* decl = malloc(sizeof(struct Declaration));
+    decl->name_index = var_index;
+    decl->type = type;
+    decl->initializer = initializer;
+    list_insert_at_end(result, list_from(decl));
+}
+#endif
+
+static struct Declaration2* parse_declaration2(struct Parser* parser);
+static struct DeclarationSpecifier* parse_declaration_specifiers(
+    struct Parser* parser);
+static struct List* parse_init_declarator_list(struct Parser* parser);
+static struct InitDeclarator* parse_init_declarator(struct Parser* parser);
+static struct TypeIr* parse_type_specifier(struct Parser* parser);
+static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser);
+static struct Declarator* parse_declarator2(struct Parser* parser);
+static struct TypeIr* parse_type_name(struct Parser* parser);
+
+static struct Declaration2* parse_declaration2(struct Parser* parser) {
+    struct DeclarationSpecifier* declaration_specifiers =
+        parse_declaration_specifiers(parser);
+    if (!declaration_specifiers) return NULL;
+
+    if (acceptable(parser, Token_Semicolon)) {
+        expect(parser, Token_Semicolon);
+        return new_declaration(declaration_specifiers, NULL);
+    }
+
+    struct List* init_declarator_list = parse_init_declarator_list(parser);
+    if (!init_declarator_list) return NULL;
+    if (acceptable(parser, Token_Semicolon)) {
+        expect(parser, Token_Semicolon);
+        return new_declaration(declaration_specifiers, init_declarator_list);
+    }
+    return NULL;
+}
+
+static struct DeclarationSpecifier* parse_declaration_specifiers(
+    struct Parser* parser) {
+    struct DeclarationSpecifier* specifiers = NULL;
+    while (true) {
+        if (acceptable_type_specifier(parser)) {
+            struct TypeIr* type = parse_type_specifier(parser);
+            if (!type) return NULL;
+            specifiers = new_declaration_specifier(
+                specifiers, DeclarationSpecifierTag_Type);
+            specifiers->type = type;
+        } else
+            break;
+    }
+    return specifiers;
+}
+
+static struct List* parse_init_declarator_list(struct Parser* parser) {
+    struct InitDeclarator* init_declarator = parse_init_declarator(parser);
+    if (!init_declarator) return NULL;
+
+    struct List* init_declarator_list = malloc(sizeof(struct List));
+    list_initialize(init_declarator_list);
+    list_insert_at_end(init_declarator_list, list_from(init_declarator));
+
+    while (acceptable(parser, Token_Comma)) {
+        advance(parser);
+        init_declarator = parse_init_declarator(parser);
+        if (!init_declarator) return NULL;
+        list_insert_at_end(init_declarator_list, list_from(init_declarator));
+    }
+    return init_declarator_list;
+}
+
+static struct InitDeclarator* parse_init_declarator(struct Parser* parser) {
+    struct Declarator* declarator = parse_declarator2(parser);
+    if (!declarator) return NULL;
+
+    struct ExprIr* assign_expression = NULL;
+    if (acceptable(parser, Token_Equal)) {
+        advance(parser);
+        assign_expression = parse_assignment_expression(parser);
+        if (!assign_expression) return NULL;
+    }
+    return new_init_declarator(declarator, assign_expression);
 }
 
 static struct TypeIr* parse_type_specifier(struct Parser* parser) {
@@ -355,49 +541,84 @@ static struct TypeIr* parse_type_specifier(struct Parser* parser) {
     return type;
 }
 
-static strtable_id parse_declarator(struct Parser* parser,
-                                    struct TypeIr* base_type,
-                                    struct TypeIr** result_type) {
-    if (acceptable(parser, Token_Asterisk)) {
-        advance(parser);
-        *result_type = type_pointer_super(type_new_pointer(base_type));
-    } else
-        *result_type = base_type;
+static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser) {
+    expect(parser, Token_KeywordStruct);
 
+    // ToDo: currently, anonymous struct is not supported
     assert(acceptable(parser, Token_Id));
-    struct Token* token = peek(parser);
-    strtable_id name_index = token->strtable_index;
-    advance(parser);
+    strtable_id name_index = parse_identifier(parser);
 
-    return name_index;
+    struct TypeIr* type =
+        context_find_user_defined_type(parser->context, name_index);
+    if (!type) {
+        type = type_struct_super(type_new_struct(name_index, NULL));
+        context_insert_user_defined_type(parser->context, name_index, type);
+    }
+
+    if (acceptable(parser, Token_LeftCurry)) {
+        advance(parser);
+
+        struct List* elem_types = malloc(sizeof(struct List));
+        list_initialize(elem_types);
+
+        while (!acceptable(parser,
+                           Token_RightCurry)) {  // ToDo: fix to parse precisely
+            struct TypeIr* type = parse_type_specifier(parser);
+            strtable_id member_index = parse_identifier(parser);
+
+            struct MemberEntry* entry =
+                type_new_member_entry(member_index, type);
+            list_insert_at_end(elem_types,
+                               type_member_entry_as_list_header(entry));
+
+            expect(parser, Token_Semicolon);
+        }
+        expect(parser, Token_RightCurry);
+
+        type_struct_set_elem_types(type_as_struct(type), elem_types);
+    }
+
+    return type;
 }
 
-static struct TypeIr* parse_type_name(struct Parser* parser) {
+static struct Declarator* parse_declarator2(struct Parser* parser) {
+    bool has_pointer = false;
+    if (acceptable(parser, Token_Asterisk)) {
+        advance(parser);
+        has_pointer = true;
+    }
+
+    if (acceptable(parser, Token_Id)) {
+        strtable_id id = parse_identifier(parser);
+        struct Declarator* declarator =
+            new_declarator(has_pointer, DeclaratorTag_Identifier);
+        declarator->identifier = id;
+        return declarator;
+    } else if (acceptable(parser, Token_LeftParen)) {
+        advance(parser);
+
+        struct Declarator* inner_declarator = parse_declarator2(parser);
+        if (!inner_declarator) return NULL;
+
+        if (!acceptable(parser, Token_RightParen)) return NULL;
+        advance(parser);
+
+        struct Declarator* declarator =
+            new_declarator(has_pointer, DeclaratorTag_Declarator);
+        declarator->declarator = inner_declarator;
+        return declarator;
+    }
+    return NULL;
+}
+
+static struct TypeIr* parse_type_name(
+    struct Parser* parser) {  // ToDo: fix to handle precisely
     struct TypeIr* type = parse_type_specifier(parser);
     if (acceptable(parser, Token_Asterisk)) {
         advance(parser);
         type = type_pointer_super(type_new_pointer(type));
     }
     return type;
-}
-
-static void parse_declaration(struct Parser* parser, struct List* result) {
-    struct TypeIr* base_type = parse_type_specifier(parser);
-
-    struct TypeIr* type;
-    strtable_id var_index = parse_declarator(parser, base_type, &type);
-
-    struct ExprIr* initializer = NULL;
-    if (acceptable(parser, Token_Equal)) {
-        advance(parser);
-        initializer = parse_initializer(parser);
-    }
-
-    struct Declaration* decl = malloc(sizeof(struct Declaration));
-    decl->name_index = var_index;
-    decl->type = type;
-    decl->initializer = initializer;
-    list_insert_at_end(result, list_from(decl));
 }
 
 /***** statements and blocks *****/
@@ -414,34 +635,13 @@ static struct BlockStmtIr* parse_compound_statement(struct Parser* parser,
     parser->current_env = env;
 
     while (!acceptable(parser, Token_RightCurry)) {
-        if (acceptable_type(parser)) {
-            struct List decls;
-            list_initialize(&decls);
-            parse_declaration(parser, &decls);
-            expect(parser, Token_Semicolon);
-            for (struct ListHeader *it = list_begin(&decls),
-                                   *eit = list_end(&decls);
-                 it != eit; it = list_next(it)) {
-                struct Declaration* decl = (struct Declaration*)it;
-                strtable_id name_index = decl->name_index;
-
-                assert(!env_find(env, name_index));
-                struct VarExprIr* var = ir_block_stmt_allocate_variable(
-                    block, name_index, decl->type);
-                env_insert(env, name_index, var);
-
-                if (!decl->initializer) continue;
-
-                struct SubstExprIr* subst =
-                    ir_new_subst_expr(ir_var_expr_cast(var), decl->initializer);
-                struct ExprStmtIr* stmt =
-                    ir_new_expr_stmt(ir_subst_expr_cast(subst));
-                ir_block_stmt_insert_at_end(block, ir_expr_stmt_super(stmt));
-            }
-        } else {
-            struct StmtIr* stmt = parse_statement(parser);
-            if (stmt) ir_block_stmt_insert_at_end(block, stmt);
+        struct Declaration2* declaration = parse_declaration2(parser);
+        if (declaration) {
+            process_declaration(declaration, parser->context, block, env);
+            continue;
         }
+        struct StmtIr* stmt = parse_statement(parser);
+        if (stmt) ir_block_stmt_insert_at_end(block, stmt);
     }
     expect(parser, Token_RightCurry);
 
@@ -594,16 +794,23 @@ static struct FunctionIr* parse_function_definition_or_declaration(
     return function;
 }
 
+static void parse_external_declaration(struct Parser* parser) {
+    struct ListHeader* saved_current_token = parser->current_token;
+
+    struct Declaration2* declaration = parse_declaration2(parser);
+    if (declaration) return;
+
+    // do backtracking
+    parser->current_token = saved_current_token;
+    if (parse_function_definition_or_declaration(parser)) return;
+
+    assert(false);
+}
+
 static void parse_translation_unit(struct Parser* parser) {
     expect(parser, Token_PseudoFileBegin);
     while (!acceptable(parser, Token_PseudoFileEnd)) {
-        if (acceptable(parser, Token_KeywordStruct)) {
-            struct TypeIr* type = parse_type_specifier(parser);
-            expect(parser, Token_Semicolon);
-            (void)type;
-        } else {
-            parse_function_definition_or_declaration(parser);
-        }
+        parse_external_declaration(parser);
     }
     expect(parser, Token_PseudoFileEnd);
 }
