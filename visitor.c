@@ -90,63 +90,47 @@ struct FunctionIr* visitor_visit_function(struct Visitor* visitor,
 struct StmtIr* visitor_visit_expr_stmt(struct Visitor* visitor,
                                        struct ExprStmtIr* ir) {
     struct ExprIr* expr = visitor_visit_expr(visitor, ir_expr_stmt_expr(ir));
-    if (expr) {
-        ir_expr_stmt_set_expr(ir, expr);
-        return ir_expr_stmt_super(ir);
-    } else
-        return NULL;
+    ir_expr_stmt_set_expr(ir, expr);
+    return ir_expr_stmt_super(ir);
 }
 
 struct StmtIr* visitor_visit_block_stmt(struct Visitor* visitor,
                                         struct BlockStmtIr* ir) {
-    bool changed = false;
     struct List* stmts = ir_block_stmt_statements(ir);
     for (struct ListHeader *it = list_begin(stmts), *eit = list_end(stmts);
          it != eit; it = list_next(it)) {
         struct ListItem* list_item = (struct ListItem*)it;
         struct StmtIr* stmt = list_item->item;
         stmt = visitor_visit_stmt(visitor, stmt);
-        if (stmt) {
-            list_item->item = stmt;
-            changed = true;
-        }
+        list_item->item = stmt;
     }
-    return changed ? ir_block_stmt_super(ir) : NULL;
+    return ir_block_stmt_super(ir);
 }
 
 struct StmtIr* visitor_visit_if_stmt(struct Visitor* visitor,
                                      struct IfStmtIr* ir) {
-    bool changed = false;
     struct ExprIr* cond = visitor_visit_expr(visitor, ir_if_stmt_cond_expr(ir));
-    if (cond) {
-        ir_if_stmt_set_cond_expr(ir, cond);
-        changed = true;
-    }
+    ir_if_stmt_set_cond_expr(ir, cond);
+
     struct StmtIr* true_stmt =
         visitor_visit_stmt(visitor, ir_if_stmt_true_stmt(ir));
-    if (true_stmt) {
-        ir_if_stmt_set_true_stmt(ir, true_stmt);
-        changed = true;
-    }
+    ir_if_stmt_set_true_stmt(ir, true_stmt);
+
     struct StmtIr* false_stmt =
         visitor_visit_stmt(visitor, ir_if_stmt_false_stmt(ir));
-    if (false_stmt) {
-        ir_if_stmt_set_false_stmt(ir, false_stmt);
-        changed = true;
-    }
-    return changed ? ir_if_stmt_super(ir) : NULL;
+    ir_if_stmt_set_false_stmt(ir, false_stmt);
+
+    return ir_if_stmt_super(ir);
 }
 
 struct StmtIr* visitor_visit_return_stmt(struct Visitor* visitor,
                                          struct ReturnStmtIr* ir) {
     struct ExprIr* expr = ir_return_stmt_expr(ir);
-    if (!expr) return NULL;
-    expr = visitor_visit_expr(visitor, expr);
     if (expr) {
+        expr = visitor_visit_expr(visitor, expr);
         ir_return_stmt_set_expr(ir, expr);
-        return ir_return_stmt_super(ir);
-    } else
-        return NULL;
+    }
+    return ir_return_stmt_super(ir);
 }
 
 void visitor_initialize(struct Visitor* visitor, struct Context* context) {
@@ -187,6 +171,6 @@ void visitor_apply(struct Visitor* visitor) {
         struct MapEntry* map_entry = (struct MapEntry*)it;
         struct FunctionIr* func = map_entry_value(map_entry);
         func = visitor_visit_function(visitor, func);
-        if (func) map_entry_set_value(map_entry, func);
+        map_entry_set_value(map_entry, func);
     }
 }

@@ -50,16 +50,16 @@ static strtable_id get_func_call_result_register(struct Context* ctx,
     return context_func_call_result_reg(ctx, kind);
 }
 
-static struct ExprIr* visit_const_expr2(struct RegallocVisitor* visitor,
-                                        struct ConstExprIr* ir) {
+static struct ExprIr* visit_const_expr(struct RegallocVisitor* visitor,
+                                       struct ConstExprIr* ir) {
     strtable_id reg_id =
         acquire_register(visitor, ir_expr_type(ir_const_expr_cast(ir)));
     ir_expr_set_reg_id(ir_const_expr_cast(ir), reg_id);
-    return NULL;
+    return ir_const_expr_cast(ir);
 }
 
-static struct ExprIr* visit_binop_expr2(struct RegallocVisitor* visitor,
-                                        struct BinopExprIr* ir) {
+static struct ExprIr* visit_binop_expr(struct RegallocVisitor* visitor,
+                                       struct BinopExprIr* ir) {
     visitor_visit_expr(as_visitor(visitor), ir_binop_expr_lhs(ir));
     visitor_visit_expr(as_visitor(visitor), ir_binop_expr_rhs(ir));
     release_register(visitor);
@@ -67,11 +67,11 @@ static struct ExprIr* visit_binop_expr2(struct RegallocVisitor* visitor,
     strtable_id reg_id =
         acquire_register(visitor, ir_expr_type(ir_binop_expr_cast(ir)));
     ir_expr_set_reg_id(ir_binop_expr_cast(ir), reg_id);
-    return NULL;
+    return ir_binop_expr_cast(ir);
 }
 
-static struct ExprIr* visit_call_expr2(struct RegallocVisitor* visitor,
-                                       struct CallExprIr* ir) {
+static struct ExprIr* visit_call_expr(struct RegallocVisitor* visitor,
+                                      struct CallExprIr* ir) {
     struct VarExprIr* func_name = ir_expr_as_var(ir_call_expr_function(ir));
     assert(func_name);
 
@@ -138,27 +138,26 @@ static struct ExprIr* visit_call_expr2(struct RegallocVisitor* visitor,
         ir_block_stmt_insert_at_end(post_block, ir_pop_stmt_super(pop_instr));
     }
 
-    return NULL;
+    return ir_call_expr_cast(ir);
 }
 
-static struct ExprIr* visit_var_expr2(struct RegallocVisitor* visitor,
-                                      struct VarExprIr* ir) {
+static struct ExprIr* visit_var_expr(struct RegallocVisitor* visitor,
+                                     struct VarExprIr* ir) {
     strtable_id reg_id =
         acquire_register(visitor, ir_expr_type(ir_var_expr_cast(ir)));
     ir_expr_set_reg_id(ir_var_expr_cast(ir), reg_id);
-    return NULL;
+    return ir_var_expr_cast(ir);
 }
 
-static struct ExprIr* visit_unop_expr2(struct RegallocVisitor* visitor,
-                                       struct UnopExprIr* ir) {
+static struct ExprIr* visit_unop_expr(struct RegallocVisitor* visitor,
+                                      struct UnopExprIr* ir) {
     (void)visitor;
-    (void)ir;
     assert(false);
-    return NULL;
+    return ir_unop_expr_cast(ir);
 }
 
-static struct ExprIr* visit_subst_expr2(struct RegallocVisitor* visitor,
-                                        struct SubstExprIr* ir) {
+static struct ExprIr* visit_subst_expr(struct RegallocVisitor* visitor,
+                                       struct SubstExprIr* ir) {
     visitor_visit_expr(as_visitor(visitor), ir_subst_expr_value(ir));
     visitor_visit_expr(as_visitor(visitor), ir_subst_expr_addr(ir));
     release_register(visitor);
@@ -166,44 +165,44 @@ static struct ExprIr* visit_subst_expr2(struct RegallocVisitor* visitor,
     strtable_id reg_id =
         acquire_register(visitor, ir_expr_type(ir_subst_expr_cast(ir)));
     ir_expr_set_reg_id(ir_subst_expr_cast(ir), reg_id);
-    return NULL;
+    return ir_subst_expr_cast(ir);
 }
 
-static struct ExprIr* visit_member_expr2(struct RegallocVisitor* visitor,
-                                         struct MemberExprIr* ir) {
+static struct ExprIr* visit_member_expr(struct RegallocVisitor* visitor,
+                                        struct MemberExprIr* ir) {
     visitor_visit_expr(as_visitor(visitor), ir_member_expr_base(ir));
     release_register(visitor);
     strtable_id reg_id =
         acquire_register(visitor, ir_expr_type(ir_member_expr_cast(ir)));
     ir_expr_set_reg_id(ir_member_expr_cast(ir), reg_id);
-    return NULL;
+    return ir_member_expr_cast(ir);
 }
 
-static struct ExprIr* visit_deref_expr2(struct RegallocVisitor* visitor,
-                                        struct DerefExprIr* ir) {
+static struct ExprIr* visit_deref_expr(struct RegallocVisitor* visitor,
+                                       struct DerefExprIr* ir) {
     visitor_visit_expr(as_visitor(visitor), ir_deref_expr_operand(ir));
     release_register(visitor);
     strtable_id reg_id =
         acquire_register(visitor, ir_expr_type(ir_deref_expr_cast(ir)));
     ir_expr_set_reg_id(ir_deref_expr_cast(ir), reg_id);
-    return NULL;
+    return ir_deref_expr_cast(ir);
 }
 
-static struct ExprIr* visit_cast_expr2(struct RegallocVisitor* visitor,
-                                       struct CastExprIr* ir) {
+static struct ExprIr* visit_cast_expr(struct RegallocVisitor* visitor,
+                                      struct CastExprIr* ir) {
     visitor_visit_expr(as_visitor(visitor), ir_cast_expr_operand(ir));
     release_register(visitor);
     strtable_id reg_id =
         acquire_register(visitor, ir_expr_type(ir_cast_expr_cast(ir)));
     ir_expr_set_reg_id(ir_cast_expr_cast(ir), reg_id);
-    return NULL;
+    return ir_cast_expr_cast(ir);
 }
 
-static struct BlockStmtIr* visit_expr_stmt(struct RegallocVisitor* visitor,
-                                           struct ExprStmtIr* ir) {
+static struct StmtIr* visit_expr_stmt(struct RegallocVisitor* visitor,
+                                      struct ExprStmtIr* ir) {
     visitor_visit_expr(as_visitor(visitor), ir_expr_stmt_expr(ir));
     release_register(visitor);
-    return NULL;
+    return ir_expr_stmt_super(ir);
 }
 
 static struct StmtIr* visit_if_stmt(struct RegallocVisitor* visitor,
@@ -214,7 +213,7 @@ static struct StmtIr* visit_if_stmt(struct RegallocVisitor* visitor,
     visitor_visit_stmt(as_visitor(visitor), ir_if_stmt_true_stmt(ir));
     visitor_visit_stmt(as_visitor(visitor), ir_if_stmt_false_stmt(ir));
 
-    return NULL;
+    return ir_if_stmt_super(ir);
 }
 
 static struct StmtIr* visit_return_stmt(struct RegallocVisitor* visitor,
@@ -224,11 +223,11 @@ static struct StmtIr* visit_return_stmt(struct RegallocVisitor* visitor,
         visitor_visit_expr(as_visitor(visitor), expr);
         release_register(visitor);
     }
-    return NULL;
+    return ir_return_stmt_super(ir);
 }
 
-static struct FunctionIr* visit_function2(struct RegallocVisitor* visitor,
-                                          struct FunctionIr* ir) {
+static struct FunctionIr* visit_function(struct RegallocVisitor* visitor,
+                                         struct FunctionIr* ir) {
     struct BlockStmtIr* body = ir_function_body2(ir);
     visitor_visit_stmt(as_visitor(visitor), ir_block_stmt_super(body));
     return ir;
@@ -238,22 +237,21 @@ struct RegallocVisitor* new_regalloc_visitor(struct Context* context) {
     struct RegallocVisitor* visitor = malloc(sizeof(struct RegallocVisitor));
     visitor_initialize(as_visitor(visitor), context);
 
-    register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr2);
-    register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr2);
-    register_visitor(visitor->as_visitor, visit_call_expr, visit_call_expr2);
-    register_visitor(visitor->as_visitor, visit_var_expr, visit_var_expr2);
-    register_visitor(visitor->as_visitor, visit_unop_expr, visit_unop_expr2);
-    register_visitor(visitor->as_visitor, visit_subst_expr, visit_subst_expr2);
-    register_visitor(visitor->as_visitor, visit_member_expr,
-                     visit_member_expr2);
-    register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr2);
-    register_visitor(visitor->as_visitor, visit_cast_expr, visit_cast_expr2);
+    register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr);
+    register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr);
+    register_visitor(visitor->as_visitor, visit_call_expr, visit_call_expr);
+    register_visitor(visitor->as_visitor, visit_var_expr, visit_var_expr);
+    register_visitor(visitor->as_visitor, visit_unop_expr, visit_unop_expr);
+    register_visitor(visitor->as_visitor, visit_subst_expr, visit_subst_expr);
+    register_visitor(visitor->as_visitor, visit_member_expr, visit_member_expr);
+    register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr);
+    register_visitor(visitor->as_visitor, visit_cast_expr, visit_cast_expr);
 
     register_visitor(visitor->as_visitor, visit_expr_stmt, visit_expr_stmt);
     register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);
     register_visitor(visitor->as_visitor, visit_return_stmt, visit_return_stmt);
 
-    register_visitor(visitor->as_visitor, visit_function, visit_function2);
+    register_visitor(visitor->as_visitor, visit_function, visit_function);
 
     visitor->free_register_index = 0;
     return visitor;

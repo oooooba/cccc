@@ -27,8 +27,7 @@ static void insert(struct List* list, struct ListHeader* point, void* item) {
 static struct StmtIr* visit_expr_stmt(struct FixupVisitor* visitor,
                                       struct ExprStmtIr* ir) {
     (void)visitor;
-    (void)ir;
-    return NULL;
+    return ir_expr_stmt_super(ir);
 }
 
 static struct StmtIr* visit_block_stmt(struct FixupVisitor* visitor,
@@ -44,21 +43,20 @@ static struct StmtIr* visit_block_stmt(struct FixupVisitor* visitor,
     visitor->parent_region_end = new_region_end;
     visitor_visit_block_stmt(as_visitor(visitor), ir);
     visitor->parent_region_end = region_base;
-    return NULL;
+    return ir_block_stmt_super(ir);
 }
 
 static struct StmtIr* visit_if_stmt(struct FixupVisitor* visitor,
                                     struct IfStmtIr* ir) {
     visitor_visit_stmt(as_visitor(visitor), ir_if_stmt_true_stmt(ir));
     visitor_visit_stmt(as_visitor(visitor), ir_if_stmt_false_stmt(ir));
-    return NULL;
+    return ir_if_stmt_super(ir);
 }
 
 static struct StmtIr* visit_return_stmt(struct FixupVisitor* visitor,
                                         struct ReturnStmtIr* ir) {
     (void)visitor;
-    (void)ir;
-    return NULL;
+    return ir_return_stmt_super(ir);
 }
 
 static struct FunctionIr* visit_function(struct FixupVisitor* visitor,

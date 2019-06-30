@@ -20,18 +20,18 @@ static struct Context* ctx(struct DumpVisitor* visitor) {
     return visitor_context(as_visitor(visitor));
 }
 
-static struct ExprIr* visit_const_expr2(struct DumpVisitor* visitor,
-                                        struct ConstExprIr* ir) {
+static struct ExprIr* visit_const_expr(struct DumpVisitor* visitor,
+                                       struct ConstExprIr* ir) {
     fprintf(visitor->stream, "v%p = %ld :: ", ir,
             ir_const_expr_integer_value(ir));
     context_dump_type(ctx(visitor), visitor->stream,
                       ir_expr_type(ir_const_expr_cast(ir)));
     fprintf(visitor->stream, "\n");
-    return NULL;
+    return ir_const_expr_cast(ir);
 }
 
-static struct ExprIr* visit_binop_expr2(struct DumpVisitor* visitor,
-                                        struct BinopExprIr* ir) {
+static struct ExprIr* visit_binop_expr(struct DumpVisitor* visitor,
+                                       struct BinopExprIr* ir) {
     struct ExprIr* lhs = ir_binop_expr_lhs(ir);
     struct ExprIr* rhs = ir_binop_expr_rhs(ir);
     visitor_visit_expr(as_visitor(visitor), lhs);
@@ -54,11 +54,11 @@ static struct ExprIr* visit_binop_expr2(struct DumpVisitor* visitor,
     context_dump_type(ctx(visitor), visitor->stream,
                       ir_expr_type(ir_binop_expr_cast(ir)));
     fprintf(visitor->stream, "\n");
-    return NULL;
+    return ir_binop_expr_cast(ir);
 }
 
-static struct ExprIr* visit_call_expr2(struct DumpVisitor* visitor,
-                                       struct CallExprIr* ir) {
+static struct ExprIr* visit_call_expr(struct DumpVisitor* visitor,
+                                      struct CallExprIr* ir) {
     struct VarExprIr* func_name = ir_expr_as_var(ir_call_expr_function(ir));
     assert(func_name);
 
@@ -87,30 +87,29 @@ static struct ExprIr* visit_call_expr2(struct DumpVisitor* visitor,
     context_dump_type(ctx(visitor), visitor->stream,
                       ir_expr_type(ir_call_expr_cast(ir)));
     fprintf(visitor->stream, "\n");
-    return NULL;
+    return ir_call_expr_cast(ir);
 }
 
-static struct ExprIr* visit_var_expr2(struct DumpVisitor* visitor,
-                                      struct VarExprIr* ir) {
+static struct ExprIr* visit_var_expr(struct DumpVisitor* visitor,
+                                     struct VarExprIr* ir) {
     strtable_id index = ir_var_expr_index(ir);
     const char* name = strtable_at(&ctx(visitor)->strtable, index);
     fprintf(visitor->stream, "v%p = address of %s :: ", ir, name);
     context_dump_type(ctx(visitor), visitor->stream,
                       ir_expr_type(ir_var_expr_cast(ir)));
     fprintf(visitor->stream, "\n");
-    return NULL;
+    return ir_var_expr_cast(ir);
 }
 
-static struct ExprIr* visit_unop_expr2(struct DumpVisitor* visitor,
-                                       struct UnopExprIr* ir) {
+static struct ExprIr* visit_unop_expr(struct DumpVisitor* visitor,
+                                      struct UnopExprIr* ir) {
     (void)visitor;
-    (void)ir;
     assert(false);
-    return NULL;
+    return ir_unop_expr_cast(ir);
 }
 
-static struct ExprIr* visit_subst_expr2(struct DumpVisitor* visitor,
-                                        struct SubstExprIr* ir) {
+static struct ExprIr* visit_subst_expr(struct DumpVisitor* visitor,
+                                       struct SubstExprIr* ir) {
     struct ExprIr* value = ir_subst_expr_value(ir);
     visitor_visit_expr(as_visitor(visitor), value);
     struct ExprIr* addr = ir_subst_expr_addr(ir);
@@ -119,11 +118,11 @@ static struct ExprIr* visit_subst_expr2(struct DumpVisitor* visitor,
     context_dump_type(ctx(visitor), visitor->stream,
                       ir_expr_type(ir_subst_expr_cast(ir)));
     fprintf(visitor->stream, "\n");
-    return NULL;
+    return ir_subst_expr_cast(ir);
 }
 
-static struct ExprIr* visit_member_expr2(struct DumpVisitor* visitor,
-                                         struct MemberExprIr* ir) {
+static struct ExprIr* visit_member_expr(struct DumpVisitor* visitor,
+                                        struct MemberExprIr* ir) {
     struct ExprIr* base = ir_member_expr_base(ir);
     visitor_visit_expr(as_visitor(visitor), base);
     strtable_id member_index = ir_member_expr_name_index(ir);
@@ -134,48 +133,48 @@ static struct ExprIr* visit_member_expr2(struct DumpVisitor* visitor,
     context_dump_type(ctx(visitor), visitor->stream,
                       ir_expr_type(ir_member_expr_cast(ir)));
     fprintf(visitor->stream, "\n");
-    return NULL;
+    return ir_member_expr_cast(ir);
 }
 
-static struct ExprIr* visit_deref_expr2(struct DumpVisitor* visitor,
-                                        struct DerefExprIr* ir) {
+static struct ExprIr* visit_deref_expr(struct DumpVisitor* visitor,
+                                       struct DerefExprIr* ir) {
     struct ExprIr* operand = ir_deref_expr_operand(ir);
     visitor_visit_expr(as_visitor(visitor), operand);
     fprintf(visitor->stream, "v%p = deref v%p :: ", ir, operand);
     context_dump_type(ctx(visitor), visitor->stream,
                       ir_expr_type(ir_deref_expr_cast(ir)));
     fprintf(visitor->stream, "\n");
-    return NULL;
+    return ir_deref_expr_cast(ir);
 }
 
-static struct ExprIr* visit_addrof_expr2(struct DumpVisitor* visitor,
-                                         struct AddrofExprIr* ir) {
+static struct ExprIr* visit_addrof_expr(struct DumpVisitor* visitor,
+                                        struct AddrofExprIr* ir) {
     struct ExprIr* operand = ir_addrof_expr_operand(ir);
     visitor_visit_expr(as_visitor(visitor), operand);
     fprintf(visitor->stream, "v%p = addrof <v%p> :: ", ir, operand);
     context_dump_type(ctx(visitor), visitor->stream,
                       ir_expr_type(ir_addrof_expr_cast(ir)));
     fprintf(visitor->stream, "\n");
-    return NULL;
+    return ir_addrof_expr_cast(ir);
 }
 
-static struct ExprIr* visit_cast_expr2(struct DumpVisitor* visitor,
-                                       struct CastExprIr* ir) {
+static struct ExprIr* visit_cast_expr(struct DumpVisitor* visitor,
+                                      struct CastExprIr* ir) {
     struct ExprIr* operand = ir_cast_expr_operand(ir);
     visitor_visit_expr(as_visitor(visitor), operand);
     fprintf(visitor->stream, "v%p = cast v%p :: ", ir, operand);
     context_dump_type(ctx(visitor), visitor->stream,
                       ir_expr_type(ir_cast_expr_cast(ir)));
     fprintf(visitor->stream, "\n");
-    return NULL;
+    return ir_cast_expr_cast(ir);
 }
 
-static struct BlockStmtIr* visit_block_stmt(struct DumpVisitor* visitor,
-                                            struct BlockStmtIr* ir) {
+static struct StmtIr* visit_block_stmt(struct DumpVisitor* visitor,
+                                       struct BlockStmtIr* ir) {
     fprintf(visitor->stream, "[@%p]{\n", ir);
     visitor_visit_block_stmt(as_visitor(visitor), ir);
     fprintf(visitor->stream, "}\n");
-    return NULL;
+    return ir_block_stmt_super(ir);
 }
 
 static struct StmtIr* visit_if_stmt(struct DumpVisitor* visitor,
@@ -191,7 +190,7 @@ static struct StmtIr* visit_if_stmt(struct DumpVisitor* visitor,
     struct StmtIr* false_stmt = ir_if_stmt_false_stmt(ir);
     visitor_visit_stmt(as_visitor(visitor), false_stmt);
 
-    return NULL;
+    return ir_if_stmt_super(ir);
 }
 
 static struct StmtIr* visit_return_stmt(struct DumpVisitor* visitor,
@@ -203,7 +202,7 @@ static struct StmtIr* visit_return_stmt(struct DumpVisitor* visitor,
     } else
         fprintf(visitor->stream, "return");
     fprintf(visitor->stream, "\n");
-    return NULL;
+    return ir_return_stmt_super(ir);
 }
 
 static struct FunctionIr* visit_function2(struct DumpVisitor* visitor,
@@ -228,25 +227,23 @@ static struct FunctionIr* visit_function2(struct DumpVisitor* visitor,
     }
     fprintf(visitor->stream, ") ");
     visit_block_stmt(visitor, ir_function_body2(ir));
-    return NULL;
+    return ir;
 }
 
 struct DumpVisitor* new_dump_visitor(struct Context* context, FILE* stream) {
     struct DumpVisitor* visitor = malloc(sizeof(struct DumpVisitor));
     visitor_initialize(as_visitor(visitor), context);
 
-    register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr2);
-    register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr2);
-    register_visitor(visitor->as_visitor, visit_call_expr, visit_call_expr2);
-    register_visitor(visitor->as_visitor, visit_var_expr, visit_var_expr2);
-    register_visitor(visitor->as_visitor, visit_unop_expr, visit_unop_expr2);
-    register_visitor(visitor->as_visitor, visit_subst_expr, visit_subst_expr2);
-    register_visitor(visitor->as_visitor, visit_member_expr,
-                     visit_member_expr2);
-    register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr2);
-    register_visitor(visitor->as_visitor, visit_addrof_expr,
-                     visit_addrof_expr2);
-    register_visitor(visitor->as_visitor, visit_cast_expr, visit_cast_expr2);
+    register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr);
+    register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr);
+    register_visitor(visitor->as_visitor, visit_call_expr, visit_call_expr);
+    register_visitor(visitor->as_visitor, visit_var_expr, visit_var_expr);
+    register_visitor(visitor->as_visitor, visit_unop_expr, visit_unop_expr);
+    register_visitor(visitor->as_visitor, visit_subst_expr, visit_subst_expr);
+    register_visitor(visitor->as_visitor, visit_member_expr, visit_member_expr);
+    register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr);
+    register_visitor(visitor->as_visitor, visit_addrof_expr, visit_addrof_expr);
+    register_visitor(visitor->as_visitor, visit_cast_expr, visit_cast_expr);
 
     register_visitor(visitor->as_visitor, visit_block_stmt, visit_block_stmt);
     register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);

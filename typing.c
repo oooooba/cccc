@@ -115,9 +115,8 @@ static struct ExprIr* visit_var_expr(struct TypingVisitor* visitor,
 static struct ExprIr* visit_unop_expr(struct TypingVisitor* visitor,
                                       struct UnopExprIr* ir) {
     (void)visitor;
-    (void)ir;
     assert(false);
-    return NULL;
+    return ir_unop_expr_cast(ir);
 }
 
 static struct ExprIr* visit_subst_expr(struct TypingVisitor* visitor,
