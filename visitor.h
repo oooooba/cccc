@@ -83,6 +83,10 @@ struct StmtIr* visitor_visit_expr_stmt(struct Visitor* visitor,
                                        struct ExprStmtIr* ir);
 struct StmtIr* visitor_visit_block_stmt(struct Visitor* visitor,
                                         struct BlockStmtIr* ir);
+struct StmtIr* visitor_visit_if_stmt(struct Visitor* visitor,
+                                     struct IfStmtIr* ir);
+struct StmtIr* visitor_visit_return_stmt(struct Visitor* visitor,
+                                         struct ReturnStmtIr* ir);
 
 void visitor_initialize(struct Visitor* visitor, struct Context* context);
 struct Context* visitor_context(struct Visitor* visitor);

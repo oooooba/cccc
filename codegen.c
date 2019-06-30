@@ -237,10 +237,7 @@ static struct StmtIr* visit_if_stmt(struct CodegenVisitor* visitor,
 
 static struct StmtIr* visit_return_stmt(struct CodegenVisitor* visitor,
                                         struct ReturnStmtIr* ir) {
-    struct ExprIr* expr = ir_return_stmt_expr(ir);
-    if (expr) {
-        visitor_visit_expr(as_visitor(visitor), expr);
-    }
+    visitor_visit_return_stmt(as_visitor(visitor), ir);
     fprintf(visitor->stream, "\tjmp\tlab_%p_end\n", visitor->function);
     return ir_return_stmt_super(ir);
 }

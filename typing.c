@@ -179,18 +179,16 @@ static struct ExprIr* visit_addrof_expr(struct TypingVisitor* visitor,
 
 static struct StmtIr* visit_if_stmt(struct TypingVisitor* visitor,
                                     struct IfStmtIr* ir) {
+    visitor_visit_if_stmt(as_visitor(visitor), ir);
     struct ExprIr* cond_expr = ir_if_stmt_cond_expr(ir);
     cond_expr = visitor_visit_expr(as_visitor(visitor), cond_expr);
     ir_if_stmt_set_cond_expr(ir, cond_expr);
-
-    visitor_visit_stmt(as_visitor(visitor), ir_if_stmt_true_stmt(ir));
-    visitor_visit_stmt(as_visitor(visitor), ir_if_stmt_false_stmt(ir));
-
     return ir_if_stmt_super(ir);
 }
 
 static struct StmtIr* visit_return_stmt(struct TypingVisitor* visitor,
                                         struct ReturnStmtIr* ir) {
+    visitor_visit_return_stmt(as_visitor(visitor), ir);
     struct ExprIr* expr = ir_return_stmt_expr(ir);
     if (expr) {
         expr = visitor_visit_expr(as_visitor(visitor), expr);
