@@ -45,36 +45,6 @@ static struct ExprIr* visit_binop_expr(struct SimplifyVisitor* visitor,
     return new_ir;
 }
 
-static struct ExprIr* visit_call_expr(struct SimplifyVisitor* visitor,
-                                      struct CallExprIr* ir) {
-    struct VarExprIr* func_name = ir_expr_as_var(ir_call_expr_function(ir));
-    assert(func_name);
-
-    for (struct ListHeader *it = list_begin(ir_call_expr_args(ir)),
-                           *eit = list_end(ir_call_expr_args(ir));
-         it != eit; it = list_next(it)) {
-        struct ListItem* item = (struct ListItem*)it;
-        struct ExprIr* arg = item->item;
-        struct ExprIr* new_arg = visitor_visit_expr(as_visitor(visitor), arg);
-        if (new_arg) item->item = new_arg;
-    }
-    return ir_call_expr_cast(ir);
-}
-
-static struct ExprIr* visit_var_expr(struct SimplifyVisitor* visitor,
-                                     struct VarExprIr* ir) {
-    (void)visitor;
-    (void)ir;
-    return ir_var_expr_cast(ir);
-}
-
-static struct ExprIr* visit_unop_expr(struct SimplifyVisitor* visitor,
-                                      struct UnopExprIr* ir) {
-    (void)visitor;
-    assert(false);
-    return ir_unop_expr_cast(ir);
-}
-
 static struct ExprIr* visit_subst_expr(struct SimplifyVisitor* visitor,
                                        struct SubstExprIr* ir) {
     struct ExprIr* addr = ir_subst_expr_addr(ir);
@@ -168,9 +138,6 @@ struct SimplifyVisitor* new_simplify_visitor(struct Context* context) {
     visitor_initialize(as_visitor(visitor), context);
 
     register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr);
-    register_visitor(visitor->as_visitor, visit_call_expr, visit_call_expr);
-    register_visitor(visitor->as_visitor, visit_var_expr, visit_var_expr);
-    register_visitor(visitor->as_visitor, visit_unop_expr, visit_unop_expr);
     register_visitor(visitor->as_visitor, visit_subst_expr, visit_subst_expr);
     register_visitor(visitor->as_visitor, visit_member_expr, visit_member_expr);
     register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr);

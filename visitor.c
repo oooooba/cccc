@@ -93,6 +93,13 @@ struct ExprIr* visitor_visit_const_expr(struct Visitor* visitor,
     return ir_const_expr_cast(ir);
 }
 
+struct ExprIr* visitor_visit_unop_expr(struct Visitor* visitor,
+                                       struct UnopExprIr* ir) {
+    (void)visitor;
+    assert(false);
+    return ir_unop_expr_cast(ir);
+}
+
 struct ExprIr* visitor_visit_binop_expr(struct Visitor* visitor,
                                         struct BinopExprIr* ir) {
     struct ExprIr* lhs = visitor_visit_expr(visitor, ir_binop_expr_lhs(ir));
@@ -102,6 +109,29 @@ struct ExprIr* visitor_visit_binop_expr(struct Visitor* visitor,
     ir_binop_expr_set_rhs(ir, rhs);
 
     return ir_binop_expr_cast(ir);
+}
+
+struct ExprIr* visitor_visit_call_expr(struct Visitor* visitor,
+                                       struct CallExprIr* ir) {
+    struct ExprIr* expr =
+        visitor_visit_expr(visitor, ir_call_expr_function(ir));
+    ir_call_expr_set_function(ir, expr);
+
+    for (struct ListHeader *it = list_begin(ir_call_expr_args(ir)),
+                           *eit = list_end(ir_call_expr_args(ir));
+         it != eit; it = list_next(it)) {
+        struct ListItem* item = (struct ListItem*)it;
+        struct ExprIr* arg = item->item;
+        struct ExprIr* new_arg = visitor_visit_expr(visitor, arg);
+        item->item = new_arg;
+    }
+    return ir_call_expr_cast(ir);
+}
+
+struct ExprIr* visitor_visit_var_expr(struct Visitor* visitor,
+                                      struct VarExprIr* ir) {
+    (void)visitor;
+    return ir_var_expr_cast(ir);
 }
 
 struct StmtIr* visitor_visit_expr_stmt(struct Visitor* visitor,
@@ -154,10 +184,10 @@ void visitor_initialize(struct Visitor* visitor, struct Context* context) {
     visitor->context = context;
 
     register_visitor(*visitor, visit_const_expr, visitor_visit_const_expr);
+    register_visitor(*visitor, visit_unop_expr, visitor_visit_unop_expr);
     register_visitor(*visitor, visit_binop_expr, visitor_visit_binop_expr);
-    register_visitor(*visitor, visit_call_expr, NULL);
-    register_visitor(*visitor, visit_var_expr, NULL);
-    register_visitor(*visitor, visit_unop_expr, NULL);
+    register_visitor(*visitor, visit_call_expr, visitor_visit_call_expr);
+    register_visitor(*visitor, visit_var_expr, visitor_visit_var_expr);
     register_visitor(*visitor, visit_subst_expr, NULL);
     register_visitor(*visitor, visit_member_expr, NULL);
     register_visitor(*visitor, visit_deref_expr, NULL);

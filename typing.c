@@ -111,13 +111,6 @@ static struct ExprIr* visit_var_expr(struct TypingVisitor* visitor,
     return ir_var_expr_cast(ir);
 }
 
-static struct ExprIr* visit_unop_expr(struct TypingVisitor* visitor,
-                                      struct UnopExprIr* ir) {
-    (void)visitor;
-    assert(false);
-    return ir_unop_expr_cast(ir);
-}
-
 static struct ExprIr* visit_subst_expr(struct TypingVisitor* visitor,
                                        struct SubstExprIr* ir) {
     struct ExprIr* value = ir_subst_expr_value(ir);
@@ -250,7 +243,6 @@ struct TypingVisitor* new_typing_visitor(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr);
     register_visitor(visitor->as_visitor, visit_call_expr, visit_call_expr);
     register_visitor(visitor->as_visitor, visit_var_expr, visit_var_expr);
-    register_visitor(visitor->as_visitor, visit_unop_expr, visit_unop_expr);
     register_visitor(visitor->as_visitor, visit_subst_expr, visit_subst_expr);
     register_visitor(visitor->as_visitor, visit_member_expr, visit_member_expr);
     register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr);

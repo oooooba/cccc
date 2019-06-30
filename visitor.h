@@ -9,14 +9,14 @@ struct Visitor {
 
     struct ExprIr* (*visit_const_expr)(struct Visitor* visitor,
                                        struct ConstExprIr* ir);
+    struct ExprIr* (*visit_unop_expr)(struct Visitor* visitor,
+                                      struct UnopExprIr* ir);
     struct ExprIr* (*visit_binop_expr)(struct Visitor* visitor,
                                        struct BinopExprIr* ir);
     struct ExprIr* (*visit_call_expr)(struct Visitor* visitor,
                                       struct CallExprIr* ir);
     struct ExprIr* (*visit_var_expr)(struct Visitor* visitor,
                                      struct VarExprIr* ir);
-    struct ExprIr* (*visit_unop_expr)(struct Visitor* visitor,
-                                      struct UnopExprIr* ir);
     struct ExprIr* (*visit_subst_expr)(struct Visitor* visitor,
                                        struct SubstExprIr* ir);
     struct ExprIr* (*visit_member_expr)(struct Visitor* visitor,
@@ -60,8 +60,14 @@ struct FunctionIr* visitor_visit_function(struct Visitor* visitor,
 
 struct ExprIr* visitor_visit_const_expr(struct Visitor* visitor,
                                         struct ConstExprIr* ir);
+struct ExprIr* visitor_visit_unop_expr(struct Visitor* visitor,
+                                       struct UnopExprIr* ir);
 struct ExprIr* visitor_visit_binop_expr(struct Visitor* visitor,
                                         struct BinopExprIr* ir);
+struct ExprIr* visitor_visit_call_expr(struct Visitor* visitor,
+                                       struct CallExprIr* ir);
+struct ExprIr* visitor_visit_var_expr(struct Visitor* visitor,
+                                      struct VarExprIr* ir);
 
 struct StmtIr* visitor_visit_expr_stmt(struct Visitor* visitor,
                                        struct ExprStmtIr* ir);
