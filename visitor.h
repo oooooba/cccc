@@ -39,11 +39,12 @@ struct Visitor {
                                     struct IfStmtIr* ir);
     struct StmtIr* (*visit_return_stmt)(struct Visitor* visitor,
                                         struct ReturnStmtIr* ir);
-
     struct StmtIr* (*visit_push_stmt)(struct Visitor* visitor,
                                       struct PushStmtIr* ir);
     struct StmtIr* (*visit_pop_stmt)(struct Visitor* visitor,
                                      struct PopStmtIr* ir);
+    struct StmtIr* (*visit_decl_stmt)(struct Visitor* visitor,
+                                      struct DeclStmtIr* ir);
 
     struct FunctionIr* (*visit_function)(struct Visitor* visitor,
                                          struct FunctionIr* ir);
@@ -87,6 +88,8 @@ struct StmtIr* visitor_visit_if_stmt(struct Visitor* visitor,
                                      struct IfStmtIr* ir);
 struct StmtIr* visitor_visit_return_stmt(struct Visitor* visitor,
                                          struct ReturnStmtIr* ir);
+struct StmtIr* visitor_visit_decl_stmt(struct Visitor* visitor,
+                                       struct DeclStmtIr* ir);
 
 void visitor_initialize(struct Visitor* visitor, struct Context* context);
 struct Context* visitor_context(struct Visitor* visitor);

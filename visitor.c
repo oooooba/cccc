@@ -75,6 +75,9 @@ struct StmtIr* visitor_visit_stmt(struct Visitor* visitor, struct StmtIr* ir) {
         case StmtIrTag_Pop:
             stmt = visitor->visit_pop_stmt(visitor, ir_stmt_as_pop(ir));
             break;
+        case StmtIrTag_Decl:
+            stmt = visitor->visit_decl_stmt(visitor, ir_stmt_as_decl(ir));
+            break;
         default:
             assert(false);
             stmt = NULL;
@@ -222,6 +225,12 @@ struct StmtIr* visitor_visit_return_stmt(struct Visitor* visitor,
     return ir_return_stmt_super(ir);
 }
 
+struct StmtIr* visitor_visit_decl_stmt(struct Visitor* visitor,
+                                       struct DeclStmtIr* ir) {
+    (void)visitor;
+    return ir_decl_stmt_super(ir);
+}
+
 void visitor_initialize(struct Visitor* visitor, struct Context* context) {
     visitor->context = context;
 
@@ -244,6 +253,7 @@ void visitor_initialize(struct Visitor* visitor, struct Context* context) {
     register_visitor(*visitor, visit_return_stmt, visitor_visit_return_stmt);
     register_visitor(*visitor, visit_push_stmt, NULL);
     register_visitor(*visitor, visit_pop_stmt, NULL);
+    register_visitor(*visitor, visit_decl_stmt, visitor_visit_decl_stmt);
 
     register_visitor(*visitor, visit_function, NULL);
 }

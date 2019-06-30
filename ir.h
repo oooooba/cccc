@@ -199,6 +199,7 @@ struct IfStmtIr* ir_stmt_as_if(struct StmtIr* ir);
 struct ReturnStmtIr* ir_stmt_as_return(struct StmtIr* ir);
 struct PushStmtIr* ir_stmt_as_push(struct StmtIr* ir);
 struct PopStmtIr* ir_stmt_as_pop(struct StmtIr* ir);
+struct DeclStmtIr* ir_stmt_as_decl(struct StmtIr* ir);
 
 struct ExprStmtIr* ir_new_expr_stmt(struct ExprIr* expr);
 struct StmtIr* ir_expr_stmt_super(struct ExprStmtIr* ir);
