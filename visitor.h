@@ -68,6 +68,12 @@ struct ExprIr* visitor_visit_call_expr(struct Visitor* visitor,
                                        struct CallExprIr* ir);
 struct ExprIr* visitor_visit_var_expr(struct Visitor* visitor,
                                       struct VarExprIr* ir);
+struct ExprIr* visitor_visit_subst_expr(struct Visitor* visitor,
+                                        struct SubstExprIr* ir);
+struct ExprIr* visitor_visit_member_expr(struct Visitor* visitor,
+                                         struct MemberExprIr* ir);
+struct ExprIr* visitor_visit_deref_expr(struct Visitor* visitor,
+                                        struct DerefExprIr* ir);
 
 struct StmtIr* visitor_visit_expr_stmt(struct Visitor* visitor,
                                        struct ExprStmtIr* ir);

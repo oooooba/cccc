@@ -150,8 +150,7 @@ static struct ExprIr* visit_var_expr(struct RegallocVisitor* visitor,
 
 static struct ExprIr* visit_subst_expr(struct RegallocVisitor* visitor,
                                        struct SubstExprIr* ir) {
-    visitor_visit_expr(as_visitor(visitor), ir_subst_expr_value(ir));
-    visitor_visit_expr(as_visitor(visitor), ir_subst_expr_addr(ir));
+    visitor_visit_subst_expr(as_visitor(visitor), ir);
     release_register(visitor);
     release_register(visitor);
     strtable_id reg_id =
@@ -162,7 +161,7 @@ static struct ExprIr* visit_subst_expr(struct RegallocVisitor* visitor,
 
 static struct ExprIr* visit_member_expr(struct RegallocVisitor* visitor,
                                         struct MemberExprIr* ir) {
-    visitor_visit_expr(as_visitor(visitor), ir_member_expr_base(ir));
+    visitor_visit_member_expr(as_visitor(visitor), ir);
     release_register(visitor);
     strtable_id reg_id =
         acquire_register(visitor, ir_expr_type(ir_member_expr_cast(ir)));
@@ -172,7 +171,7 @@ static struct ExprIr* visit_member_expr(struct RegallocVisitor* visitor,
 
 static struct ExprIr* visit_deref_expr(struct RegallocVisitor* visitor,
                                        struct DerefExprIr* ir) {
-    visitor_visit_expr(as_visitor(visitor), ir_deref_expr_operand(ir));
+    visitor_visit_deref_expr(as_visitor(visitor), ir);
     release_register(visitor);
     strtable_id reg_id =
         acquire_register(visitor, ir_expr_type(ir_deref_expr_cast(ir)));

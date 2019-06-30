@@ -45,43 +45,6 @@ static struct ExprIr* visit_binop_expr(struct SimplifyVisitor* visitor,
     return new_ir;
 }
 
-static struct ExprIr* visit_subst_expr(struct SimplifyVisitor* visitor,
-                                       struct SubstExprIr* ir) {
-    struct ExprIr* addr = ir_subst_expr_addr(ir);
-    struct ExprIr* new_addr = visitor_visit_expr(as_visitor(visitor), addr);
-    if (new_addr) {
-        ir_subst_expr_set_addr(ir, new_addr);
-    }
-
-    struct ExprIr* value = ir_subst_expr_value(ir);
-    struct ExprIr* new_value = visitor_visit_expr(as_visitor(visitor), value);
-    if (new_value) {
-        ir_subst_expr_set_value(ir, new_value);
-    }
-
-    return ir_subst_expr_cast(ir);
-}
-
-static struct ExprIr* visit_member_expr(struct SimplifyVisitor* visitor,
-                                        struct MemberExprIr* ir) {
-    struct ExprIr* base = ir_member_expr_base(ir);
-    struct ExprIr* new_base = visitor_visit_expr(as_visitor(visitor), base);
-    if (new_base) {
-        ir_member_expr_set_base(ir, new_base);
-    }
-    return ir_member_expr_cast(ir);
-}
-
-static struct ExprIr* visit_deref_expr(struct SimplifyVisitor* visitor,
-                                       struct DerefExprIr* ir) {
-    struct ExprIr* new_operand =
-        visitor_visit_expr(as_visitor(visitor), ir_deref_expr_operand(ir));
-    if (new_operand) {
-        ir_deref_expr_set_operand(ir, new_operand);
-    }
-    return ir_deref_expr_cast(ir);
-}
-
 static struct ExprIr* visit_addrof_expr(struct SimplifyVisitor* visitor,
                                         struct AddrofExprIr* ir) {
     struct DerefExprIr* deref = ir_expr_as_deref(ir_addrof_expr_operand(ir));
@@ -138,9 +101,6 @@ struct SimplifyVisitor* new_simplify_visitor(struct Context* context) {
     visitor_initialize(as_visitor(visitor), context);
 
     register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr);
-    register_visitor(visitor->as_visitor, visit_subst_expr, visit_subst_expr);
-    register_visitor(visitor->as_visitor, visit_member_expr, visit_member_expr);
-    register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr);
     register_visitor(visitor->as_visitor, visit_addrof_expr, visit_addrof_expr);
     register_visitor(visitor->as_visitor, visit_cast_expr, visit_cast_expr);
 

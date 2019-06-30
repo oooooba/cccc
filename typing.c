@@ -113,10 +113,9 @@ static struct ExprIr* visit_var_expr(struct TypingVisitor* visitor,
 
 static struct ExprIr* visit_subst_expr(struct TypingVisitor* visitor,
                                        struct SubstExprIr* ir) {
+    visitor_visit_subst_expr(as_visitor(visitor), ir);
     struct ExprIr* value = ir_subst_expr_value(ir);
-    value = visitor_visit_expr(as_visitor(visitor), value);
     struct ExprIr* addr = ir_subst_expr_addr(ir);
-    addr = visitor_visit_expr(as_visitor(visitor), addr);
 
     struct TypeIr* value_type = ir_expr_type(value);
     struct TypeIr* loc_type =
@@ -136,11 +135,10 @@ static struct ExprIr* visit_subst_expr(struct TypingVisitor* visitor,
 
 static struct ExprIr* visit_member_expr(struct TypingVisitor* visitor,
                                         struct MemberExprIr* ir) {
-    struct ExprIr* base = ir_member_expr_base(ir);
-    base = visitor_visit_expr(as_visitor(visitor), base);
-    ir_member_expr_set_base(ir, base);
+    visitor_visit_member_expr(as_visitor(visitor), ir);
 
-    struct PointerTypeIr* ptr_struct_type = type_as_pointer(ir_expr_type(base));
+    struct PointerTypeIr* ptr_struct_type =
+        type_as_pointer(ir_expr_type(ir_member_expr_base(ir)));
     assert(ptr_struct_type);
 
     struct StructTypeIr* struct_type =
@@ -160,10 +158,9 @@ static struct ExprIr* visit_member_expr(struct TypingVisitor* visitor,
 
 static struct ExprIr* visit_deref_expr(struct TypingVisitor* visitor,
                                        struct DerefExprIr* ir) {
-    struct ExprIr* operand = ir_deref_expr_operand(ir);
-    operand = visitor_visit_expr(as_visitor(visitor), operand);
-    ir_deref_expr_set_operand(ir, operand);
-    struct PointerTypeIr* operand_type = type_as_pointer(ir_expr_type(operand));
+    visitor_visit_deref_expr(as_visitor(visitor), ir);
+    struct PointerTypeIr* operand_type =
+        type_as_pointer(ir_expr_type(ir_deref_expr_operand(ir)));
     assert(operand_type);
     ir_expr_set_type(ir_deref_expr_cast(ir),
                      type_pointer_elem_type(operand_type));

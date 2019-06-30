@@ -102,10 +102,9 @@ static struct ExprIr* visit_var_expr(struct DumpVisitor* visitor,
 
 static struct ExprIr* visit_subst_expr(struct DumpVisitor* visitor,
                                        struct SubstExprIr* ir) {
+    visitor_visit_subst_expr(as_visitor(visitor), ir);
     struct ExprIr* value = ir_subst_expr_value(ir);
-    visitor_visit_expr(as_visitor(visitor), value);
     struct ExprIr* addr = ir_subst_expr_addr(ir);
-    visitor_visit_expr(as_visitor(visitor), addr);
     fprintf(visitor->stream, "v%p = subst v%p, v%p :: ", ir, addr, value);
     context_dump_type(ctx(visitor), visitor->stream,
                       ir_expr_type(ir_subst_expr_cast(ir)));
@@ -115,8 +114,8 @@ static struct ExprIr* visit_subst_expr(struct DumpVisitor* visitor,
 
 static struct ExprIr* visit_member_expr(struct DumpVisitor* visitor,
                                         struct MemberExprIr* ir) {
+    visitor_visit_member_expr(as_visitor(visitor), ir);
     struct ExprIr* base = ir_member_expr_base(ir);
-    visitor_visit_expr(as_visitor(visitor), base);
     strtable_id member_index = ir_member_expr_name_index(ir);
     const char* member_name =
         strtable_at(&ctx(visitor)->strtable, member_index);
@@ -130,8 +129,8 @@ static struct ExprIr* visit_member_expr(struct DumpVisitor* visitor,
 
 static struct ExprIr* visit_deref_expr(struct DumpVisitor* visitor,
                                        struct DerefExprIr* ir) {
+    visitor_visit_deref_expr(as_visitor(visitor), ir);
     struct ExprIr* operand = ir_deref_expr_operand(ir);
-    visitor_visit_expr(as_visitor(visitor), operand);
     fprintf(visitor->stream, "v%p = deref v%p :: ", ir, operand);
     context_dump_type(ctx(visitor), visitor->stream,
                       ir_expr_type(ir_deref_expr_cast(ir)));

@@ -145,10 +145,9 @@ static struct ExprIr* visit_var_expr(struct CodegenVisitor* visitor,
 
 static struct ExprIr* visit_member_expr(struct CodegenVisitor* visitor,
                                         struct MemberExprIr* ir) {
-    struct ExprIr* base = ir_member_expr_base(ir);
-    visitor_visit_expr(as_visitor(visitor), base);
+    visitor_visit_member_expr(as_visitor(visitor), ir);
 
-    strtable_id base_reg_id = ir_expr_reg_id(base);
+    strtable_id base_reg_id = ir_expr_reg_id(ir_member_expr_base(ir));
     strtable_id result_reg_id = ir_expr_reg_id(ir_member_expr_cast(ir));
     assert(base_reg_id == result_reg_id);
 
@@ -161,13 +160,10 @@ static struct ExprIr* visit_member_expr(struct CodegenVisitor* visitor,
 
 static struct ExprIr* visit_subst_expr(struct CodegenVisitor* visitor,
                                        struct SubstExprIr* ir) {
-    struct ExprIr* value = ir_subst_expr_value(ir);
-    visitor_visit_expr(as_visitor(visitor), value);
-    struct ExprIr* addr = ir_subst_expr_addr(ir);
-    visitor_visit_expr(as_visitor(visitor), addr);
+    visitor_visit_subst_expr(as_visitor(visitor), ir);
 
-    strtable_id value_reg_id = ir_expr_reg_id(value);
-    strtable_id addr_reg_id = ir_expr_reg_id(addr);
+    strtable_id value_reg_id = ir_expr_reg_id(ir_subst_expr_value(ir));
+    strtable_id addr_reg_id = ir_expr_reg_id(ir_subst_expr_addr(ir));
     assert(ir_expr_reg_id(ir_subst_expr_cast(ir)) == value_reg_id);
 
     const char* value_reg = register_name(visitor, value_reg_id);
@@ -179,10 +175,9 @@ static struct ExprIr* visit_subst_expr(struct CodegenVisitor* visitor,
 
 static struct ExprIr* visit_deref_expr(struct CodegenVisitor* visitor,
                                        struct DerefExprIr* ir) {
-    struct ExprIr* operand = ir_deref_expr_operand(ir);
-    visitor_visit_expr(as_visitor(visitor), operand);
+    visitor_visit_deref_expr(as_visitor(visitor), ir);
 
-    strtable_id operand_reg_id = ir_expr_reg_id(operand);
+    strtable_id operand_reg_id = ir_expr_reg_id(ir_deref_expr_operand(ir));
     strtable_id result_reg_id = ir_expr_reg_id(ir_deref_expr_cast(ir));
 
     const char* operand_reg = register_name(visitor, operand_reg_id);

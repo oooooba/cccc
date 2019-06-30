@@ -128,6 +128,32 @@ struct ExprIr* visitor_visit_call_expr(struct Visitor* visitor,
     return ir_call_expr_cast(ir);
 }
 
+struct ExprIr* visitor_visit_subst_expr(struct Visitor* visitor,
+                                        struct SubstExprIr* ir) {
+    struct ExprIr* value = visitor_visit_expr(visitor, ir_subst_expr_value(ir));
+    ir_subst_expr_set_value(ir, value);
+
+    struct ExprIr* addr = visitor_visit_expr(visitor, ir_subst_expr_addr(ir));
+    ir_subst_expr_set_addr(ir, addr);
+
+    return ir_subst_expr_cast(ir);
+}
+
+struct ExprIr* visitor_visit_member_expr(struct Visitor* visitor,
+                                         struct MemberExprIr* ir) {
+    struct ExprIr* base = visitor_visit_expr(visitor, ir_member_expr_base(ir));
+    ir_member_expr_set_base(ir, base);
+    return ir_member_expr_cast(ir);
+}
+
+struct ExprIr* visitor_visit_deref_expr(struct Visitor* visitor,
+                                        struct DerefExprIr* ir) {
+    struct ExprIr* operand =
+        visitor_visit_expr(visitor, ir_deref_expr_operand(ir));
+    ir_deref_expr_set_operand(ir, operand);
+    return ir_deref_expr_cast(ir);
+}
+
 struct ExprIr* visitor_visit_var_expr(struct Visitor* visitor,
                                       struct VarExprIr* ir) {
     (void)visitor;
@@ -188,9 +214,9 @@ void visitor_initialize(struct Visitor* visitor, struct Context* context) {
     register_visitor(*visitor, visit_binop_expr, visitor_visit_binop_expr);
     register_visitor(*visitor, visit_call_expr, visitor_visit_call_expr);
     register_visitor(*visitor, visit_var_expr, visitor_visit_var_expr);
-    register_visitor(*visitor, visit_subst_expr, NULL);
-    register_visitor(*visitor, visit_member_expr, NULL);
-    register_visitor(*visitor, visit_deref_expr, NULL);
+    register_visitor(*visitor, visit_subst_expr, visitor_visit_subst_expr);
+    register_visitor(*visitor, visit_member_expr, visitor_visit_member_expr);
+    register_visitor(*visitor, visit_deref_expr, visitor_visit_deref_expr);
     register_visitor(*visitor, visit_addrof_expr, NULL);
     register_visitor(*visitor, visit_cast_expr, NULL);
 
