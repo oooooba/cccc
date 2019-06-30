@@ -665,6 +665,10 @@ struct PopStmtIr* ir_stmt_as_pop(struct StmtIr* ir) {
     return ir->tag == StmtIrTag_Pop ? (struct PopStmtIr*)ir : NULL;
 }
 
+struct DeclStmtIr* ir_stmt_as_decl(struct StmtIr* ir) {
+    return ir->tag == StmtIrTag_Decl ? (struct DeclStmtIr*)ir : NULL;
+}
+
 struct ExprStmtIr {
     struct StmtIr super;
     struct ExprIr* expr;
@@ -840,3 +844,27 @@ struct StmtIr* ir_pop_stmt_super(struct PopStmtIr* ir) {
 }
 
 strtable_id ir_pop_stmt_reg_id(struct PopStmtIr* ir) { return ir->reg_id; }
+
+struct DeclStmtIr {
+    struct StmtIr super;
+    strtable_id var_id;
+    struct TypeIr* type;
+};
+
+struct DeclStmtIr* ir_new_decl_stmt(strtable_id var_id, struct TypeIr* type) {
+    struct DeclStmtIr* ir = malloc(sizeof(struct DeclStmtIr));
+    initialize_stmt(ir_decl_stmt_super(ir), StmtIrTag_Decl);
+    ir->var_id = var_id;
+    ir->type = type;
+    return ir;
+}
+
+struct StmtIr* ir_decl_stmt_super(struct DeclStmtIr* ir) {
+    return &ir->super;
+}
+
+strtable_id ir_decl_stmt_var_id(struct DeclStmtIr* ir) { return ir->var_id; }
+
+struct TypeIr* ir_decl_stmt_type(struct DeclStmtIr* ir) {
+    return ir->type;
+}

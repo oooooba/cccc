@@ -25,12 +25,13 @@ struct AddrofExprIr;
 struct CastExprIr;
 
 struct StmtIr;
-struct ExprStmt;
-struct BlockStmt;
-struct IfStmt;
-struct ReturnStmt;
-struct PushStmt;
-struct PopStmt;
+struct ExprStmtIr;
+struct BlockStmtIr;
+struct IfStmtIr;
+struct ReturnStmtIr;
+struct PushStmtIr;
+struct PopStmtIr;
+struct DeclStmtIr;
 
 enum IrTag {
     IrTag_Expr,
@@ -58,6 +59,7 @@ enum StmtIrTag {
     StmtIrTag_Return,
     StmtIrTag_Push,
     StmtIrTag_Pop,
+    StmtIrTag_Decl,
 };
 
 enum ConstExprIrTag {
@@ -237,5 +239,10 @@ strtable_id ir_push_stmt_reg_id(struct PushStmtIr* ir);
 struct PopStmtIr* ir_new_pop_stmt(strtable_id reg_id);
 struct StmtIr* ir_pop_stmt_super(struct PopStmtIr* ir);
 strtable_id ir_pop_stmt_reg_id(struct PopStmtIr* ir);
+
+struct DeclStmtIr* ir_new_decl_stmt(strtable_id var_id, struct TypeIr* type);
+struct StmtIr* ir_decl_stmt_super(struct DeclStmtIr* ir);
+strtable_id ir_decl_stmt_var_id(struct DeclStmtIr* ir);
+struct TypeIr* ir_decl_stmt_type(struct DeclStmtIr* ir);
 
 #endif
