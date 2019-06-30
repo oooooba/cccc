@@ -60,8 +60,7 @@ static struct ExprIr* visit_const_expr(struct RegallocVisitor* visitor,
 
 static struct ExprIr* visit_binop_expr(struct RegallocVisitor* visitor,
                                        struct BinopExprIr* ir) {
-    visitor_visit_expr(as_visitor(visitor), ir_binop_expr_lhs(ir));
-    visitor_visit_expr(as_visitor(visitor), ir_binop_expr_rhs(ir));
+    visitor_visit_binop_expr(as_visitor(visitor), ir);
     release_register(visitor);
     release_register(visitor);
     strtable_id reg_id =

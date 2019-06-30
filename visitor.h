@@ -58,6 +58,11 @@ struct StmtIr* visitor_visit_stmt(struct Visitor* visitor, struct StmtIr* ir);
 struct FunctionIr* visitor_visit_function(struct Visitor* visitor,
                                           struct FunctionIr* ir);
 
+struct ExprIr* visitor_visit_const_expr(struct Visitor* visitor,
+                                        struct ConstExprIr* ir);
+struct ExprIr* visitor_visit_binop_expr(struct Visitor* visitor,
+                                        struct BinopExprIr* ir);
+
 struct StmtIr* visitor_visit_expr_stmt(struct Visitor* visitor,
                                        struct ExprStmtIr* ir);
 struct StmtIr* visitor_visit_block_stmt(struct Visitor* visitor,

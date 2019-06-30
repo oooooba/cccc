@@ -25,10 +25,9 @@ static struct ExprIr* visit_const_expr(struct TypingVisitor* visitor,
 
 static struct ExprIr* visit_binop_expr(struct TypingVisitor* visitor,
                                        struct BinopExprIr* ir) {
+    visitor_visit_binop_expr(as_visitor(visitor), ir);
     struct ExprIr* lhs = ir_binop_expr_lhs(ir);
-    lhs = visitor_visit_expr(as_visitor(visitor), lhs);
     struct ExprIr* rhs = ir_binop_expr_rhs(ir);
-    rhs = visitor_visit_expr(as_visitor(visitor), rhs);
 
     struct TypeIr* lhs_type = ir_expr_type(lhs);
     struct TypeIr* rhs_type = ir_expr_type(rhs);

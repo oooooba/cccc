@@ -14,32 +14,13 @@ static struct Visitor* as_visitor(struct SimplifyVisitor* visitor) {
     return &visitor->as_visitor;
 }
 
-static struct ExprIr* visit_const_expr(struct SimplifyVisitor* visitor,
-                                       struct ConstExprIr* ir) {
-    (void)visitor;
-    return ir_const_expr_cast(ir);
-}
-
 static struct ExprIr* visit_binop_expr(struct SimplifyVisitor* visitor,
                                        struct BinopExprIr* ir) {
-    struct ExprIr* lhs = ir_binop_expr_lhs(ir);
-    struct ExprIr* new_lhs = visitor_visit_expr(as_visitor(visitor), lhs);
-    if (new_lhs) {
-        ir_binop_expr_set_lhs(ir, new_lhs);
-        lhs = new_lhs;
-    }
+    visitor_visit_binop_expr(as_visitor(visitor), ir);
 
-    struct ExprIr* rhs = ir_binop_expr_rhs(ir);
-    struct ExprIr* new_rhs = visitor_visit_expr(as_visitor(visitor), rhs);
-    if (new_rhs) {
-        ir_binop_expr_set_rhs(ir, new_rhs);
-        rhs = new_rhs;
-    }
-
-    struct ConstExprIr* lhs_expr = ir_expr_as_const(lhs);
-    if (!lhs_expr) return ir_const_expr_cast(lhs_expr);
-    struct ConstExprIr* rhs_expr = ir_expr_as_const(rhs);
-    if (!rhs_expr) return ir_const_expr_cast(rhs_expr);
+    struct ConstExprIr* lhs_expr = ir_expr_as_const(ir_binop_expr_lhs(ir));
+    struct ConstExprIr* rhs_expr = ir_expr_as_const(ir_binop_expr_rhs(ir));
+    if (!(lhs_expr && rhs_expr)) return ir_binop_expr_cast(ir);
 
     intptr_t lhs_const = ir_const_expr_integer_value(lhs_expr);
     intptr_t rhs_const = ir_const_expr_integer_value(rhs_expr);
@@ -186,7 +167,6 @@ struct SimplifyVisitor* new_simplify_visitor(struct Context* context) {
     struct SimplifyVisitor* visitor = malloc(sizeof(struct SimplifyVisitor));
     visitor_initialize(as_visitor(visitor), context);
 
-    register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr);
     register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr);
     register_visitor(visitor->as_visitor, visit_call_expr, visit_call_expr);
     register_visitor(visitor->as_visitor, visit_var_expr, visit_var_expr);

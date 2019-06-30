@@ -87,6 +87,23 @@ struct FunctionIr* visitor_visit_function(struct Visitor* visitor,
     return visitor->visit_function(visitor, ir);
 }
 
+struct ExprIr* visitor_visit_const_expr(struct Visitor* visitor,
+                                        struct ConstExprIr* ir) {
+    (void)visitor;
+    return ir_const_expr_cast(ir);
+}
+
+struct ExprIr* visitor_visit_binop_expr(struct Visitor* visitor,
+                                        struct BinopExprIr* ir) {
+    struct ExprIr* lhs = visitor_visit_expr(visitor, ir_binop_expr_lhs(ir));
+    ir_binop_expr_set_lhs(ir, lhs);
+
+    struct ExprIr* rhs = visitor_visit_expr(visitor, ir_binop_expr_rhs(ir));
+    ir_binop_expr_set_rhs(ir, rhs);
+
+    return ir_binop_expr_cast(ir);
+}
+
 struct StmtIr* visitor_visit_expr_stmt(struct Visitor* visitor,
                                        struct ExprStmtIr* ir) {
     struct ExprIr* expr = visitor_visit_expr(visitor, ir_expr_stmt_expr(ir));
@@ -136,8 +153,8 @@ struct StmtIr* visitor_visit_return_stmt(struct Visitor* visitor,
 void visitor_initialize(struct Visitor* visitor, struct Context* context) {
     visitor->context = context;
 
-    register_visitor(*visitor, visit_const_expr, NULL);
-    register_visitor(*visitor, visit_binop_expr, NULL);
+    register_visitor(*visitor, visit_const_expr, visitor_visit_const_expr);
+    register_visitor(*visitor, visit_binop_expr, visitor_visit_binop_expr);
     register_visitor(*visitor, visit_call_expr, NULL);
     register_visitor(*visitor, visit_var_expr, NULL);
     register_visitor(*visitor, visit_unop_expr, NULL);

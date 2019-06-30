@@ -32,10 +32,9 @@ static struct ExprIr* visit_const_expr(struct DumpVisitor* visitor,
 
 static struct ExprIr* visit_binop_expr(struct DumpVisitor* visitor,
                                        struct BinopExprIr* ir) {
+    visitor_visit_binop_expr(as_visitor(visitor), ir);
     struct ExprIr* lhs = ir_binop_expr_lhs(ir);
     struct ExprIr* rhs = ir_binop_expr_rhs(ir);
-    visitor_visit_expr(as_visitor(visitor), lhs);
-    visitor_visit_expr(as_visitor(visitor), rhs);
     const char* op;
     switch (ir_binop_expr_op(ir)) {
         case BinopExprIrTag_Add:
