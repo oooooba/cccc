@@ -181,7 +181,7 @@ static struct ExprIr* visit_deref_expr(struct RegallocVisitor* visitor,
 
 static struct ExprIr* visit_cast_expr(struct RegallocVisitor* visitor,
                                       struct CastExprIr* ir) {
-    visitor_visit_expr(as_visitor(visitor), ir_cast_expr_operand(ir));
+    visitor_visit_cast_expr(as_visitor(visitor), ir);
     release_register(visitor);
     strtable_id reg_id =
         acquire_register(visitor, ir_expr_type(ir_cast_expr_cast(ir)));
@@ -235,6 +235,7 @@ struct RegallocVisitor* new_regalloc_visitor(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_subst_expr, visit_subst_expr);
     register_visitor(visitor->as_visitor, visit_member_expr, visit_member_expr);
     register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr);
+    register_visitor(visitor->as_visitor, visit_addrof_expr, NULL);
     register_visitor(visitor->as_visitor, visit_cast_expr, visit_cast_expr);
 
     register_visitor(visitor->as_visitor, visit_expr_stmt, visit_expr_stmt);

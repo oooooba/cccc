@@ -128,6 +128,12 @@ struct ExprIr* visitor_visit_call_expr(struct Visitor* visitor,
     return ir_call_expr_cast(ir);
 }
 
+struct ExprIr* visitor_visit_var_expr(struct Visitor* visitor,
+                                      struct VarExprIr* ir) {
+    (void)visitor;
+    return ir_var_expr_cast(ir);
+}
+
 struct ExprIr* visitor_visit_subst_expr(struct Visitor* visitor,
                                         struct SubstExprIr* ir) {
     struct ExprIr* value = visitor_visit_expr(visitor, ir_subst_expr_value(ir));
@@ -154,10 +160,20 @@ struct ExprIr* visitor_visit_deref_expr(struct Visitor* visitor,
     return ir_deref_expr_cast(ir);
 }
 
-struct ExprIr* visitor_visit_var_expr(struct Visitor* visitor,
-                                      struct VarExprIr* ir) {
-    (void)visitor;
-    return ir_var_expr_cast(ir);
+struct ExprIr* visitor_visit_addrof_expr(struct Visitor* visitor,
+                                         struct AddrofExprIr* ir) {
+    struct ExprIr* operand =
+        visitor_visit_expr(visitor, ir_addrof_expr_operand(ir));
+    ir_addrof_expr_set_operand(ir, operand);
+    return ir_addrof_expr_cast(ir);
+}
+
+struct ExprIr* visitor_visit_cast_expr(struct Visitor* visitor,
+                                       struct CastExprIr* ir) {
+    struct ExprIr* operand =
+        visitor_visit_expr(visitor, ir_cast_expr_operand(ir));
+    ir_cast_expr_set_operand(ir, operand);
+    return ir_cast_expr_cast(ir);
 }
 
 struct StmtIr* visitor_visit_expr_stmt(struct Visitor* visitor,
@@ -217,8 +233,8 @@ void visitor_initialize(struct Visitor* visitor, struct Context* context) {
     register_visitor(*visitor, visit_subst_expr, visitor_visit_subst_expr);
     register_visitor(*visitor, visit_member_expr, visitor_visit_member_expr);
     register_visitor(*visitor, visit_deref_expr, visitor_visit_deref_expr);
-    register_visitor(*visitor, visit_addrof_expr, NULL);
-    register_visitor(*visitor, visit_cast_expr, NULL);
+    register_visitor(*visitor, visit_addrof_expr, visitor_visit_addrof_expr);
+    register_visitor(*visitor, visit_cast_expr, visitor_visit_cast_expr);
 
     register_visitor(*visitor, visit_stmt_pre, visitor_visit_stmt_pre);
 

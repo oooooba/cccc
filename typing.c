@@ -169,21 +169,12 @@ static struct ExprIr* visit_deref_expr(struct TypingVisitor* visitor,
 
 static struct ExprIr* visit_addrof_expr(struct TypingVisitor* visitor,
                                         struct AddrofExprIr* ir) {
+    visitor_visit_addrof_expr(as_visitor(visitor), ir);
     struct ExprIr* operand = ir_addrof_expr_operand(ir);
-    operand = visitor_visit_expr(as_visitor(visitor), operand);
-    ir_addrof_expr_set_operand(ir, operand);
     ir_expr_set_type(
         ir_addrof_expr_cast(ir),
         type_pointer_super(type_new_pointer(ir_expr_type(operand))));
     return ir_addrof_expr_cast(ir);
-}
-
-static struct ExprIr* visit_cast_expr(struct TypingVisitor* visitor,
-                                      struct CastExprIr* ir) {
-    struct ExprIr* operand = ir_cast_expr_operand(ir);
-    operand = visitor_visit_expr(as_visitor(visitor), operand);
-    ir_cast_expr_set_operand(ir, operand);
-    return ir_cast_expr_cast(ir);
 }
 
 static struct StmtIr* visit_if_stmt(struct TypingVisitor* visitor,
@@ -244,7 +235,6 @@ struct TypingVisitor* new_typing_visitor(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_member_expr, visit_member_expr);
     register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr);
     register_visitor(visitor->as_visitor, visit_addrof_expr, visit_addrof_expr);
-    register_visitor(visitor->as_visitor, visit_cast_expr, visit_cast_expr);
 
     register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);
     register_visitor(visitor->as_visitor, visit_return_stmt, visit_return_stmt);

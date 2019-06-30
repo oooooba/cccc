@@ -189,8 +189,8 @@ static struct ExprIr* visit_deref_expr(struct CodegenVisitor* visitor,
 
 static struct ExprIr* visit_cast_expr(struct CodegenVisitor* visitor,
                                       struct CastExprIr* ir) {
+    visitor_visit_cast_expr(as_visitor(visitor), ir);
     struct ExprIr* operand = ir_cast_expr_operand(ir);
-    visitor_visit_expr(as_visitor(visitor), operand);
 
     strtable_id operand_reg_id = ir_expr_reg_id(operand);
     strtable_id result_reg_id = ir_expr_reg_id(ir_cast_expr_cast(ir));
@@ -290,6 +290,7 @@ struct CodegenVisitor* new_codegen_visitor(struct Context* context,
     register_visitor(visitor->as_visitor, visit_subst_expr, visit_subst_expr);
     register_visitor(visitor->as_visitor, visit_member_expr, visit_member_expr);
     register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr);
+    register_visitor(visitor->as_visitor, visit_addrof_expr, NULL);
     register_visitor(visitor->as_visitor, visit_cast_expr, visit_cast_expr);
 
     register_visitor(visitor->as_visitor, visit_stmt_pre, visit_stmt_pre);

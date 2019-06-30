@@ -140,8 +140,8 @@ static struct ExprIr* visit_deref_expr(struct DumpVisitor* visitor,
 
 static struct ExprIr* visit_addrof_expr(struct DumpVisitor* visitor,
                                         struct AddrofExprIr* ir) {
+    visitor_visit_addrof_expr(as_visitor(visitor), ir);
     struct ExprIr* operand = ir_addrof_expr_operand(ir);
-    visitor_visit_expr(as_visitor(visitor), operand);
     fprintf(visitor->stream, "v%p = addrof <v%p> :: ", ir, operand);
     context_dump_type(ctx(visitor), visitor->stream,
                       ir_expr_type(ir_addrof_expr_cast(ir)));
@@ -151,8 +151,8 @@ static struct ExprIr* visit_addrof_expr(struct DumpVisitor* visitor,
 
 static struct ExprIr* visit_cast_expr(struct DumpVisitor* visitor,
                                       struct CastExprIr* ir) {
+    visitor_visit_cast_expr(as_visitor(visitor), ir);
     struct ExprIr* operand = ir_cast_expr_operand(ir);
-    visitor_visit_expr(as_visitor(visitor), operand);
     fprintf(visitor->stream, "v%p = cast v%p :: ", ir, operand);
     context_dump_type(ctx(visitor), visitor->stream,
                       ir_expr_type(ir_cast_expr_cast(ir)));

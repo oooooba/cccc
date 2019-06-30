@@ -74,6 +74,10 @@ struct ExprIr* visitor_visit_member_expr(struct Visitor* visitor,
                                          struct MemberExprIr* ir);
 struct ExprIr* visitor_visit_deref_expr(struct Visitor* visitor,
                                         struct DerefExprIr* ir);
+struct ExprIr* visitor_visit_addrof_expr(struct Visitor* visitor,
+                                         struct AddrofExprIr* ir);
+struct ExprIr* visitor_visit_cast_expr(struct Visitor* visitor,
+                                       struct CastExprIr* ir);
 
 struct StmtIr* visitor_visit_expr_stmt(struct Visitor* visitor,
                                        struct ExprStmtIr* ir);

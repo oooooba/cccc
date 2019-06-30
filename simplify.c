@@ -50,19 +50,7 @@ static struct ExprIr* visit_addrof_expr(struct SimplifyVisitor* visitor,
     struct DerefExprIr* deref = ir_expr_as_deref(ir_addrof_expr_operand(ir));
     assert(deref);
     struct ExprIr* operand = ir_deref_expr_operand(deref);
-    struct ExprIr* new_operand =
-        visitor_visit_expr(as_visitor(visitor), operand);
-    return new_operand ? new_operand : operand;
-}
-
-static struct ExprIr* visit_cast_expr(struct SimplifyVisitor* visitor,
-                                      struct CastExprIr* ir) {
-    struct ExprIr* new_operand =
-        visitor_visit_expr(as_visitor(visitor), ir_cast_expr_operand(ir));
-    if (new_operand) {
-        ir_cast_expr_set_operand(ir, new_operand);
-    }
-    return ir_cast_expr_cast(ir);
+    return visitor_visit_expr(as_visitor(visitor), operand);
 }
 
 static struct StmtIr* visit_if_stmt(struct SimplifyVisitor* visitor,
@@ -102,7 +90,6 @@ struct SimplifyVisitor* new_simplify_visitor(struct Context* context) {
 
     register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr);
     register_visitor(visitor->as_visitor, visit_addrof_expr, visit_addrof_expr);
-    register_visitor(visitor->as_visitor, visit_cast_expr, visit_cast_expr);
 
     register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);
     register_visitor(visitor->as_visitor, visit_return_stmt, visit_return_stmt);
