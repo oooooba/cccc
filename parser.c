@@ -199,41 +199,68 @@ static struct Declaration2* new_declaration(
     return declaration;
 }
 
-static void process_declaration(struct Declaration2* declaration,
-                                struct Context* context,
-                                struct BlockStmtIr* block, struct Env* env) {
+static struct List* normalize_declaration(struct Declaration2* declaration) {
+    struct List* decl_list = malloc(sizeof(struct List));
+    list_initialize(decl_list);
+
+    if (list_size(declaration->init_declarator_list) == 1) {
+        struct ListItem* list_item = malloc(sizeof(struct ListItem));
+        list_item->item = declaration;
+        list_insert_at_end(decl_list, list_from(list_item));
+        return decl_list;
+    }
+
+    while (list_size(declaration->init_declarator_list)) {
+        struct ListHeader* it = list_begin(declaration->init_declarator_list);
+        list_erase_at_begin(declaration->init_declarator_list);
+
+        struct List* list = malloc(sizeof(struct List));
+        list_initialize(list);
+        list_insert_at_begin(list, it);
+
+        struct Declaration2* decl =
+            new_declaration(declaration->declaration_specifiers, list);
+        struct ListItem* list_item = malloc(sizeof(struct ListItem));
+        list_item->item = decl;
+        list_insert_at_end(decl_list, list_from(list_item));
+    }
+
+    return decl_list;
+}
+
+static struct VarExprIr* declare_variable(struct Declaration2* declaration,
+                                          struct Context* context,
+                                          struct BlockStmtIr* block,
+                                          struct Env* env) {
     (void)context;
     assert(block);
     assert(declaration->declaration_specifiers->tag ==
            DeclarationSpecifierTag_Type);
     struct TypeIr* base_type = declaration->declaration_specifiers->type;
 
-    for (struct ListHeader *it = list_begin(declaration->init_declarator_list),
-                           *eit = list_end(declaration->init_declarator_list);
-         it != eit; it = list_next(it)) {
-        struct InitDeclarator* init_declarator = (struct InitDeclarator*)it;
-        struct Declarator* declarator = init_declarator->declarator;
-        struct DirectDeclarator* direct_declarator =
-            declarator->direct_declarator;
-        assert(direct_declarator->tag == DirectDeclaratorTag_Identifier);
-        strtable_id name_index = direct_declarator->identifier;
+    struct InitDeclarator* init_declarator = (struct InitDeclarator*)list_cast(
+        list_begin(declaration->init_declarator_list));
+    struct Declarator* declarator = init_declarator->declarator;
+    struct DirectDeclarator* direct_declarator = declarator->direct_declarator;
+    assert(direct_declarator->tag == DirectDeclaratorTag_Identifier);
+    strtable_id name_index = direct_declarator->identifier;
 
-        assert(!env_find(env, name_index));
-        struct TypeIr* type =
-            declarator->has_pointer
-                ? type_pointer_super(type_new_pointer(base_type))
-                : base_type;
-        struct VarExprIr* var =
-            ir_block_stmt_allocate_variable(block, name_index, type);
-        env_insert(env, name_index, var);
+    assert(!env_find(env, name_index));
+    struct TypeIr* type = declarator->has_pointer
+                              ? type_pointer_super(type_new_pointer(base_type))
+                              : base_type;
+    struct VarExprIr* var =
+        ir_block_stmt_allocate_variable(block, name_index, type);
+    env_insert(env, name_index, var);
 
-        if (!init_declarator->assign_expression) continue;
-
+    if (init_declarator->assign_expression) {
         struct SubstExprIr* subst = ir_new_subst_expr(
             ir_var_expr_cast(var), init_declarator->assign_expression);
         struct ExprStmtIr* stmt = ir_new_expr_stmt(ir_subst_expr_cast(subst));
         ir_block_stmt_insert_at_end(block, ir_expr_stmt_super(stmt));
     }
+
+    return var;
 }
 
 /***** lexical elements *****/
@@ -738,7 +765,14 @@ static struct BlockStmtIr* parse_compound_statement(struct Parser* parser,
     while (!acceptable(parser, Token_RightCurry)) {
         struct Declaration2* declaration = parse_declaration2(parser);
         if (declaration) {
-            process_declaration(declaration, parser->context, block, env);
+            struct List* decl_list = normalize_declaration(declaration);
+            for (struct ListHeader *it = list_begin(decl_list),
+                                   *eit = list_end(decl_list);
+                 it != eit; it = list_next(it)) {
+                struct ListItem* list_item = (struct ListItem*)it;
+                struct Declaration2* decl = list_item->item;
+                declare_variable(decl, parser->context, block, env);
+            }
             continue;
         }
         struct StmtIr* stmt = parse_statement(parser);
