@@ -169,10 +169,6 @@ static struct Location* ir_new_location(struct Region* region,
     return loc;
 }
 
-static strtable_id ir_location_name_index(struct Location* loc) {
-    return loc->name_index;
-}
-
 static struct TypeIr* ir_location_type(struct Location* loc) {
     return loc->type;
 }
@@ -378,20 +374,49 @@ struct BlockStmtIr* ir_call_expr_post_expr_block(struct CallExprIr* ir) {
     return ir->post_expr_block;
 }
 
+enum VarExprTag {
+    VarExprTag_Invalid,
+    VarExprTag_Location,
+    VarExprTag_Function,
+};
+
 struct VarExprIr {
     struct ExprIr as_expr;
-    bool is_function;
+    strtable_id id;
+    enum VarExprTag tag;
     union {
         struct Location* location;
         struct FunctionIr* function;
     };
 };
 
-static struct VarExprIr* ir_new_var_expr(struct Location* location) {
+static struct VarExprIr* ir_new_var_expr_inner(strtable_id id) {
     struct VarExprIr* ir = malloc(sizeof(struct VarExprIr));
     initialize_expr(ir_var_expr_cast(ir), ExprIrTag_Var);
-    ir->is_function = false;
+    ir->id = id;
+    return ir;
+}
+
+struct VarExprIr* ir_new_var_expr(strtable_id id) {
+    struct VarExprIr* ir = ir_new_var_expr_inner(id);
+    ir->tag = VarExprTag_Invalid;
+    ir->location = NULL;
+    return ir;
+}
+
+static struct VarExprIr* ir_new_var_expr_from_location(
+    strtable_id id, struct Location* location) {
+    struct VarExprIr* ir = ir_new_var_expr_inner(id);
+    ir->tag = VarExprTag_Location;
     ir->location = location;
+    return ir;
+}
+
+struct VarExprIr* ir_new_var_expr_from_function(strtable_id id,
+                                                struct FunctionIr* function) {
+    struct VarExprIr* ir = ir_new_var_expr_inner(id);
+    ir->tag = VarExprTag_Function;
+    ir->function = function;
     return ir;
 }
 
@@ -400,43 +425,39 @@ struct ExprIr* ir_var_expr_cast(struct VarExprIr* ir) {
 }
 
 struct VarExprIr* ir_var_expr_clone(struct VarExprIr* ir) {
-    struct VarExprIr* new_ir = ir_new_var_expr(NULL);
-    new_ir->is_function = ir->is_function;
+    assert(ir->tag != VarExprTag_Invalid);
+    struct VarExprIr* new_ir = ir_new_var_expr_inner(ir->id);
+    new_ir->tag = ir->tag;
     new_ir->location = ir->location;
     return new_ir;
 }
 
-struct VarExprIr* ir_var_expr_from_function(struct FunctionIr* function) {
-    struct VarExprIr* new_ir = ir_new_var_expr(NULL);
-    new_ir->is_function = true;
-    new_ir->function = function;
-    return new_ir;
+bool ir_var_expr_is_function(struct VarExprIr* ir) {
+    return ir->tag == VarExprTag_Function;
 }
 
-bool ir_var_expr_is_function(struct VarExprIr* ir) { return ir->is_function; }
-
 struct FunctionIr* ir_var_expr_function(struct VarExprIr* ir) {
-    assert(ir->is_function);
+    assert(ir->tag == VarExprTag_Function);
     return ir->function;
 }
 
 size_t ir_var_expr_offset(struct VarExprIr* ir) {
-    assert(!ir->is_function);
+    assert(ir->tag == VarExprTag_Location);
     return ir_location_offset(ir->location);
 }
 
-strtable_id ir_var_expr_index(struct VarExprIr* ir) {
-    if (ir->is_function)
-        return ir_function_name_index(ir->function);
-    else
-        return ir_location_name_index(ir->location);
-}
+strtable_id ir_var_expr_index(struct VarExprIr* ir) { return ir->id; }
 
 struct TypeIr* ir_var_expr_type(struct VarExprIr* ir) {
-    if (ir->is_function)
-        return ir_function_type(ir->function);
-    else
-        return ir_location_type(ir->location);
+    switch (ir->tag) {
+        case VarExprTag_Location:
+            return ir_location_type(ir->location);
+        case VarExprTag_Function:
+            return ir_function_type(ir->function);
+        default:
+            assert(false);
+            return NULL;
+    }
 }
 
 struct UnopExprIr {
@@ -726,7 +747,7 @@ struct VarExprIr* ir_block_stmt_allocate_variable(struct BlockStmtIr* ir,
                                                   strtable_id name_index,
                                                   struct TypeIr* type) {
     struct Location* loc = ir_new_location(ir->region, name_index, type);
-    return ir_new_var_expr(loc);
+    return ir_new_var_expr_from_location(name_index, loc);
 }
 
 void ir_block_stmt_commit_region_status(struct BlockStmtIr* ir,

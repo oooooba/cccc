@@ -306,7 +306,8 @@ static struct ExprIr* parse_primary_expression(struct Parser* parser) {
                 struct FunctionIr* function =
                     context_find_function_declaration(parser->context, index);
                 assert(function);
-                struct VarExprIr* var = ir_var_expr_from_function(function);
+                struct VarExprIr* var =
+                    ir_new_var_expr_from_function(index, function);
                 return ir_var_expr_cast(var);
             }
         } break;
