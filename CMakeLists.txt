@@ -13,6 +13,7 @@ add_executable(cccc
     lexer.c
     list.c
     map.c
+    nameresolve.c
     parser.c
     regalloc.c
     strtable.c

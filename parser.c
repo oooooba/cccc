@@ -249,9 +249,12 @@ static struct VarExprIr* declare_variable(struct Declaration2* declaration,
     struct TypeIr* type = declarator->has_pointer
                               ? type_pointer_super(type_new_pointer(base_type))
                               : base_type;
-    struct VarExprIr* var =
-        ir_block_stmt_allocate_variable(block, name_index, type);
+
+    struct VarExprIr* var = ir_new_var_expr(name_index);
     env_insert(env, name_index, var);
+
+    struct DeclStmtIr* decl = ir_new_decl_stmt(name_index, type);
+    ir_block_stmt_insert_at_end(block, ir_decl_stmt_super(decl));
 
     if (init_declarator->assign_expression) {
         struct SubstExprIr* subst = ir_new_subst_expr(
@@ -298,7 +301,7 @@ static struct ExprIr* parse_primary_expression(struct Parser* parser) {
             struct VarExprIr* var = env_find(parser->current_env, index);
             if (var) {
                 // reference to memory location (variable)
-                var = ir_var_expr_clone(var);
+                struct VarExprIr* var = ir_new_var_expr(index);
                 struct DerefExprIr* deref_var =
                     ir_new_deref_expr(ir_var_expr_cast(var));
                 return ir_deref_expr_cast(deref_var);

@@ -424,12 +424,14 @@ struct ExprIr* ir_var_expr_cast(struct VarExprIr* ir) {
     return &ir->as_expr;
 }
 
-struct VarExprIr* ir_var_expr_clone(struct VarExprIr* ir) {
-    assert(ir->tag != VarExprTag_Invalid);
-    struct VarExprIr* new_ir = ir_new_var_expr_inner(ir->id);
-    new_ir->tag = ir->tag;
-    new_ir->location = ir->location;
-    return new_ir;
+void ir_var_expr_copy(struct VarExprIr* ir, struct VarExprIr* src) {
+    assert(src->tag != VarExprTag_Invalid);
+    ir->tag = src->tag;
+    ir->location = src->location;
+}
+
+bool ir_var_expr_is_invalid(struct VarExprIr* ir) {
+    return ir->tag == VarExprTag_Invalid;
 }
 
 bool ir_var_expr_is_function(struct VarExprIr* ir) {

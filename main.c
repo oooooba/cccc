@@ -11,6 +11,9 @@
 struct DumpVisitor;
 struct DumpVisitor* new_dump_visitor(struct Context* context, FILE* stream);
 
+struct NameresolveVisitor;
+struct NameresolveVisitor* new_nameresolve_visitor(struct Context* context);
+
 struct TypingVisitor;
 struct TypingVisitor* new_typing_visitor(struct Context* context);
 
@@ -45,6 +48,11 @@ int main(void) {
     fprintf(stderr, "[apply dump (1)]\n");
     struct DumpVisitor* dump_visitor = new_dump_visitor(&context, stderr);
     visitor_apply((struct Visitor*)dump_visitor);
+
+    fprintf(stderr, "[apply nameresolve]\n");
+    struct NameresolveVisitor* nameresolve_visitor =
+        new_nameresolve_visitor(&context);
+    visitor_apply((struct Visitor*)nameresolve_visitor);
 
     fprintf(stderr, "[apply typing]\n");
     struct TypingVisitor* typing_visitor = new_typing_visitor(&context);

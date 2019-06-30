@@ -144,7 +144,8 @@ struct VarExprIr* ir_new_var_expr(strtable_id id);
 struct VarExprIr* ir_new_var_expr_from_function(strtable_id id,
                                                 struct FunctionIr* function);
 struct ExprIr* ir_var_expr_cast(struct VarExprIr* ir);
-struct VarExprIr* ir_var_expr_clone(struct VarExprIr* ir);
+void ir_var_expr_copy(struct VarExprIr* ir, struct VarExprIr* src);
+bool ir_var_expr_is_invalid(struct VarExprIr* ir);
 bool ir_var_expr_is_function(struct VarExprIr* ir);
 size_t ir_var_expr_offset(struct VarExprIr* ir);
 strtable_id ir_var_expr_index(struct VarExprIr* ir);
