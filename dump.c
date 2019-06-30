@@ -196,6 +196,16 @@ static struct StmtIr* visit_return_stmt(struct DumpVisitor* visitor,
     return ir_return_stmt_super(ir);
 }
 
+static struct StmtIr* visit_decl_stmt(struct DumpVisitor* visitor,
+                                      struct DeclStmtIr* ir) {
+    const char* name =
+        strtable_at(&ctx(visitor)->strtable, ir_decl_stmt_var_id(ir));
+    fprintf(visitor->stream, "decl %s :: ", name);
+    context_dump_type(ctx(visitor), visitor->stream, ir_decl_stmt_type(ir));
+    fprintf(visitor->stream, "\n");
+    return ir_decl_stmt_super(ir);
+}
+
 static struct FunctionIr* visit_function2(struct DumpVisitor* visitor,
                                           struct FunctionIr* ir) {
     const char* name =
@@ -238,6 +248,7 @@ struct DumpVisitor* new_dump_visitor(struct Context* context, FILE* stream) {
     register_visitor(visitor->as_visitor, visit_block_stmt, visit_block_stmt);
     register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);
     register_visitor(visitor->as_visitor, visit_return_stmt, visit_return_stmt);
+    register_visitor(visitor->as_visitor, visit_decl_stmt, visit_decl_stmt);
 
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
 
