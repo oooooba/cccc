@@ -51,7 +51,6 @@ static struct Context* ctx(struct NameresolveVisitor* visitor) {
 
 static struct ExprIr* visit_var_expr(struct NameresolveVisitor* visitor,
                                      struct VarExprIr* ir) {
-    if (!ir_var_expr_is_invalid(ir)) return ir_var_expr_cast(ir);
     strtable_id id = ir_var_expr_index(ir);
     struct VarExprIr* src = env_find(visitor->current_env, id);
     assert(src);
