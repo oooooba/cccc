@@ -10,14 +10,12 @@
 struct Env {
     struct Map var_map;  // key: strtable_id, value: VarExprIr*
     struct Env* outer_env;
-    struct BlockStmtIr* block;
 };
 
-static struct Env* env_new(struct Env* outer_env, struct BlockStmtIr* block) {
+static struct Env* env_new(struct Env* outer_env) {
     struct Env* env = malloc(sizeof(struct Env));
     map_initialize(&env->var_map);
     env->outer_env = outer_env;
-    env->block = block;
     return env;
 }
 
@@ -64,7 +62,7 @@ static struct ExprIr* visit_var_expr(struct NameresolveVisitor* visitor,
 static struct StmtIr* visit_block_stmt(struct NameresolveVisitor* visitor,
                                        struct BlockStmtIr* ir) {
     struct Env* outer_env = visitor->current_env;
-    visitor->current_env = env_new(outer_env, ir);
+    visitor->current_env = env_new(outer_env);
     visitor_visit_block_stmt(as_visitor(visitor), ir);
     visitor->current_env = outer_env;
     return ir_block_stmt_super(ir);
@@ -73,11 +71,7 @@ static struct StmtIr* visit_block_stmt(struct NameresolveVisitor* visitor,
 static struct StmtIr* visit_decl_stmt(struct NameresolveVisitor* visitor,
                                       struct DeclStmtIr* ir) {
     strtable_id var_id = ir_decl_stmt_var_id(ir);
-    struct TypeIr* type = ir_decl_stmt_type(ir);
-    struct BlockStmtIr* block = visitor->current_env->block;
-    struct VarExprIr* var =
-        ir_block_stmt_allocate_variable(block, var_id, type);
-    ir_decl_stmt_set_var(ir, var);
+    struct VarExprIr* var = ir_decl_stmt_instantiate(ir);
     env_insert(visitor->current_env, var_id, var);
     return ir_decl_stmt_super(ir);
 }
@@ -91,7 +85,7 @@ static struct FunctionIr* visit_function(struct NameresolveVisitor* visitor,
 static struct Env* create_external_declaration_env(struct Context* context) {
     // ToDo: fix to handle declarations in correct order (e.g. forward
     // declaration)
-    struct Env* env = env_new(NULL, NULL);
+    struct Env* env = env_new(NULL);
     for (struct ListHeader *it = context_function_declaration_begin(context),
                            *eit = context_function_declaration_end(context);
          it != eit; it = list_next(it)) {

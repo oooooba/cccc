@@ -745,13 +745,6 @@ void ir_block_stmt_insert_at_end(struct BlockStmtIr* ir, struct StmtIr* stmt) {
     list_insert_at_end(&ir->statemetnts, list_from(list_item));
 }
 
-struct VarExprIr* ir_block_stmt_allocate_variable(struct BlockStmtIr* ir,
-                                                  strtable_id name_index,
-                                                  struct TypeIr* type) {
-    struct Location* loc = ir_new_location(ir->region, name_index, type);
-    return ir_new_var_expr_from_location(name_index, loc);
-}
-
 void ir_block_stmt_commit_region_status(struct BlockStmtIr* ir,
                                         size_t region_base) {
     size_t alignment = sizeof(void*);
@@ -872,14 +865,17 @@ struct DeclStmtIr {
     struct StmtIr super;
     strtable_id var_id;
     struct TypeIr* type;
-    struct VarExprIr* var;  // workaround, ToDo: fix
+    struct BlockStmtIr* block;
+    struct VarExprIr* var;
 };
 
-struct DeclStmtIr* ir_new_decl_stmt(strtable_id var_id, struct TypeIr* type) {
+struct DeclStmtIr* ir_new_decl_stmt(strtable_id var_id, struct TypeIr* type,
+                                    struct BlockStmtIr* block) {
     struct DeclStmtIr* ir = malloc(sizeof(struct DeclStmtIr));
     initialize_stmt(ir_decl_stmt_super(ir), StmtIrTag_Decl);
     ir->var_id = var_id;
     ir->type = type;
+    ir->block = block;
     ir->var = NULL;
     return ir;
 }
@@ -899,7 +895,10 @@ struct VarExprIr* ir_decl_stmt_var(struct DeclStmtIr* ir) {
     return ir->var;
 }
 
-void ir_decl_stmt_set_var(struct DeclStmtIr* ir, struct VarExprIr* var) {
-    assert(!ir->var);
+struct VarExprIr* ir_decl_stmt_instantiate(struct DeclStmtIr* ir) {
+    struct Location* loc =
+        ir_new_location(ir->block->region, ir->var_id, ir->type);
+    struct VarExprIr* var = ir_new_var_expr_from_location(ir->var_id, loc);
     ir->var = var;
+    return var;
 }

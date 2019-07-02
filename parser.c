@@ -253,7 +253,7 @@ static struct VarExprIr* declare_variable(struct Declaration2* declaration,
     struct VarExprIr* var = ir_new_var_expr(name_index);
     env_insert(env, name_index, var);
 
-    struct DeclStmtIr* decl = ir_new_decl_stmt(name_index, type);
+    struct DeclStmtIr* decl = ir_new_decl_stmt(name_index, type, block);
     ir_block_stmt_insert_at_end(block, ir_decl_stmt_super(decl));
 
     if (init_declarator->assign_expression) {
@@ -858,6 +858,7 @@ static struct FunctionIr* parse_function_definition_or_declaration(
 
     struct Env* env = env_new(parser->current_env);
     parser->current_env = env;
+    struct BlockStmtIr* body = ir_new_block_stmt();
 
     expect(parser, Token_LeftParen);
     struct List* param_decl_list = malloc(sizeof(struct List));
@@ -879,7 +880,7 @@ static struct FunctionIr* parse_function_definition_or_declaration(
             struct VarExprIr* var = ir_new_var_expr(name_index);
             env_insert(env, name_index, var);
             struct DeclStmtIr* decl =
-                ir_new_decl_stmt(name_index, param_decl->type);
+                ir_new_decl_stmt(name_index, param_decl->type, body);
 
             struct ListItem* param_item = malloc(sizeof(struct ListItem));
             param_item->item = decl;
@@ -922,7 +923,6 @@ static struct FunctionIr* parse_function_definition_or_declaration(
     }
 
     if (has_func_def) {
-        struct BlockStmtIr* body = ir_new_block_stmt();
         for (struct ListHeader *it = list_begin(param_decl_list),
                                *eit = list_end(param_decl_list);
              it != eit; it = list_next(it)) {

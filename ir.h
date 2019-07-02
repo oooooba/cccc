@@ -213,9 +213,6 @@ struct BlockStmtIr* ir_new_block_stmt(void);
 struct StmtIr* ir_block_stmt_super(struct BlockStmtIr* ir);
 struct List* ir_block_stmt_statements(struct BlockStmtIr* ir);
 void ir_block_stmt_insert_at_end(struct BlockStmtIr* ir, struct StmtIr* stmt);
-struct VarExprIr* ir_block_stmt_allocate_variable(struct BlockStmtIr* ir,
-                                                  strtable_id name_index,
-                                                  struct TypeIr* type);
 void ir_block_stmt_commit_region_status(struct BlockStmtIr* ir,
                                         size_t region_base);
 size_t ir_block_stmt_region_size(struct BlockStmtIr* ir);
@@ -244,11 +241,12 @@ struct PopStmtIr* ir_new_pop_stmt(strtable_id reg_id);
 struct StmtIr* ir_pop_stmt_super(struct PopStmtIr* ir);
 strtable_id ir_pop_stmt_reg_id(struct PopStmtIr* ir);
 
-struct DeclStmtIr* ir_new_decl_stmt(strtable_id var_id, struct TypeIr* type);
+struct DeclStmtIr* ir_new_decl_stmt(strtable_id var_id, struct TypeIr* type,
+                                    struct BlockStmtIr* block);
 struct StmtIr* ir_decl_stmt_super(struct DeclStmtIr* ir);
 strtable_id ir_decl_stmt_var_id(struct DeclStmtIr* ir);
 struct TypeIr* ir_decl_stmt_type(struct DeclStmtIr* ir);
 struct VarExprIr* ir_decl_stmt_var(struct DeclStmtIr* ir);
-void ir_decl_stmt_set_var(struct DeclStmtIr* ir, struct VarExprIr* var);
+struct VarExprIr* ir_decl_stmt_instantiate(struct DeclStmtIr* ir);
 
 #endif
