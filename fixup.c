@@ -105,10 +105,11 @@ static struct FunctionIr* visit_function(struct FixupVisitor* visitor,
 
     // insert saving parameter register code
     size_t i = 0;
-    for (struct ListHeader *it = list_begin(ir_function_params(ir)),
-                           *eit = list_end(ir_function_params(ir));
+    for (struct ListHeader *it = list_begin(ir_function_param_decl_list(ir)),
+                           *eit = list_end(ir_function_param_decl_list(ir));
          it != eit; it = list_next(it)) {
-        struct VarExprIr* dst_var = ((struct ListItem*)it)->item;
+        struct DeclStmtIr* decl = ((struct ListItem*)it)->item;
+        struct VarExprIr* dst_var = ir_decl_stmt_var(decl);
         struct TypeIr* dst_var_type = ir_var_expr_type(dst_var);
         struct TypeIr* dst_ptr_type = ir_expr_type(ir_var_expr_cast(dst_var));
 

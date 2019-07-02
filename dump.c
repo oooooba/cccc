@@ -212,19 +212,19 @@ static struct FunctionIr* visit_function2(struct DumpVisitor* visitor,
         strtable_at(&ctx(visitor)->strtable, ir_function_name_index(ir));
     fprintf(visitor->stream, "function %s (", name);
     bool first = true;
-    for (struct ListHeader *it = list_begin(ir_function_params(ir)),
-                           *eit = list_end(ir_function_params(ir));
+    for (struct ListHeader *it = list_begin(ir_function_param_decl_list(ir)),
+                           *eit = list_end(ir_function_param_decl_list(ir));
          it != eit; it = list_next(it)) {
-        struct VarExprIr* var = ((struct ListItem*)it)->item;
+        struct DeclStmtIr* decl = ((struct ListItem*)it)->item;
         const char* var_name =
-            strtable_at(&ctx(visitor)->strtable, ir_var_expr_index(var));
+            strtable_at(&ctx(visitor)->strtable, ir_decl_stmt_var_id(decl));
         if (first)
             first = false;
         else
             fprintf(visitor->stream, ", ");
         fprintf(visitor->stream, "%s @ ", var_name);
         context_dump_type(ctx(visitor), visitor->stream,
-                          ir_expr_type(ir_var_expr_cast(var)));
+                          ir_decl_stmt_type(decl));
     }
     fprintf(visitor->stream, ") ");
     visit_block_stmt(visitor, ir_function_body2(ir));

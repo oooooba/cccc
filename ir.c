@@ -76,7 +76,7 @@ struct FunctionIr {
     strtable_id name_index;
     struct BlockStmtIr* body;
     size_t region_size;
-    struct List* params;  // VarExprIr* list
+    struct List* param_decl_list;  // DeclStmtIr* list
     struct FunctionTypeIr* type;
 };
 
@@ -87,7 +87,7 @@ struct FunctionIr* ir_new_function(strtable_id name_index,
     ir->name_index = name_index;
     ir->body = NULL;
     ir->region_size = (size_t)-1;
-    ir->params = NULL;
+    ir->param_decl_list = NULL;
     ir->type = type;
     return ir;
 }
@@ -121,19 +121,19 @@ void ir_function_set_region_size(struct FunctionIr* ir, size_t region_size) {
     ir->region_size = region_size;
 }
 
-struct List* ir_function_params(struct FunctionIr* ir) {
-    assert(ir->params);
-    return ir->params;
+struct List* ir_function_param_decl_list(struct FunctionIr* ir) {
+    assert(ir->param_decl_list);
+    return ir->param_decl_list;
 }
 
 bool ir_function_has_defined(struct FunctionIr* ir) { return ir->body != NULL; }
 
-void ir_function_define(struct FunctionIr* ir, struct List* params,
+void ir_function_define(struct FunctionIr* ir, struct List* param_decl_list,
                         struct BlockStmtIr* body) {
-    // ToDo: insert equality check between type and type of params
-    assert(!ir->params);
+    // ToDo: insert equality check between type and type of param_decl_list
+    assert(!ir->param_decl_list);
     assert(!ir->body);
-    ir->params = params;
+    ir->param_decl_list = param_decl_list;
     ir->body = body;
 }
 
@@ -872,6 +872,7 @@ struct DeclStmtIr {
     struct StmtIr super;
     strtable_id var_id;
     struct TypeIr* type;
+    struct VarExprIr* var;  // workaround, ToDo: fix
 };
 
 struct DeclStmtIr* ir_new_decl_stmt(strtable_id var_id, struct TypeIr* type) {
@@ -879,6 +880,7 @@ struct DeclStmtIr* ir_new_decl_stmt(strtable_id var_id, struct TypeIr* type) {
     initialize_stmt(ir_decl_stmt_super(ir), StmtIrTag_Decl);
     ir->var_id = var_id;
     ir->type = type;
+    ir->var = NULL;
     return ir;
 }
 
@@ -890,4 +892,14 @@ strtable_id ir_decl_stmt_var_id(struct DeclStmtIr* ir) { return ir->var_id; }
 
 struct TypeIr* ir_decl_stmt_type(struct DeclStmtIr* ir) {
     return ir->type;
+}
+
+struct VarExprIr* ir_decl_stmt_var(struct DeclStmtIr* ir) {
+    assert(ir->var);
+    return ir->var;
+}
+
+void ir_decl_stmt_set_var(struct DeclStmtIr* ir, struct VarExprIr* var) {
+    assert(!ir->var);
+    ir->var = var;
 }

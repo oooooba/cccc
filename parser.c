@@ -859,11 +859,9 @@ static struct FunctionIr* parse_function_definition_or_declaration(
     struct Env* env = env_new(parser->current_env);
     parser->current_env = env;
 
-    struct BlockStmtIr* body = ir_new_block_stmt();
-
     expect(parser, Token_LeftParen);
-    struct List* params = malloc(sizeof(struct List));
-    list_initialize(params);
+    struct List* param_decl_list = malloc(sizeof(struct List));
+    list_initialize(param_decl_list);
     struct List* param_types = malloc(sizeof(struct List));
     list_initialize(param_types);
     if (acceptable(parser, Token_KeywordVoid))
@@ -878,13 +876,14 @@ static struct FunctionIr* parse_function_definition_or_declaration(
             struct Declaration* param_decl =
                 (struct Declaration*)list_begin(&param_decls);
             strtable_id name_index = param_decl->name_index;
-            struct VarExprIr* var = ir_block_stmt_allocate_variable(
-                body, name_index, param_decl->type);
+            struct VarExprIr* var = ir_new_var_expr(name_index);
             env_insert(env, name_index, var);
+            struct DeclStmtIr* decl =
+                ir_new_decl_stmt(name_index, param_decl->type);
 
             struct ListItem* param_item = malloc(sizeof(struct ListItem));
-            param_item->item = var;
-            list_insert_at_end(params, list_from(param_item));
+            param_item->item = decl;
+            list_insert_at_end(param_decl_list, list_from(param_item));
 
             struct ListItem* param_type_item = malloc(sizeof(struct ListItem));
             param_type_item->item = param_decl->type;
@@ -923,9 +922,18 @@ static struct FunctionIr* parse_function_definition_or_declaration(
     }
 
     if (has_func_def) {
-        body = parse_compound_statement(parser, body);
+        struct BlockStmtIr* body = ir_new_block_stmt();
+        for (struct ListHeader *it = list_begin(param_decl_list),
+                               *eit = list_end(param_decl_list);
+             it != eit; it = list_next(it)) {
+            struct DeclStmtIr* decl = ((struct ListItem*)it)->item;
+            ir_block_stmt_insert_at_end(body, ir_decl_stmt_super(decl));
+        }
+
+        struct BlockStmtIr* block = parse_compound_statement(parser, NULL);
+        ir_block_stmt_insert_at_end(body, ir_block_stmt_super(block));
         assert(!ir_function_has_defined(function));
-        ir_function_define(function, params, body);
+        ir_function_define(function, param_decl_list, body);
     } else
         expect(parser, Token_Semicolon);
 

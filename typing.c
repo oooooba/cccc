@@ -201,23 +201,18 @@ static struct StmtIr* visit_return_stmt(struct TypingVisitor* visitor,
     return ir_return_stmt_super(ir);
 }
 
+static struct StmtIr* visit_decl_stmt(struct TypingVisitor* visitor,
+                                      struct DeclStmtIr* ir) {
+    struct VarExprIr* var = ir_decl_stmt_var(ir);
+    struct VarExprIr* new_var = ir_expr_as_var(visit_var_expr(visitor, var));
+    assert(var == new_var);
+    return ir_decl_stmt_super(ir);
+}
+
 static struct FunctionIr* visit_function(struct TypingVisitor* visitor,
                                          struct FunctionIr* ir) {
     visitor->function = ir;
-
-    for (struct ListHeader *it = list_begin(ir_function_params(ir)),
-                           *eit = list_end(ir_function_params(ir));
-         it != eit; it = list_next(it)) {
-        struct ListItem* item = (struct ListItem*)it;
-        struct VarExprIr* param = item->item;
-        param = ir_expr_as_var(visit_var_expr(visitor, param));
-        assert(param);
-        item->item = param;
-    }
-
-    struct BlockStmtIr* body = ir_function_body2(ir);
-    visitor_visit_stmt(as_visitor(visitor), ir_block_stmt_super(body));
-
+    visitor_visit_block_stmt(as_visitor(visitor), ir_function_body2(ir));
     return ir;
 }
 
@@ -236,6 +231,7 @@ struct TypingVisitor* new_typing_visitor(struct Context* context) {
 
     register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);
     register_visitor(visitor->as_visitor, visit_return_stmt, visit_return_stmt);
+    register_visitor(visitor->as_visitor, visit_decl_stmt, visit_decl_stmt);
 
     register_visitor(visitor->as_visitor, visit_function, visit_function);
 

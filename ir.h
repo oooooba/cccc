@@ -89,9 +89,9 @@ struct BlockStmtIr* ir_function_body2(struct FunctionIr* ir);
 void ir_function_set_body2(struct FunctionIr* ir, struct BlockStmtIr* body);
 size_t ir_function_region_size(struct FunctionIr* ir);
 void ir_function_set_region_size(struct FunctionIr* ir, size_t region_size);
-struct List* ir_function_params(struct FunctionIr* ir);
+struct List* ir_function_param_decl_list(struct FunctionIr* ir);
 bool ir_function_has_defined(struct FunctionIr* ir);
-void ir_function_define(struct FunctionIr* ir, struct List* params,
+void ir_function_define(struct FunctionIr* ir, struct List* param_decl_list,
                         struct BlockStmtIr* body);
 struct TypeIr* ir_function_type(struct FunctionIr* ir);
 struct TypeIr* ir_function_result_type(struct FunctionIr* ir);
@@ -248,5 +248,7 @@ struct DeclStmtIr* ir_new_decl_stmt(strtable_id var_id, struct TypeIr* type);
 struct StmtIr* ir_decl_stmt_super(struct DeclStmtIr* ir);
 strtable_id ir_decl_stmt_var_id(struct DeclStmtIr* ir);
 struct TypeIr* ir_decl_stmt_type(struct DeclStmtIr* ir);
+struct VarExprIr* ir_decl_stmt_var(struct DeclStmtIr* ir);
+void ir_decl_stmt_set_var(struct DeclStmtIr* ir, struct VarExprIr* var);
 
 #endif
