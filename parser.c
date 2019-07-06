@@ -231,6 +231,22 @@ static struct DeclStmtIr* insert_normalized_declaration_statement(
     return decl;
 }
 
+/***** prototypes *****/
+
+static struct Declaration2* parse_declaration2(struct Parser* parser);
+static struct DeclarationSpecifier* parse_declaration_specifiers(
+    struct Parser* parser);
+static struct List* parse_init_declarator_list(struct Parser* parser);
+static struct InitDeclarator* parse_init_declarator(struct Parser* parser);
+static struct TypeIr* parse_type_specifier(struct Parser* parser);
+static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser);
+static struct Declarator* parse_declarator2(struct Parser* parser);
+static struct DirectDeclarator* parse_direct_declarator(struct Parser* parser);
+static struct List* parse_parameter_type_list(struct Parser* parser);
+static struct List* parse_parameter_list(struct Parser* parser);
+static struct ListItem* parse_parameter_declaration(struct Parser* parser);
+static struct TypeIr* parse_type_name(struct Parser* parser);
+
 /***** lexical elements *****/
 
 static struct ExprIr* parse_integer_constant(struct Parser* parser) {
@@ -330,11 +346,22 @@ static struct ExprIr* parse_unary_expression(struct Parser* parser) {
         advance(parser);
         struct ExprIr* operand = parse_cast_expression(parser);
         return ir_deref_expr_cast(ir_new_deref_expr(operand));
+    } else if (acceptable(parser, Token_KeywordSizeof)) {
+        struct ExprIr* const_expr = NULL;
+        advance(parser);
+        expect(parser, Token_LeftParen);
+        if (acceptable_type_specifier(parser)) {
+            struct TypeIr* type = parse_type_name(parser);
+            const_expr =
+                ir_const_expr_cast(ir_new_integer_const_expr(type_size(type)));
+        } else {
+            assert(false);
+        }
+        expect(parser, Token_RightParen);
+        return const_expr;
     } else
         return parse_postfix_expression(parser);
 }
-
-static struct TypeIr* parse_type_name(struct Parser* parser);
 
 static struct ExprIr* parse_cast_expression(struct Parser* parser) {
     if (!acceptable(parser, Token_LeftParen))
@@ -396,20 +423,6 @@ static struct ExprIr* parse_expression(struct Parser* parser) {
 }
 
 /***** declarations *****/
-
-static struct Declaration2* parse_declaration2(struct Parser* parser);
-static struct DeclarationSpecifier* parse_declaration_specifiers(
-    struct Parser* parser);
-static struct List* parse_init_declarator_list(struct Parser* parser);
-static struct InitDeclarator* parse_init_declarator(struct Parser* parser);
-static struct TypeIr* parse_type_specifier(struct Parser* parser);
-static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser);
-static struct Declarator* parse_declarator2(struct Parser* parser);
-static struct DirectDeclarator* parse_direct_declarator(struct Parser* parser);
-static struct List* parse_parameter_type_list(struct Parser* parser);
-static struct List* parse_parameter_list(struct Parser* parser);
-static struct ListItem* parse_parameter_declaration(struct Parser* parser);
-static struct TypeIr* parse_type_name(struct Parser* parser);
 
 static struct Declaration2* parse_declaration2(struct Parser* parser) {
     struct DeclarationSpecifier* declaration_specifiers =

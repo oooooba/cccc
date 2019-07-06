@@ -89,3 +89,7 @@ long test(char c, int i);
 long test18(int i, char c) { return test(c, i); }
 
 long test(char c, int i) { return c * i; }
+
+int test19(void) {
+    return sizeof(int) + sizeof(char) + sizeof(long) + sizeof(int*);
+}
