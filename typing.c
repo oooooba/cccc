@@ -65,12 +65,8 @@ static struct ExprIr* visit_call_expr(struct TypingVisitor* visitor,
     struct ExprIr* func_expr = ir_call_expr_function(ir);
     func_expr = visitor_visit_expr(as_visitor(visitor), func_expr);
     ir_call_expr_set_function(ir, func_expr);
-
-    struct VarExprIr* func_var_expr = ir_expr_as_var(func_expr);
-    assert(func_var_expr);
     struct FunctionTypeIr* func_type =
-        type_as_function(ir_expr_type(ir_var_expr_cast(func_var_expr)));
-    assert(func_type);
+        type_as_function(ir_expr_type(func_expr));
 
     struct List* arg_exprs = ir_call_expr_args(ir);
     struct List* param_types = type_function_param_types(func_type);
@@ -159,11 +155,15 @@ static struct ExprIr* visit_member_expr(struct TypingVisitor* visitor,
 static struct ExprIr* visit_deref_expr(struct TypingVisitor* visitor,
                                        struct DerefExprIr* ir) {
     visitor_visit_deref_expr(as_visitor(visitor), ir);
-    struct PointerTypeIr* operand_type =
-        type_as_pointer(ir_expr_type(ir_deref_expr_operand(ir)));
-    assert(operand_type);
-    ir_expr_set_type(ir_deref_expr_cast(ir),
-                     type_pointer_elem_type(operand_type));
+    struct TypeIr* operand_type = ir_expr_type(ir_deref_expr_operand(ir));
+    if (type_as_pointer(operand_type)) {
+        struct TypeIr* elem_type =
+            type_pointer_elem_type(type_as_pointer(operand_type));
+        ir_expr_set_type(ir_deref_expr_cast(ir), elem_type);
+    } else if (type_as_function(operand_type)) {
+        return ir_deref_expr_operand(ir);
+    } else
+        assert(false);
     return ir_deref_expr_cast(ir);
 }
 

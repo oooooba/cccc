@@ -307,7 +307,9 @@ static struct ExprIr* parse_primary_expression(struct Parser* parser) {
                 return ir_deref_expr_cast(deref_var);
             } else {
                 struct VarExprIr* var = ir_new_var_expr(index);
-                return ir_var_expr_cast(var);
+                struct DerefExprIr* deref_var =
+                    ir_new_deref_expr(ir_var_expr_cast(var));
+                return ir_deref_expr_cast(deref_var);
             }
         } break;
         default:

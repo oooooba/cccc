@@ -184,6 +184,20 @@ void context_dump_type(struct Context* context, FILE* stream,
 
             fprintf(stream, "}");
         } break;
+        case Type_Function: {
+            struct FunctionTypeIr* f = type_as_function(type);
+            fprintf(stream, "(");
+            struct List* param_types = type_function_param_types(f);
+            for (struct ListHeader *it = list_begin(param_types),
+                                   *eit = list_end(param_types);
+                 it != eit; it = list_next(it)) {
+                struct TypeIr* param_type = ((struct ListItem*)it)->item;
+                context_dump_type(context, stream, param_type);
+                fprintf(stream, " -> ");
+            }
+            context_dump_type(context, stream, type_function_result_type(f));
+            fprintf(stream, ")");
+        } break;
         default:
             assert(false);
     }

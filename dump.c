@@ -58,19 +58,8 @@ static struct ExprIr* visit_binop_expr(struct DumpVisitor* visitor,
 
 static struct ExprIr* visit_call_expr(struct DumpVisitor* visitor,
                                       struct CallExprIr* ir) {
-    struct VarExprIr* func_name = ir_expr_as_var(ir_call_expr_function(ir));
-    assert(func_name);
-
-    for (struct ListHeader *it = list_begin(ir_call_expr_args(ir)),
-                           *eit = list_end(ir_call_expr_args(ir));
-         it != eit; it = list_next(it)) {
-        struct ExprIr* arg = ((struct ListItem*)it)->item;
-        visitor_visit_expr(as_visitor(visitor), arg);
-    }
-
-    strtable_id name_id = ir_var_expr_index(func_name);
-    const char* name = strtable_at(&ctx(visitor)->strtable, name_id);
-    fprintf(visitor->stream, "v%p = call %s (", ir, name);
+    visitor_visit_call_expr(as_visitor(visitor), ir);
+    fprintf(visitor->stream, "v%p = call %p (", ir, ir_call_expr_function(ir));
     bool first = true;
     for (struct ListHeader *it = list_begin(ir_call_expr_args(ir)),
                            *eit = list_end(ir_call_expr_args(ir));
