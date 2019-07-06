@@ -46,6 +46,7 @@ static bool acceptable_type_specifier(struct Parser* parser) {
     return acceptable(parser, Token_KeywordLong) ||
            acceptable(parser, Token_KeywordInt) ||
            acceptable(parser, Token_KeywordChar) ||
+           acceptable(parser, Token_KeywordVoid) ||
            acceptable(parser, Token_KeywordStruct);
 }
 
@@ -197,9 +198,9 @@ static struct List* normalize_declaration(struct Declaration2* declaration) {
     return decl_list;
 }
 
-static struct VarExprIr* declare_variable(struct Declaration2* declaration,
-                                          struct Context* context,
-                                          struct BlockStmtIr* block) {
+static struct DeclStmtIr* insert_normalized_declaration_statement(
+    struct Declaration2* declaration, struct Context* context,
+    struct BlockStmtIr* block) {
     (void)context;
     assert(block);
     assert(declaration->declaration_specifiers->tag ==
@@ -227,7 +228,7 @@ static struct VarExprIr* declare_variable(struct Declaration2* declaration,
         ir_block_stmt_insert_at_end(block, ir_expr_stmt_super(stmt));
     }
 
-    return var;
+    return decl;
 }
 
 /***** lexical elements *****/
@@ -396,60 +397,6 @@ static struct ExprIr* parse_expression(struct Parser* parser) {
 
 /***** declarations *****/
 
-#if 1  // legacy code
-struct Declaration {
-    struct ListHeader as_list;
-    strtable_id name_index;
-    struct TypeIr* type;
-    struct ExprIr* initializer;
-};
-
-static strtable_id parse_declarator(struct Parser* parser,
-                                    struct TypeIr* base_type,
-                                    struct TypeIr** result_type);
-static struct TypeIr* parse_type_specifier(struct Parser* parser);
-
-static struct ExprIr* parse_initializer(struct Parser* parser) {
-    return parse_expression(parser);
-}
-
-static strtable_id parse_declarator(struct Parser* parser,
-                                    struct TypeIr* base_type,
-                                    struct TypeIr** result_type) {
-    if (acceptable(parser, Token_Asterisk)) {
-        advance(parser);
-        *result_type = type_pointer_super(type_new_pointer(base_type));
-    } else
-        *result_type = base_type;
-
-    assert(acceptable(parser, Token_Id));
-    struct Token* token = peek(parser);
-    strtable_id name_index = token->strtable_index;
-    advance(parser);
-
-    return name_index;
-}
-
-static void parse_declaration(struct Parser* parser, struct List* result) {
-    struct TypeIr* base_type = parse_type_specifier(parser);
-
-    struct TypeIr* type;
-    strtable_id var_index = parse_declarator(parser, base_type, &type);
-
-    struct ExprIr* initializer = NULL;
-    if (acceptable(parser, Token_Equal)) {
-        advance(parser);
-        initializer = parse_initializer(parser);
-    }
-
-    struct Declaration* decl = malloc(sizeof(struct Declaration));
-    decl->name_index = var_index;
-    decl->type = type;
-    decl->initializer = initializer;
-    list_insert_at_end(result, list_from(decl));
-}
-#endif
-
 static struct Declaration2* parse_declaration2(struct Parser* parser);
 static struct DeclarationSpecifier* parse_declaration_specifiers(
     struct Parser* parser);
@@ -459,7 +406,6 @@ static struct TypeIr* parse_type_specifier(struct Parser* parser);
 static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser);
 static struct Declarator* parse_declarator2(struct Parser* parser);
 static struct DirectDeclarator* parse_direct_declarator(struct Parser* parser);
-static struct List* parse_parameter_type_list(struct Parser* parser);
 static struct List* parse_parameter_type_list(struct Parser* parser);
 static struct List* parse_parameter_list(struct Parser* parser);
 static struct ListItem* parse_parameter_declaration(struct Parser* parser);
@@ -608,14 +554,14 @@ static struct Declarator* parse_declarator2(struct Parser* parser) {
 }
 
 static struct DirectDeclarator* parse_direct_declarator(struct Parser* parser) {
+    struct DirectDeclarator* direct_declarator = NULL;
     if (acceptable(parser, Token_Id)) {
         strtable_id id = parse_identifier(parser);
         if (id == STRTABLE_INVALID_ID) return NULL;
 
-        struct DirectDeclarator* direct_declarator =
+        direct_declarator =
             new_direct_declarator(DirectDeclaratorTag_Identifier);
         direct_declarator->identifier = id;
-        return direct_declarator;
     } else if (acceptable(parser, Token_LeftParen)) {
         advance(parser);
 
@@ -625,31 +571,32 @@ static struct DirectDeclarator* parse_direct_declarator(struct Parser* parser) {
         if (!acceptable(parser, Token_RightParen)) return NULL;
         advance(parser);
 
-        struct DirectDeclarator* direct_declarator =
+        direct_declarator =
             new_direct_declarator(DirectDeclaratorTag_Declarator);
         direct_declarator->declarator = declarator;
-        return direct_declarator;
-    } else {
-        struct DirectDeclarator* inner_direct_declarator =
-            parse_direct_declarator(parser);
-        if (!inner_direct_declarator) return NULL;
+    } else
+        return NULL;
 
+    while (true) {
         if (acceptable(parser, Token_LeftParen)) {
             advance(parser);
             struct List* parameter_type_list =
                 parse_parameter_type_list(parser);
+            if (!parameter_type_list) return NULL;
             if (!acceptable(parser, Token_RightParen)) return NULL;
             expect(parser, Token_RightParen);
 
-            struct DirectDeclarator* direct_declarator =
+            struct DirectDeclarator* inner_direct_declarator =
+                direct_declarator;
+            direct_declarator =
                 new_direct_declarator(DirectDeclaratorTag_Parameters);
             direct_declarator->parameters.direct_declarator =
                 inner_direct_declarator;
             direct_declarator->parameters.list = parameter_type_list;
-            return direct_declarator;
-        }
+        } else
+            break;
     }
-    return NULL;
+    return direct_declarator;
 }
 
 static struct List* parse_parameter_type_list(struct Parser* parser) {
@@ -665,11 +612,22 @@ static struct List* parse_parameter_list(struct Parser* parser) {
     list_initialize(parameter_list);
     list_insert_at_end(parameter_list, list_from(parameter));
 
+    // hold to check its type
+    struct Declaration2* first_decl = parameter->item;
+
     while (acceptable(parser, Token_Comma)) {
         advance(parser);
         parameter = parse_parameter_declaration(parser);
         if (!parameter) return NULL;
         list_insert_at_end(parameter_list, list_from(parameter));
+    }
+
+    if (list_size(parameter_list) == 1) {
+        struct DeclarationSpecifier* first_specifiers =
+            first_decl->declaration_specifiers;
+        assert(first_specifiers->tag == DeclarationSpecifierTag_Type);
+        if (type_as_void(first_specifiers->type))
+            list_initialize(parameter_list);
     }
 
     return parameter_list;
@@ -681,7 +639,8 @@ static struct ListItem* parse_parameter_declaration(struct Parser* parser) {
     if (!declaration_specifiers) return NULL;
 
     struct Declarator* declarator = parse_declarator2(parser);
-    if (!declarator) return NULL;
+    assert(declaration_specifiers->tag == DeclarationSpecifierTag_Type);
+    if (!type_as_void(declaration_specifiers->type) && !declarator) return NULL;
 
     struct InitDeclarator* init_declarator =
         new_init_declarator(declarator, NULL);
@@ -725,7 +684,8 @@ static struct BlockStmtIr* parse_compound_statement(struct Parser* parser,
                  it != eit; it = list_next(it)) {
                 struct ListItem* list_item = (struct ListItem*)it;
                 struct Declaration2* decl = list_item->item;
-                declare_variable(decl, parser->context, block);
+                insert_normalized_declaration_statement(decl, parser->context,
+                                                        block);
             }
             continue;
         }
@@ -795,91 +755,67 @@ static struct StmtIr* parse_statement(struct Parser* parser) {
 
 /***** external definitions *****/
 
-static struct FunctionIr* parse_function_definition_or_declaration(
-    struct Parser* parser) {
-    struct List func_decls;
-    list_initialize(&func_decls);
-    parse_declaration(parser, &func_decls);
-    assert(list_size(&func_decls) == 1);
-    struct Declaration* func_decl =
-        (struct Declaration*)list_begin(&func_decls);
+static struct FunctionIr* parse_function_definition(struct Parser* parser) {
+    struct DeclarationSpecifier* specifiers =
+        parse_declaration_specifiers(parser);
+    if (!specifiers) return NULL;
+    struct Declarator* declarator = parse_declarator2(parser);
+    if (!declarator) return NULL;
 
-    struct BlockStmtIr* body = ir_new_block_stmt();
+    assert(specifiers->tag == DeclarationSpecifierTag_Type);
+    struct TypeIr* return_type = specifiers->type;
 
-    expect(parser, Token_LeftParen);
-    struct List* param_decl_list = malloc(sizeof(struct List));
-    list_initialize(param_decl_list);
+    struct DirectDeclarator* direct_declarator = declarator->direct_declarator;
+    assert(direct_declarator->tag == DirectDeclaratorTag_Parameters);
+
+    struct DirectDeclarator* inner_direct_declarator =
+        direct_declarator->parameters.direct_declarator;
+    assert(inner_direct_declarator->tag == DirectDeclaratorTag_Identifier);
+    strtable_id name_index = inner_direct_declarator->identifier;
+
+    struct List* param_decl_list = direct_declarator->parameters.list;
     struct List* param_types = malloc(sizeof(struct List));
     list_initialize(param_types);
-    if (acceptable(parser, Token_KeywordVoid))
-        advance(parser);
-    else {
-        while (!acceptable(parser, Token_RightParen)) {
-            struct List param_decls;
-            list_initialize(&param_decls);
-            parse_declaration(parser, &param_decls);
-            assert(list_size(&param_decls) == 1);
+    struct List* param_decl_stmt_list = malloc(sizeof(struct List));
+    list_initialize(param_decl_stmt_list);
+    struct BlockStmtIr* body = ir_new_block_stmt();
+    for (struct ListHeader *it = list_begin(param_decl_list),
+                           *eit = list_end(param_decl_list);
+         it != eit; it = list_next(it)) {
+        struct Declaration2* decl = ((struct ListItem*)it)->item;
+        struct DeclStmtIr* decl_stmt = insert_normalized_declaration_statement(
+            decl, parser->context, body);
 
-            struct Declaration* param_decl =
-                (struct Declaration*)list_begin(&param_decls);
-            strtable_id name_index = param_decl->name_index;
-            struct DeclStmtIr* decl =
-                ir_new_decl_stmt(name_index, param_decl->type, body);
+        struct TypeIr* param_type = ir_decl_stmt_type(decl_stmt);
+        struct ListItem* param_type_item = malloc(sizeof(struct ListItem));
+        param_type_item->item = param_type;
+        list_insert_at_end(param_types, list_from(param_type_item));
 
-            struct ListItem* param_item = malloc(sizeof(struct ListItem));
-            param_item->item = decl;
-            list_insert_at_end(param_decl_list, list_from(param_item));
-
-            struct ListItem* param_type_item = malloc(sizeof(struct ListItem));
-            param_type_item->item = param_decl->type;
-            list_insert_at_end(param_types, list_from(param_type_item));
-
-            if (acceptable(parser, Token_Comma)) {
-                assert(peek_k(parser, 1)->tag != Token_RightParen);
-                advance(parser);
-            }
-        }
+        struct ListItem* param_decl_stmt_item = malloc(sizeof(struct ListItem));
+        param_decl_stmt_item->item = decl_stmt;
+        list_insert_at_end(param_decl_stmt_list,
+                           list_from(param_decl_stmt_item));
     }
-    expect(parser, Token_RightParen);
-
-    bool has_func_def;
-    if (acceptable(parser, Token_LeftCurry))
-        has_func_def = true;
-    else if (acceptable(parser, Token_Semicolon))
-        has_func_def = false;
-    else
-        assert(false);
-
     struct FunctionTypeIr* func_type =
-        type_new_function(func_decl->type, param_types);
-    strtable_id name_index = func_decl->name_index;
+        type_new_function(return_type, param_types);
+
     struct FunctionIr* function =
         context_find_function_declaration(parser->context, name_index);
     if (function) {
         // ToDo: check function type
 
         // prevent to insert dupulicate definitions
-        if (has_func_def) assert(!ir_function_has_defined(function));
+        assert(!ir_function_has_defined(function));
     } else {
         function = ir_new_function(name_index, func_type);
         context_insert_function_declaration(parser->context, name_index,
                                             function);
     }
 
-    if (has_func_def) {
-        for (struct ListHeader *it = list_begin(param_decl_list),
-                               *eit = list_end(param_decl_list);
-             it != eit; it = list_next(it)) {
-            struct DeclStmtIr* decl = ((struct ListItem*)it)->item;
-            ir_block_stmt_insert_at_end(body, ir_decl_stmt_super(decl));
-        }
-
-        struct BlockStmtIr* block = parse_compound_statement(parser, NULL);
-        ir_block_stmt_insert_at_end(body, ir_block_stmt_super(block));
-        assert(!ir_function_has_defined(function));
-        ir_function_define(function, param_decl_list, body);
-    } else
-        expect(parser, Token_Semicolon);
+    struct BlockStmtIr* block = parse_compound_statement(parser, NULL);
+    ir_block_stmt_insert_at_end(body, ir_block_stmt_super(block));
+    assert(!ir_function_has_defined(function));
+    ir_function_define(function, param_decl_stmt_list, body);
 
     return function;
 }
@@ -892,7 +828,7 @@ static void parse_external_declaration(struct Parser* parser) {
 
     // do backtracking
     parser->current_token = saved_current_token;
-    if (parse_function_definition_or_declaration(parser)) return;
+    if (parse_function_definition(parser)) return;
 
     assert(false);
 }

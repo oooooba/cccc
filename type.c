@@ -49,6 +49,10 @@ static void initialize_type(struct TypeIr* type, enum TypeTag tag,
     type->size = size;
 }
 
+struct VoidTypeIr* type_as_void(struct TypeIr* type) {
+    return type->tag == Type_Void ? (struct VoidTypeIr*)type : NULL;
+}
+
 struct PointerTypeIr* type_as_pointer(struct TypeIr* type) {
     return type->tag == Type_Pointer ? (struct PointerTypeIr*)type : NULL;
 }

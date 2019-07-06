@@ -27,6 +27,7 @@ enum TypeTag {
     Type_Function,
 };
 
+struct VoidTypeIr* type_as_void(struct TypeIr* type);
 struct PointerTypeIr* type_as_pointer(struct TypeIr* type);
 struct StructTypeIr* type_as_struct(struct TypeIr* type);
 struct FunctionTypeIr* type_as_function(struct TypeIr* type);

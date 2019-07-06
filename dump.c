@@ -211,7 +211,7 @@ static struct FunctionIr* visit_function2(struct DumpVisitor* visitor,
             first = false;
         else
             fprintf(visitor->stream, ", ");
-        fprintf(visitor->stream, "%s @ ", var_name);
+        fprintf(visitor->stream, "%s :: ", var_name);
         context_dump_type(ctx(visitor), visitor->stream,
                           ir_decl_stmt_type(decl));
     }
