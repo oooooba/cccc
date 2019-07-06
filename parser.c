@@ -12,45 +12,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct Env;
-
 struct Parser {
     struct Context* context;
     struct List* tokens;
     struct ListHeader* current_token;
-    struct Env* current_env;
+    // struct Env* current_env;
 };
 
 /***** helper functions *****/
-
-struct Env {
-    struct Map var_map;  // key: strtable_id, value: VarExprIr*
-    struct Env* outer_env;
-};
-
-static struct Env* env_new(struct Env* outer_env) {
-    struct Env* env = malloc(sizeof(struct Env));
-    map_initialize(&env->var_map);
-    env->outer_env = outer_env;
-    return env;
-}
-
-static struct VarExprIr* env_find(struct Env* env, strtable_id index) {
-    if (!env) return NULL;
-    struct VarExprIr* var =
-        (struct VarExprIr*)map_find(&env->var_map, (void*)index);
-    if (var) {
-        assert(ir_var_expr_index(var) == index);
-        return var;
-    } else
-        return env_find(env->outer_env, index);
-}
-
-static void env_insert(struct Env* env, strtable_id index,
-                       struct VarExprIr* var) {
-    assert(ir_var_expr_index(var) == index);
-    map_insert(&env->var_map, (void*)index, var);
-}
 
 static struct Token* peek_k(struct Parser* parser, size_t k) {
     struct ListHeader* it = parser->current_token;
@@ -230,8 +199,7 @@ static struct List* normalize_declaration(struct Declaration2* declaration) {
 
 static struct VarExprIr* declare_variable(struct Declaration2* declaration,
                                           struct Context* context,
-                                          struct BlockStmtIr* block,
-                                          struct Env* env) {
+                                          struct BlockStmtIr* block) {
     (void)context;
     assert(block);
     assert(declaration->declaration_specifiers->tag ==
@@ -243,16 +211,12 @@ static struct VarExprIr* declare_variable(struct Declaration2* declaration,
     struct Declarator* declarator = init_declarator->declarator;
     struct DirectDeclarator* direct_declarator = declarator->direct_declarator;
     assert(direct_declarator->tag == DirectDeclaratorTag_Identifier);
-    strtable_id name_index = direct_declarator->identifier;
 
-    assert(!env_find(env, name_index));
+    strtable_id name_index = direct_declarator->identifier;
+    struct VarExprIr* var = ir_new_var_expr(name_index);
     struct TypeIr* type = declarator->has_pointer
                               ? type_pointer_super(type_new_pointer(base_type))
                               : base_type;
-
-    struct VarExprIr* var = ir_new_var_expr(name_index);
-    env_insert(env, name_index, var);
-
     struct DeclStmtIr* decl = ir_new_decl_stmt(name_index, type, block);
     ir_block_stmt_insert_at_end(block, ir_decl_stmt_super(decl));
 
@@ -298,19 +262,10 @@ static struct ExprIr* parse_primary_expression(struct Parser* parser) {
             return parse_constant(parser);
         case Token_Id: {
             strtable_id index = parse_identifier(parser);
-            struct VarExprIr* var = env_find(parser->current_env, index);
-            if (var) {
-                // reference to memory location (variable)
-                struct VarExprIr* var = ir_new_var_expr(index);
-                struct DerefExprIr* deref_var =
-                    ir_new_deref_expr(ir_var_expr_cast(var));
-                return ir_deref_expr_cast(deref_var);
-            } else {
-                struct VarExprIr* var = ir_new_var_expr(index);
-                struct DerefExprIr* deref_var =
-                    ir_new_deref_expr(ir_var_expr_cast(var));
-                return ir_deref_expr_cast(deref_var);
-            }
+            struct VarExprIr* var = ir_new_var_expr(index);
+            struct DerefExprIr* deref_var =
+                ir_new_deref_expr(ir_var_expr_cast(var));
+            return ir_deref_expr_cast(deref_var);
         } break;
         default:
             assert(false);
@@ -761,9 +716,6 @@ static struct BlockStmtIr* parse_compound_statement(struct Parser* parser,
 
     if (!block) block = ir_new_block_stmt();
 
-    struct Env* env = env_new(parser->current_env);
-    parser->current_env = env;
-
     while (!acceptable(parser, Token_RightCurry)) {
         struct Declaration2* declaration = parse_declaration2(parser);
         if (declaration) {
@@ -773,7 +725,7 @@ static struct BlockStmtIr* parse_compound_statement(struct Parser* parser,
                  it != eit; it = list_next(it)) {
                 struct ListItem* list_item = (struct ListItem*)it;
                 struct Declaration2* decl = list_item->item;
-                declare_variable(decl, parser->context, block, env);
+                declare_variable(decl, parser->context, block);
             }
             continue;
         }
@@ -781,8 +733,6 @@ static struct BlockStmtIr* parse_compound_statement(struct Parser* parser,
         if (stmt) ir_block_stmt_insert_at_end(block, stmt);
     }
     expect(parser, Token_RightCurry);
-
-    parser->current_env = env->outer_env;
 
     return block;
 }
@@ -854,8 +804,6 @@ static struct FunctionIr* parse_function_definition_or_declaration(
     struct Declaration* func_decl =
         (struct Declaration*)list_begin(&func_decls);
 
-    struct Env* env = env_new(parser->current_env);
-    parser->current_env = env;
     struct BlockStmtIr* body = ir_new_block_stmt();
 
     expect(parser, Token_LeftParen);
@@ -875,8 +823,6 @@ static struct FunctionIr* parse_function_definition_or_declaration(
             struct Declaration* param_decl =
                 (struct Declaration*)list_begin(&param_decls);
             strtable_id name_index = param_decl->name_index;
-            struct VarExprIr* var = ir_new_var_expr(name_index);
-            env_insert(env, name_index, var);
             struct DeclStmtIr* decl =
                 ir_new_decl_stmt(name_index, param_decl->type, body);
 
@@ -935,7 +881,6 @@ static struct FunctionIr* parse_function_definition_or_declaration(
     } else
         expect(parser, Token_Semicolon);
 
-    parser->current_env = env->outer_env;
     return function;
 }
 
@@ -967,6 +912,5 @@ struct Parser* parser_new(struct Context* context, struct List* tokens) {
     parser->context = context;
     parser->tokens = tokens;
     parser->current_token = list_begin(tokens);
-    parser->current_env = NULL;
     return parser;
 }
