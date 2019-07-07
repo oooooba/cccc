@@ -264,8 +264,8 @@ struct Context* visitor_context(struct Visitor* visitor) {
 
 void visitor_apply(struct Visitor* visitor) {
     for (struct ListHeader *
-             it = context_function_declaration_begin(visitor->context),
-            *eit = context_function_declaration_end(visitor->context);
+             it = context_function_definition_begin(visitor->context),
+            *eit = context_function_definition_end(visitor->context);
          it != eit; it = list_next(it)) {
         struct MapEntry* map_entry = (struct MapEntry*)it;
         struct FunctionIr* func = map_entry_value(map_entry);

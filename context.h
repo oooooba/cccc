@@ -13,7 +13,7 @@
 struct Context {
     struct Strtable strtable;
     struct Map
-        function_declaration_map;      // key: strtable_id, value: FunctionIr*,
+        function_definition_map;       // key: strtable_id, value: FunctionIr*,
     struct Map user_defined_type_map;  // key: strtable_id, value: TypeIr*
     struct Vector register_ids;        // strtable_id vector
 };
@@ -27,13 +27,13 @@ enum RegisterSizeKind {
 
 void context_initialize(struct Context* context);
 
-void context_insert_function_declaration(struct Context* context,
-                                         strtable_id index,
-                                         struct FunctionIr* func);
-struct FunctionIr* context_find_function_declaration(struct Context* context,
-                                                     strtable_id index);
-struct ListHeader* context_function_declaration_begin(struct Context* context);
-struct ListHeader* context_function_declaration_end(struct Context* context);
+void context_insert_function_definition(struct Context* context,
+                                        strtable_id index,
+                                        struct FunctionIr* func);
+struct FunctionIr* context_find_function_definition(struct Context* context,
+                                                    strtable_id index);
+struct ListHeader* context_function_definition_begin(struct Context* context);
+struct ListHeader* context_function_definition_end(struct Context* context);
 
 void context_insert_user_defined_type(struct Context* context,
                                       strtable_id index, struct TypeIr* type);

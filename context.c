@@ -14,28 +14,28 @@
 
 void context_initialize(struct Context* context) {
     strtable_initialize(&context->strtable);
-    map_initialize(&context->function_declaration_map);
+    map_initialize(&context->function_definition_map);
     map_initialize(&context->user_defined_type_map);
     vector_initialize(&context->register_ids, sizeof(strtable_id));
 }
 
-void context_insert_function_declaration(struct Context* context,
-                                         strtable_id index,
-                                         struct FunctionIr* func) {
-    map_insert(&context->function_declaration_map, (void*)index, func);
+void context_insert_function_definition(struct Context* context,
+                                        strtable_id index,
+                                        struct FunctionIr* func) {
+    map_insert(&context->function_definition_map, (void*)index, func);
 }
 
-struct FunctionIr* context_find_function_declaration(struct Context* context,
-                                                     strtable_id index) {
-    return map_find(&context->function_declaration_map, (void*)index);
+struct FunctionIr* context_find_function_definition(struct Context* context,
+                                                    strtable_id index) {
+    return map_find(&context->function_definition_map, (void*)index);
 }
 
-struct ListHeader* context_function_declaration_begin(struct Context* context) {
-    return map_begin(&context->function_declaration_map);
+struct ListHeader* context_function_definition_begin(struct Context* context) {
+    return map_begin(&context->function_definition_map);
 }
 
-struct ListHeader* context_function_declaration_end(struct Context* context) {
-    return map_end(&context->function_declaration_map);
+struct ListHeader* context_function_definition_end(struct Context* context) {
+    return map_end(&context->function_definition_map);
 }
 
 void context_insert_user_defined_type(struct Context* context,

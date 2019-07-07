@@ -854,7 +854,7 @@ static struct FunctionIr* parse_function_definition(struct Parser* parser) {
         type_new_function(return_type, param_types);
 
     struct FunctionIr* function =
-        context_find_function_declaration(parser->context, name_index);
+        context_find_function_definition(parser->context, name_index);
     if (function) {
         // ToDo: check function type
 
@@ -862,8 +862,8 @@ static struct FunctionIr* parse_function_definition(struct Parser* parser) {
         assert(!ir_function_has_defined(function));
     } else {
         function = ir_new_function(name_index, func_type);
-        context_insert_function_declaration(parser->context, name_index,
-                                            function);
+        context_insert_function_definition(parser->context, name_index,
+                                           function);
     }
 
     struct BlockStmtIr* block = parse_compound_statement(parser, NULL);

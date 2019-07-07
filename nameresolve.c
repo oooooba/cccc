@@ -85,8 +85,8 @@ static struct Env* create_external_declaration_env(struct Context* context) {
     // ToDo: fix to handle declarations in correct order (e.g. forward
     // declaration)
     struct Env* env = env_new(NULL);
-    for (struct ListHeader *it = context_function_declaration_begin(context),
-                           *eit = context_function_declaration_end(context);
+    for (struct ListHeader *it = context_function_definition_begin(context),
+                           *eit = context_function_definition_end(context);
          it != eit; it = list_next(it)) {
         struct MapEntry* map_entry = (struct MapEntry*)it;
         struct FunctionIr* func = map_entry_value(map_entry);
