@@ -71,6 +71,33 @@ struct FunctionIr* ir_as_function(struct Ir* ir) {
 
 enum IrTag ir_tag(struct Ir* ir) { return ir->tag; }
 
+struct GlobalIr {
+    struct Ir as_ir;
+    bool has_definition;
+    struct FunctionIr* function;
+};
+
+struct GlobalIr* ir_new_global_from_function(struct FunctionIr* function,
+                                             bool has_definition) {
+    struct GlobalIr* ir = malloc(sizeof(struct GlobalIr));
+    initialize_ir(ir_global_cast(ir), IrTag_Global);
+    ir->has_definition = has_definition;
+    ir->function = function;
+    return ir;
+}
+
+struct Ir* ir_global_cast(struct GlobalIr* ir) {
+    return &ir->as_ir;
+}
+
+bool ir_global_has_definition(struct GlobalIr* ir) {
+    return ir->has_definition;
+}
+
+struct FunctionIr* ir_global_function(struct GlobalIr* ir) {
+    return ir->function;
+}
+
 struct FunctionIr {
     struct Ir as_ir;
     strtable_id name_index;

@@ -90,6 +90,11 @@ struct FunctionIr* visitor_visit_function(struct Visitor* visitor,
     return visitor->visit_function(visitor, ir);
 }
 
+struct GlobalIr* visitor_visit_global(struct Visitor* visitor,
+                                      struct GlobalIr* ir) {
+    return visitor->visit_global ? visitor->visit_global(visitor, ir) : ir;
+}
+
 struct ExprIr* visitor_visit_const_expr(struct Visitor* visitor,
                                         struct ConstExprIr* ir) {
     (void)visitor;
@@ -256,6 +261,8 @@ void visitor_initialize(struct Visitor* visitor, struct Context* context) {
     register_visitor(*visitor, visit_decl_stmt, visitor_visit_decl_stmt);
 
     register_visitor(*visitor, visit_function, NULL);
+
+    register_visitor(*visitor, visit_global, NULL);
 }
 
 struct Context* visitor_context(struct Visitor* visitor) {
@@ -264,12 +271,17 @@ struct Context* visitor_context(struct Visitor* visitor) {
 
 void visitor_apply(struct Visitor* visitor) {
     for (struct ListHeader *
-             it = context_function_definition_begin(visitor->context),
-            *eit = context_function_definition_end(visitor->context);
+             it = context_global_declaration_begin(visitor->context),
+            *eit = context_global_declaration_end(visitor->context);
          it != eit; it = list_next(it)) {
-        struct MapEntry* map_entry = (struct MapEntry*)it;
-        struct FunctionIr* func = map_entry_value(map_entry);
-        func = visitor_visit_function(visitor, func);
-        map_entry_set_value(map_entry, func);
+        struct ListItem* list_item = (struct ListItem*)it;
+        struct GlobalIr* decl = list_item->item;
+        decl = visitor_visit_global(visitor, decl);
+        if (ir_global_has_definition(decl)) {
+            struct FunctionIr* func = ir_global_function(decl);
+            func = visitor_visit_function(visitor, func);
+            strtable_id id = ir_function_name_index(func);
+            context_insert_function_definition(visitor->context, id, func);
+        }
     }
 }

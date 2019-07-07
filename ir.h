@@ -10,6 +10,8 @@
 
 struct Ir;
 
+struct GlobalIr;
+
 struct FunctionIr;
 
 struct ExprIr;
@@ -37,6 +39,7 @@ enum IrTag {
     IrTag_Expr,
     IrTag_Stmt,
     IrTag_Function,
+    IrTag_Global,
 };
 
 enum ExprIrTag {
@@ -80,6 +83,12 @@ enum UnopExprIrTag {
 struct ExprIr* ir_as_expr(struct Ir* ir);
 struct FunctionIr* ir_as_function(struct Ir* ir);
 enum IrTag ir_tag(struct Ir* ir);
+
+struct GlobalIr* ir_new_global_from_function(struct FunctionIr* function,
+                                             bool has_definition);
+struct Ir* ir_global_cast(struct GlobalIr* ir);
+bool ir_global_has_definition(struct GlobalIr* ir);
+struct FunctionIr* ir_global_function(struct GlobalIr* ir);
 
 struct FunctionIr* ir_new_function(strtable_id name_index,
                                    struct FunctionTypeIr* type);

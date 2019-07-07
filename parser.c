@@ -815,13 +815,18 @@ static struct StmtIr* parse_statement(struct Parser* parser) {
 
 /***** external definitions *****/
 
-static struct FunctionIr* parse_function_definition(struct Parser* parser) {
-    struct List* specifiers = parse_declaration_specifiers(parser);
-    if (!specifiers) return NULL;
-    struct Declarator* declarator = parse_declarator2(parser);
-    if (!declarator) return NULL;
+struct Res {
+    strtable_id id;
+    struct FunctionTypeIr* type;
+    struct BlockStmtIr* block;
+    struct List* decl_stmt_list;
+};
 
-    struct DeclarationSpecifier* specifier = nth_list_item(specifiers, 0);
+static struct Res* parse_function_declaration(
+    struct Context* context, struct List* declaration_specifier_list,
+    struct Declarator* declarator) {
+    struct DeclarationSpecifier* specifier =
+        nth_list_item(declaration_specifier_list, 0);
     assert(specifier->tag == DeclarationSpecifierTag_Type);
     struct TypeIr* return_type = specifier->type;
 
@@ -838,13 +843,13 @@ static struct FunctionIr* parse_function_definition(struct Parser* parser) {
     list_initialize(param_types);
     struct List* param_decl_stmt_list = malloc(sizeof(struct List));
     list_initialize(param_decl_stmt_list);
-    struct BlockStmtIr* body = ir_new_block_stmt();
+    struct BlockStmtIr* block = ir_new_block_stmt();
     for (struct ListHeader *it = list_begin(param_decl_list),
                            *eit = list_end(param_decl_list);
          it != eit; it = list_next(it)) {
         struct Declaration2* decl = ((struct ListItem*)it)->item;
-        struct DeclStmtIr* decl_stmt = insert_normalized_declaration_statement(
-            decl, parser->context, body);
+        struct DeclStmtIr* decl_stmt =
+            insert_normalized_declaration_statement(decl, context, block);
 
         struct TypeIr* param_type = ir_decl_stmt_type(decl_stmt);
         insert_at_end_as_list_item(param_types, param_type);
@@ -852,6 +857,27 @@ static struct FunctionIr* parse_function_definition(struct Parser* parser) {
     }
     struct FunctionTypeIr* func_type =
         type_new_function(return_type, param_types);
+
+    struct Res* res = malloc(sizeof(struct Res));
+    res->id = name_index;
+    res->type = func_type;
+    res->block = block;
+    res->decl_stmt_list = param_decl_stmt_list;
+    return res;
+}
+
+static struct FunctionIr* parse_function_definition(struct Parser* parser) {
+    struct List* specifiers = parse_declaration_specifiers(parser);
+    if (!specifiers) return NULL;
+    struct Declarator* declarator = parse_declarator2(parser);
+    if (!declarator) return NULL;
+
+    struct Res* result =
+        parse_function_declaration(parser->context, specifiers, declarator);
+    strtable_id name_index = result->id;
+    struct FunctionTypeIr* func_type = result->type;
+    struct BlockStmtIr* body = result->block;
+    struct List* param_decl_stmt_list = result->decl_stmt_list;
 
     struct FunctionIr* function =
         context_find_function_definition(parser->context, name_index);
@@ -871,6 +897,9 @@ static struct FunctionIr* parse_function_definition(struct Parser* parser) {
     assert(!ir_function_has_defined(function));
     ir_function_define(function, param_decl_stmt_list, body);
 
+    struct GlobalIr* global = ir_new_global_from_function(function, true);
+    context_append_global_declaration(parser->context, global);
+
     return function;
 }
 
@@ -878,7 +907,24 @@ static void parse_external_declaration(struct Parser* parser) {
     struct ListHeader* saved_current_token = parser->current_token;
 
     struct Declaration2* declaration = parse_declaration2(parser);
-    if (declaration) return;
+    if (declaration) {
+        if (!declaration->init_declarator_list) return;
+        struct InitDeclarator* init_decl =
+            list_cast(list_begin(declaration->init_declarator_list));
+        struct Declarator* declarator = init_decl->declarator;
+        struct DirectDeclarator* direct_declarator =
+            declarator->direct_declarator;
+        if (direct_declarator->tag != DirectDeclaratorTag_Parameters) return;
+
+        struct List* declaration_specifiers =
+            declaration->declaration_specifiers;
+        struct Res* result = parse_function_declaration(
+            parser->context, declaration_specifiers, declarator);
+        struct FunctionIr* function = ir_new_function(result->id, result->type);
+        struct GlobalIr* global = ir_new_global_from_function(function, false);
+        context_append_global_declaration(parser->context, global);
+        return;
+    }
 
     // do backtracking
     parser->current_token = saved_current_token;

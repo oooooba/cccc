@@ -12,6 +12,8 @@
 
 struct Context {
     struct Strtable strtable;
+    struct List
+        global_declaration_list;  // ListItem list, elem: struct GlobaIr*
     struct Map
         function_definition_map;       // key: strtable_id, value: FunctionIr*,
     struct Map user_defined_type_map;  // key: strtable_id, value: TypeIr*
@@ -26,6 +28,11 @@ enum RegisterSizeKind {
 };
 
 void context_initialize(struct Context* context);
+
+void context_append_global_declaration(struct Context* context,
+                                       struct GlobalIr* global);
+struct ListHeader* context_global_declaration_begin(struct Context* context);
+struct ListHeader* context_global_declaration_end(struct Context* context);
 
 void context_insert_function_definition(struct Context* context,
                                         strtable_id index,

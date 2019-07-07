@@ -14,9 +14,25 @@
 
 void context_initialize(struct Context* context) {
     strtable_initialize(&context->strtable);
+    list_initialize(&context->global_declaration_list);
     map_initialize(&context->function_definition_map);
     map_initialize(&context->user_defined_type_map);
     vector_initialize(&context->register_ids, sizeof(strtable_id));
+}
+
+void context_append_global_declaration(struct Context* context,
+                                       struct GlobalIr* global) {
+    struct ListItem* list_item = malloc(sizeof(struct ListItem));
+    list_item->item = global;
+    list_insert_at_end(&context->global_declaration_list, list_from(list_item));
+}
+
+struct ListHeader* context_global_declaration_begin(struct Context* context) {
+    return list_begin(&context->global_declaration_list);
+}
+
+struct ListHeader* context_global_declaration_end(struct Context* context) {
+    return list_end(&context->global_declaration_list);
 }
 
 void context_insert_function_definition(struct Context* context,

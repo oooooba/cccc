@@ -48,6 +48,9 @@ struct Visitor {
 
     struct FunctionIr* (*visit_function)(struct Visitor* visitor,
                                          struct FunctionIr* ir);
+
+    struct GlobalIr* (*visit_global)(struct Visitor* visitor,
+                                     struct GlobalIr* ir);
 };
 
 struct Ir* visitor_visit_ir(struct Visitor* visitor, struct Ir* ir);
@@ -58,6 +61,9 @@ struct StmtIr* visitor_visit_stmt(struct Visitor* visitor, struct StmtIr* ir);
 
 struct FunctionIr* visitor_visit_function(struct Visitor* visitor,
                                           struct FunctionIr* ir);
+
+struct GlobalIr* visitor_visit_global(struct Visitor* visitor,
+                                      struct GlobalIr* ir);
 
 struct ExprIr* visitor_visit_const_expr(struct Visitor* visitor,
                                         struct ConstExprIr* ir);

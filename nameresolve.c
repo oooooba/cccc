@@ -45,10 +45,6 @@ static struct Visitor* as_visitor(struct NameresolveVisitor* visitor) {
     return &visitor->as_visitor;
 }
 
-static struct Context* ctx(struct NameresolveVisitor* visitor) {
-    return visitor_context(as_visitor(visitor));
-}
-
 static struct ExprIr* visit_var_expr(struct NameresolveVisitor* visitor,
                                      struct VarExprIr* ir) {
     strtable_id id = ir_var_expr_index(ir);
@@ -81,20 +77,13 @@ static struct FunctionIr* visit_function(struct NameresolveVisitor* visitor,
     return ir;
 }
 
-static struct Env* create_external_declaration_env(struct Context* context) {
-    // ToDo: fix to handle declarations in correct order (e.g. forward
-    // declaration)
-    struct Env* env = env_new(NULL);
-    for (struct ListHeader *it = context_function_definition_begin(context),
-                           *eit = context_function_definition_end(context);
-         it != eit; it = list_next(it)) {
-        struct MapEntry* map_entry = (struct MapEntry*)it;
-        struct FunctionIr* func = map_entry_value(map_entry);
-        strtable_id id = ir_function_name_index(func);
-        struct VarExprIr* var = ir_new_var_expr_from_function(id, func);
-        env_insert(env, id, var);
-    }
-    return env;
+static struct GlobalIr* visit_global(struct NameresolveVisitor* visitor,
+                                     struct GlobalIr* ir) {
+    struct FunctionIr* func = ir_global_function(ir);
+    strtable_id id = ir_function_name_index(func);
+    struct VarExprIr* var = ir_new_var_expr_from_function(id, func);
+    env_insert(visitor->current_env, id, var);
+    return ir;
 }
 
 struct NameresolveVisitor* new_nameresolve_visitor(struct Context* context) {
@@ -109,7 +98,8 @@ struct NameresolveVisitor* new_nameresolve_visitor(struct Context* context) {
 
     register_visitor(visitor->as_visitor, visit_function, visit_function);
 
-    visitor->current_env = NULL;
-    visitor->current_env = create_external_declaration_env(ctx(visitor));
+    register_visitor(visitor->as_visitor, visit_global, visit_global);
+
+    visitor->current_env = env_new(NULL);
     return visitor;
 }
