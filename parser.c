@@ -72,6 +72,12 @@ static struct StmtIr* to_block_stmt(struct StmtIr* ir) {
     return ir_block_stmt_super(block);
 }
 
+static void insert_at_end_as_list_item(struct List* list, void* item) {
+    struct ListItem* list_item = malloc(sizeof(struct ListItem));
+    list_item->item = item;
+    list_insert_at_end(list, list_from(list_item));
+}
+
 struct Declarator;
 
 enum DirectDeclaratorTag {
@@ -184,9 +190,7 @@ static struct List* normalize_declaration(struct Declaration2* declaration) {
     list_initialize(decl_list);
 
     if (list_size(declaration->init_declarator_list) == 1) {
-        struct ListItem* list_item = malloc(sizeof(struct ListItem));
-        list_item->item = declaration;
-        list_insert_at_end(decl_list, list_from(list_item));
+        insert_at_end_as_list_item(decl_list, declaration);
         return decl_list;
     }
 
@@ -200,9 +204,7 @@ static struct List* normalize_declaration(struct Declaration2* declaration) {
 
         struct Declaration2* decl =
             new_declaration(declaration->declaration_specifiers, list);
-        struct ListItem* list_item = malloc(sizeof(struct ListItem));
-        list_item->item = decl;
-        list_insert_at_end(decl_list, list_from(list_item));
+        insert_at_end_as_list_item(decl_list, decl);
     }
 
     return decl_list;
@@ -256,7 +258,7 @@ static struct Declarator* parse_declarator2(struct Parser* parser);
 static struct DirectDeclarator* parse_direct_declarator(struct Parser* parser);
 static struct List* parse_parameter_type_list(struct Parser* parser);
 static struct List* parse_parameter_list(struct Parser* parser);
-static struct ListItem* parse_parameter_declaration(struct Parser* parser);
+static struct Declaration2* parse_parameter_declaration(struct Parser* parser);
 static struct TypeIr* parse_type_name(struct Parser* parser);
 
 /***** lexical elements *****/
@@ -322,9 +324,7 @@ static struct ExprIr* parse_postfix_expression(struct Parser* parser) {
             list_initialize(args);
             while (!acceptable(parser, Token_RightParen)) {
                 struct ExprIr* arg = parse_assignment_expression(parser);
-                struct ListItem* item = malloc(sizeof(struct ListItem));
-                item->item = arg;
-                list_insert_at_end(args, list_from(item));
+                insert_at_end_as_list_item(args, arg);
                 if (acceptable(parser, Token_Comma)) {
                     assert(peek_k(parser, 1)->tag != Token_RightParen);
                     advance(parser);
@@ -651,21 +651,21 @@ static struct List* parse_parameter_type_list(struct Parser* parser) {
 }
 
 static struct List* parse_parameter_list(struct Parser* parser) {
-    struct ListItem* parameter = parse_parameter_declaration(parser);
+    struct Declaration2* parameter = parse_parameter_declaration(parser);
     if (!parameter) return NULL;
 
     struct List* parameter_list = malloc(sizeof(struct List));
     list_initialize(parameter_list);
-    list_insert_at_end(parameter_list, list_from(parameter));
+    insert_at_end_as_list_item(parameter_list, parameter);
 
     // hold to check its type
-    struct Declaration2* first_decl = parameter->item;
+    struct Declaration2* first_decl = parameter;
 
     while (acceptable(parser, Token_Comma)) {
         advance(parser);
         parameter = parse_parameter_declaration(parser);
         if (!parameter) return NULL;
-        list_insert_at_end(parameter_list, list_from(parameter));
+        insert_at_end_as_list_item(parameter_list, parameter);
     }
 
     if (list_size(parameter_list) == 1) {
@@ -679,7 +679,7 @@ static struct List* parse_parameter_list(struct Parser* parser) {
     return parameter_list;
 }
 
-static struct ListItem* parse_parameter_declaration(struct Parser* parser) {
+static struct Declaration2* parse_parameter_declaration(struct Parser* parser) {
     struct DeclarationSpecifier* declaration_specifiers =
         parse_declaration_specifiers(parser);
     if (!declaration_specifiers) return NULL;
@@ -696,9 +696,7 @@ static struct ListItem* parse_parameter_declaration(struct Parser* parser) {
 
     struct Declaration2* declaration =
         new_declaration(declaration_specifiers, init_declarator_list);
-    struct ListItem* param = malloc(sizeof(struct ListItem));
-    param->item = declaration;
-    return param;
+    return declaration;
 }
 
 static struct TypeIr* parse_type_name(
@@ -833,14 +831,8 @@ static struct FunctionIr* parse_function_definition(struct Parser* parser) {
             decl, parser->context, body);
 
         struct TypeIr* param_type = ir_decl_stmt_type(decl_stmt);
-        struct ListItem* param_type_item = malloc(sizeof(struct ListItem));
-        param_type_item->item = param_type;
-        list_insert_at_end(param_types, list_from(param_type_item));
-
-        struct ListItem* param_decl_stmt_item = malloc(sizeof(struct ListItem));
-        param_decl_stmt_item->item = decl_stmt;
-        list_insert_at_end(param_decl_stmt_list,
-                           list_from(param_decl_stmt_item));
+        insert_at_end_as_list_item(param_types, param_type);
+        insert_at_end_as_list_item(param_decl_stmt_list, decl_stmt);
     }
     struct FunctionTypeIr* func_type =
         type_new_function(return_type, param_types);
