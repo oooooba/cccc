@@ -169,7 +169,7 @@ enum DeclarationSpecifierTag {
 struct DeclarationSpecifier {
     enum DeclarationSpecifierTag tag;
     union {
-        enum StorageClassSpecifierTag storageClassTag;
+        enum StorageClassSpecifierTag storage_class_tag;
         struct TypeIr* type;
     };
 };
@@ -489,7 +489,7 @@ static struct List* parse_declaration_specifiers(struct Parser* parser) {
                 parse_storage_class_specifier(parser);
             specifier =
                 new_declaration_specifier(DeclarationSpecifierTag_StorageClass);
-            specifier->storageClassTag = tag;
+            specifier->storage_class_tag = tag;
         } else
             break;
         insert_at_end_as_list_item(specifiers, specifier);
@@ -927,7 +927,7 @@ static void parse_external_declaration(struct Parser* parser) {
         struct DeclarationSpecifier* first_specifier =
             nth_list_item(declaration->declaration_specifiers, 0);
         if (first_specifier->tag == DeclarationSpecifierTag_StorageClass) {
-            assert(first_specifier->storageClassTag ==
+            assert(first_specifier->storage_class_tag ==
                    StorageClassSpecifierTag_Typedef);
             assert(direct_declarator->tag == DirectDeclaratorTag_Identifier);
             strtable_id id = direct_declarator->identifier;
