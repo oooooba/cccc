@@ -139,7 +139,6 @@ static struct Declarator* new_declarator(
 }
 
 struct InitDeclarator {
-    struct ListHeader as_list;
     struct Declarator* declarator;
     struct ExprIr* assign_expression;
 };
@@ -184,7 +183,8 @@ static struct DeclarationSpecifier* new_declaration_specifier(
 struct Declaration2 {
     struct List* declaration_specifiers;  // struct ListItem list, elem: struct
                                           // DeclarationSpecifier*
-    struct List* init_declarator_list;    // struct InitDeclarator list
+    struct List* init_declarator_list;    // struct ListItem list, elem: struct
+                                          // InitDeclarator*
 };
 
 static struct Declaration2* new_declaration(struct List* declaration_specifiers,
@@ -209,12 +209,13 @@ static struct List* normalize_declaration(struct Declaration2* declaration) {
     }
 
     while (list_size(declaration->init_declarator_list)) {
-        struct ListHeader* it = list_begin(declaration->init_declarator_list);
+        struct InitDeclarator* init_declarator =
+            nth_list_item(declaration->init_declarator_list, 0);
         list_erase_at_begin(declaration->init_declarator_list);
 
         struct List* list = malloc(sizeof(struct List));
         list_initialize(list);
-        list_insert_at_begin(list, it);
+        insert_at_end_as_list_item(list, init_declarator);
 
         struct Declaration2* decl =
             new_declaration(declaration->declaration_specifiers, list);
@@ -235,8 +236,8 @@ static struct DeclStmtIr* insert_normalized_declaration_statement(
     assert(specifier->tag == DeclarationSpecifierTag_Type);
     struct TypeIr* base_type = specifier->type;
 
-    struct InitDeclarator* init_declarator = (struct InitDeclarator*)list_cast(
-        list_begin(declaration->init_declarator_list));
+    struct InitDeclarator* init_declarator =
+        nth_list_item(declaration->init_declarator_list, 0);
     struct Declarator* declarator = init_declarator->declarator;
     struct DirectDeclarator* direct_declarator = declarator->direct_declarator;
     assert(direct_declarator->tag == DirectDeclaratorTag_Identifier);
@@ -499,13 +500,13 @@ static struct List* parse_init_declarator_list(struct Parser* parser) {
 
     struct List* init_declarator_list = malloc(sizeof(struct List));
     list_initialize(init_declarator_list);
-    list_insert_at_end(init_declarator_list, list_from(init_declarator));
+    insert_at_end_as_list_item(init_declarator_list, init_declarator);
 
     while (acceptable(parser, Token_Comma)) {
         advance(parser);
         init_declarator = parse_init_declarator(parser);
         if (!init_declarator) return NULL;
-        list_insert_at_end(init_declarator_list, list_from(init_declarator));
+        insert_at_end_as_list_item(init_declarator_list, init_declarator);
     }
     return init_declarator_list;
 }
@@ -708,7 +709,7 @@ static struct Declaration2* parse_parameter_declaration(struct Parser* parser) {
         new_init_declarator(declarator, NULL);
     struct List* init_declarator_list = malloc(sizeof(struct List));
     list_initialize(init_declarator_list);
-    list_insert_at_end(init_declarator_list, list_from(init_declarator));
+    insert_at_end_as_list_item(init_declarator_list, init_declarator);
 
     struct Declaration2* declaration =
         new_declaration(declaration_specifiers, init_declarator_list);
@@ -910,7 +911,7 @@ static void parse_external_declaration(struct Parser* parser) {
     if (declaration) {
         if (!declaration->init_declarator_list) return;
         struct InitDeclarator* init_decl =
-            list_cast(list_begin(declaration->init_declarator_list));
+            nth_list_item(declaration->init_declarator_list, 0);
         struct Declarator* declarator = init_decl->declarator;
         struct DirectDeclarator* direct_declarator =
             declarator->direct_declarator;
