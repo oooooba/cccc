@@ -47,6 +47,10 @@ static bool acceptable_storage_class_specifier(struct Parser* parser) {
 }
 
 static bool acceptable_type_specifier(struct Parser* parser) {
+    if (acceptable(parser, Token_Id)) {
+        strtable_id id = peek(parser)->strtable_index;
+        return context_find_user_defined_type(parser->context, id);
+    }
     return acceptable(parser, Token_KeywordLong) ||
            acceptable(parser, Token_KeywordInt) ||
            acceptable(parser, Token_KeywordChar) ||
@@ -481,7 +485,6 @@ static struct List* parse_declaration_specifiers(struct Parser* parser) {
             specifier = new_declaration_specifier(DeclarationSpecifierTag_Type);
             specifier->type = type;
         } else if (acceptable_storage_class_specifier(parser)) {
-            assert(false);
             enum StorageClassSpecifierTag tag =
                 parse_storage_class_specifier(parser);
             specifier =
@@ -555,6 +558,10 @@ static struct TypeIr* parse_type_specifier(struct Parser* parser) {
             break;
         case Token_KeywordStruct:
             return parse_struct_or_union_specifier(parser);
+        case Token_Id:
+            type = context_find_user_defined_type(parser->context,
+                                                  peek(parser)->strtable_index);
+            break;
         default:
             assert(false);
     }
@@ -910,11 +917,29 @@ static void parse_external_declaration(struct Parser* parser) {
     struct Declaration2* declaration = parse_declaration2(parser);
     if (declaration) {
         if (!declaration->init_declarator_list) return;
+
         struct InitDeclarator* init_decl =
             nth_list_item(declaration->init_declarator_list, 0);
         struct Declarator* declarator = init_decl->declarator;
         struct DirectDeclarator* direct_declarator =
             declarator->direct_declarator;
+
+        struct DeclarationSpecifier* first_specifier =
+            nth_list_item(declaration->declaration_specifiers, 0);
+        if (first_specifier->tag == DeclarationSpecifierTag_StorageClass) {
+            assert(first_specifier->storageClassTag ==
+                   StorageClassSpecifierTag_Typedef);
+            assert(direct_declarator->tag == DirectDeclaratorTag_Identifier);
+            strtable_id id = direct_declarator->identifier;
+
+            struct DeclarationSpecifier* second_specifier =
+                nth_list_item(declaration->declaration_specifiers, 1);
+            assert(second_specifier->tag == DeclarationSpecifierTag_Type);
+            struct TypeIr* type = second_specifier->type;
+            context_insert_user_defined_type(parser->context, id, type);
+            return;
+        }
+
         if (direct_declarator->tag != DirectDeclaratorTag_Parameters) return;
 
         struct List* declaration_specifiers =

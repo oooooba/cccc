@@ -93,3 +93,19 @@ long test(char c, int i) { return c * i; }
 int test19(void) {
     return sizeof(int) + sizeof(char) + sizeof(long) + sizeof(int*);
 }
+
+typedef int Int;
+typedef Int Int2;
+typedef struct S TS;
+
+Int test20(Int2 n) {
+    TS ts;
+    if (sizeof(Int) - sizeof(Int2)) {
+        ts.x = 0;
+        ts.y = 0;
+    } else {
+        ts.x = n;
+        ts.y = sizeof(TS);
+    }
+    return ts.x + ts.y;
+}
