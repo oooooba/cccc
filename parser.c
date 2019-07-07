@@ -42,6 +42,10 @@ static bool acceptable(struct Parser* parser, enum TokenTag expected) {
         return false;
 }
 
+static bool acceptable_storage_class_specifier(struct Parser* parser) {
+    return acceptable(parser, Token_KeywordTypedef);
+}
+
 static bool acceptable_type_specifier(struct Parser* parser) {
     return acceptable(parser, Token_KeywordLong) ||
            acceptable(parser, Token_KeywordInt) ||
@@ -129,7 +133,12 @@ static struct InitDeclarator* new_init_declarator(
     return init_declarator;
 }
 
+enum StorageClassSpecifierTag {
+    StorageClassSpecifierTag_Typedef,
+};
+
 enum DeclarationSpecifierTag {
+    DeclarationSpecifierTag_StorageClass,
     DeclarationSpecifierTag_Type,
 };
 
@@ -137,6 +146,7 @@ struct DeclarationSpecifier {
     struct DeclarationSpecifier* outer;
     enum DeclarationSpecifierTag tag;
     union {
+        enum StorageClassSpecifierTag storageClassTag;
         struct TypeIr* type;
     };
 };
@@ -238,6 +248,8 @@ static struct DeclarationSpecifier* parse_declaration_specifiers(
     struct Parser* parser);
 static struct List* parse_init_declarator_list(struct Parser* parser);
 static struct InitDeclarator* parse_init_declarator(struct Parser* parser);
+static enum StorageClassSpecifierTag parse_storage_class_specifier(
+    struct Parser* parser);
 static struct TypeIr* parse_type_specifier(struct Parser* parser);
 static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser);
 static struct Declarator* parse_declarator2(struct Parser* parser);
@@ -453,6 +465,13 @@ static struct DeclarationSpecifier* parse_declaration_specifiers(
             specifiers = new_declaration_specifier(
                 specifiers, DeclarationSpecifierTag_Type);
             specifiers->type = type;
+        } else if (acceptable_storage_class_specifier(parser)) {
+            assert(false);
+            enum StorageClassSpecifierTag tag =
+                parse_storage_class_specifier(parser);
+            specifiers = new_declaration_specifier(
+                specifiers, DeclarationSpecifierTag_StorageClass);
+            specifiers->storageClassTag = tag;
         } else
             break;
     }
@@ -487,6 +506,20 @@ static struct InitDeclarator* parse_init_declarator(struct Parser* parser) {
         if (!assign_expression) return NULL;
     }
     return new_init_declarator(declarator, assign_expression);
+}
+
+static enum StorageClassSpecifierTag parse_storage_class_specifier(
+    struct Parser* parser) {
+    enum StorageClassSpecifierTag tag;
+    switch (peek(parser)->tag) {
+        case Token_KeywordTypedef:
+            tag = StorageClassSpecifierTag_Typedef;
+            break;
+        default:
+            assert(false);
+    }
+    advance(parser);
+    return tag;
 }
 
 static struct TypeIr* parse_type_specifier(struct Parser* parser) {

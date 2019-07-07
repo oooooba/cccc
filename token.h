@@ -17,6 +17,7 @@ enum TokenTag {
     Token_KeywordReturn,
     Token_KeywordSizeof,
     Token_KeywordStruct,
+    Token_KeywordTypedef,
     Token_KeywordVoid,
 
     Token_LeftParen,
