@@ -78,6 +78,21 @@ static void insert_at_end_as_list_item(struct List* list, void* item) {
     list_insert_at_end(list, list_from(list_item));
 }
 
+static void* nth_list_item(struct List* list, size_t n) {
+    assert(list_size(list));
+    for (struct ListHeader *it = list_begin(list), *eit = list_end(list);
+         it != eit; it = list_next(it)) {
+        if (n) {
+            --n;
+            continue;
+        }
+        struct ListItem* list_item = (struct ListItem*)it;
+        return list_item->item;
+    }
+    assert(false);
+    return NULL;
+}
+
 struct Declarator;
 
 enum DirectDeclaratorTag {
@@ -149,7 +164,6 @@ enum DeclarationSpecifierTag {
 };
 
 struct DeclarationSpecifier {
-    struct DeclarationSpecifier* outer;
     enum DeclarationSpecifierTag tag;
     union {
         enum StorageClassSpecifierTag storageClassTag;
@@ -158,23 +172,23 @@ struct DeclarationSpecifier {
 };
 
 static struct DeclarationSpecifier* new_declaration_specifier(
-    struct DeclarationSpecifier* outer, enum DeclarationSpecifierTag tag) {
+    enum DeclarationSpecifierTag tag) {
     struct DeclarationSpecifier* specifier =
         malloc(sizeof(struct DeclarationSpecifier));
     *specifier = (struct DeclarationSpecifier){
-        .outer = outer, .tag = tag,
+        .tag = tag,
     };
     return specifier;
 }
 
 struct Declaration2 {
-    struct DeclarationSpecifier* declaration_specifiers;
-    struct List* init_declarator_list;  // struct InitDeclarator list
+    struct List* declaration_specifiers;  // struct ListItem list, elem: struct
+                                          // DeclarationSpecifier*
+    struct List* init_declarator_list;    // struct InitDeclarator list
 };
 
-static struct Declaration2* new_declaration(
-    struct DeclarationSpecifier* declaration_specifiers,
-    struct List* init_declarator_list) {
+static struct Declaration2* new_declaration(struct List* declaration_specifiers,
+                                            struct List* init_declarator_list) {
     assert(declaration_specifiers);
 
     struct Declaration2* declaration = malloc(sizeof(struct Declaration2));
@@ -215,9 +229,11 @@ static struct DeclStmtIr* insert_normalized_declaration_statement(
     struct BlockStmtIr* block) {
     (void)context;
     assert(block);
-    assert(declaration->declaration_specifiers->tag ==
-           DeclarationSpecifierTag_Type);
-    struct TypeIr* base_type = declaration->declaration_specifiers->type;
+
+    struct DeclarationSpecifier* specifier =
+        nth_list_item(declaration->declaration_specifiers, 0);
+    assert(specifier->tag == DeclarationSpecifierTag_Type);
+    struct TypeIr* base_type = specifier->type;
 
     struct InitDeclarator* init_declarator = (struct InitDeclarator*)list_cast(
         list_begin(declaration->init_declarator_list));
@@ -246,8 +262,7 @@ static struct DeclStmtIr* insert_normalized_declaration_statement(
 /***** prototypes *****/
 
 static struct Declaration2* parse_declaration2(struct Parser* parser);
-static struct DeclarationSpecifier* parse_declaration_specifiers(
-    struct Parser* parser);
+static struct List* parse_declaration_specifiers(struct Parser* parser);
 static struct List* parse_init_declarator_list(struct Parser* parser);
 static struct InitDeclarator* parse_init_declarator(struct Parser* parser);
 static enum StorageClassSpecifierTag parse_storage_class_specifier(
@@ -437,8 +452,7 @@ static struct ExprIr* parse_expression(struct Parser* parser) {
 /***** declarations *****/
 
 static struct Declaration2* parse_declaration2(struct Parser* parser) {
-    struct DeclarationSpecifier* declaration_specifiers =
-        parse_declaration_specifiers(parser);
+    struct List* declaration_specifiers = parse_declaration_specifiers(parser);
     if (!declaration_specifiers) return NULL;
 
     if (acceptable(parser, Token_Semicolon)) {
@@ -455,27 +469,28 @@ static struct Declaration2* parse_declaration2(struct Parser* parser) {
     return NULL;
 }
 
-static struct DeclarationSpecifier* parse_declaration_specifiers(
-    struct Parser* parser) {
-    struct DeclarationSpecifier* specifiers = NULL;
+static struct List* parse_declaration_specifiers(struct Parser* parser) {
+    struct List* specifiers = malloc(sizeof(struct List));
+    list_initialize(specifiers);
     while (true) {
+        struct DeclarationSpecifier* specifier = NULL;
         if (acceptable_type_specifier(parser)) {
             struct TypeIr* type = parse_type_specifier(parser);
             if (!type) return NULL;
-            specifiers = new_declaration_specifier(
-                specifiers, DeclarationSpecifierTag_Type);
-            specifiers->type = type;
+            specifier = new_declaration_specifier(DeclarationSpecifierTag_Type);
+            specifier->type = type;
         } else if (acceptable_storage_class_specifier(parser)) {
             assert(false);
             enum StorageClassSpecifierTag tag =
                 parse_storage_class_specifier(parser);
-            specifiers = new_declaration_specifier(
-                specifiers, DeclarationSpecifierTag_StorageClass);
-            specifiers->storageClassTag = tag;
+            specifier =
+                new_declaration_specifier(DeclarationSpecifierTag_StorageClass);
+            specifier->storageClassTag = tag;
         } else
             break;
+        insert_at_end_as_list_item(specifiers, specifier);
     }
-    return specifiers;
+    return list_size(specifiers) ? specifiers : NULL;
 }
 
 static struct List* parse_init_declarator_list(struct Parser* parser) {
@@ -670,7 +685,7 @@ static struct List* parse_parameter_list(struct Parser* parser) {
 
     if (list_size(parameter_list) == 1) {
         struct DeclarationSpecifier* first_specifiers =
-            first_decl->declaration_specifiers;
+            nth_list_item(first_decl->declaration_specifiers, 0);
         assert(first_specifiers->tag == DeclarationSpecifierTag_Type);
         if (type_as_void(first_specifiers->type))
             list_initialize(parameter_list);
@@ -680,13 +695,14 @@ static struct List* parse_parameter_list(struct Parser* parser) {
 }
 
 static struct Declaration2* parse_parameter_declaration(struct Parser* parser) {
-    struct DeclarationSpecifier* declaration_specifiers =
-        parse_declaration_specifiers(parser);
+    struct List* declaration_specifiers = parse_declaration_specifiers(parser);
     if (!declaration_specifiers) return NULL;
 
     struct Declarator* declarator = parse_declarator2(parser);
-    assert(declaration_specifiers->tag == DeclarationSpecifierTag_Type);
-    if (!type_as_void(declaration_specifiers->type) && !declarator) return NULL;
+    struct DeclarationSpecifier* specifier =
+        nth_list_item(declaration_specifiers, 0);
+    assert(specifier->tag == DeclarationSpecifierTag_Type);
+    if (!type_as_void(specifier->type) && !declarator) return NULL;
 
     struct InitDeclarator* init_declarator =
         new_init_declarator(declarator, NULL);
@@ -800,14 +816,14 @@ static struct StmtIr* parse_statement(struct Parser* parser) {
 /***** external definitions *****/
 
 static struct FunctionIr* parse_function_definition(struct Parser* parser) {
-    struct DeclarationSpecifier* specifiers =
-        parse_declaration_specifiers(parser);
+    struct List* specifiers = parse_declaration_specifiers(parser);
     if (!specifiers) return NULL;
     struct Declarator* declarator = parse_declarator2(parser);
     if (!declarator) return NULL;
 
-    assert(specifiers->tag == DeclarationSpecifierTag_Type);
-    struct TypeIr* return_type = specifiers->type;
+    struct DeclarationSpecifier* specifier = nth_list_item(specifiers, 0);
+    assert(specifier->tag == DeclarationSpecifierTag_Type);
+    struct TypeIr* return_type = specifier->type;
 
     struct DirectDeclarator* direct_declarator = declarator->direct_declarator;
     assert(direct_declarator->tag == DirectDeclaratorTag_Parameters);
