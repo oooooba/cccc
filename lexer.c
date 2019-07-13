@@ -246,6 +246,8 @@ static void tokenize(struct Lexer* lexer) {
             tokenize_simple_lexeme(lexer);
         else if (is_complex_lexeme(c))
             tokenize_complex_lexeme(lexer);
+        else if (c == '#')
+            break;
         else {
             assert(c == '\n' || c == ' ');
             advance(lexer);
