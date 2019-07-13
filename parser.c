@@ -816,7 +816,10 @@ static struct StmtIr* parse_statement(struct Parser* parser) {
         return parse_selection_statement(parser);
     else if (acceptable(parser, Token_KeywordReturn))
         return parse_jump_statement(parser);
-    else
+    else if (acceptable(parser, Token_Semicolon)) {
+        advance(parser);
+        return NULL;
+    } else
         return ir_expr_stmt_super(
             ir_new_expr_stmt(parse_expression_statement(parser)));
 }
