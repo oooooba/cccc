@@ -162,6 +162,9 @@ void context_dump_type(struct Context* context, FILE* stream,
     }
 
     switch (type_tag(type)) {
+        case Type_Void:
+            fprintf(stream, "void");
+            break;
         case Type_Long:
             fprintf(stream, "long");
             break;

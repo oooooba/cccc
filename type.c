@@ -77,7 +77,7 @@ struct VoidTypeIr* type_new_void(void) {
     static struct VoidTypeIr* type = NULL;
     if (!type) {
         type = malloc(sizeof(struct VoidTypeIr));
-        initialize_type(type_void_super(type), Type_Void, (size_t)-1);
+        initialize_type(type_void_super(type), Type_Void, 1);  // ToDo: fix
     }
     return type;
 }
