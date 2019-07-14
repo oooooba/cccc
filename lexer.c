@@ -41,9 +41,11 @@ static enum TokenTag find_token_tag(const char* str) {
     return Token_Id;
 }
 
-static struct Token* new_token(enum TokenTag tag) {
+static struct Token* new_token(enum TokenTag tag, size_t line, size_t pos) {
     struct Token* token = malloc(sizeof(struct Token));
     token->tag = tag;
+    token->line = line;
+    token->position = pos;
     return token;
 }
 
@@ -74,6 +76,7 @@ static bool is_complex_lexeme(char c) {
 
 static enum TokenTag tokenize_number(struct Lexer* lexer) {
     assert(is_digit(peek(lexer)));
+    size_t pos = lexer->pos;
     intptr_t n = 0;
     for (;;) {
         char c = peek(lexer);
@@ -81,7 +84,7 @@ static enum TokenTag tokenize_number(struct Lexer* lexer) {
         n = n * 10 + (c - '0');
         advance(lexer);
     }
-    struct Token* token = new_token(Token_Integer);
+    struct Token* token = new_token(Token_Integer, lexer->line, pos);
     token->integer = n;
     list_insert_at_end(lexer->tokens, list_from(token));
     return Token_Integer;
@@ -101,7 +104,7 @@ static enum TokenTag tokenize_lexeme(struct Lexer* lexer) {
     str[len] = 0;
 
     enum TokenTag tag = find_token_tag(str);
-    struct Token* token = new_token(tag);
+    struct Token* token = new_token(tag, lexer->line, begin_pos);
     if (tag == Token_Id) {
         strtable_id index = strtable_find(&lexer->context->strtable, str);
         if (!index) index = strtable_register(&lexer->context->strtable, str);
@@ -114,7 +117,6 @@ static enum TokenTag tokenize_lexeme(struct Lexer* lexer) {
 static enum TokenTag tokenize_simple_lexeme(struct Lexer* lexer) {
     char c = peek(lexer);
     assert(is_simple_lexeme(c));
-    advance(lexer);
     enum TokenTag tag;
     switch (c) {
         case '(':
@@ -151,8 +153,9 @@ static enum TokenTag tokenize_simple_lexeme(struct Lexer* lexer) {
             assert(false);
     };
 
-    struct Token* token = new_token(tag);
+    struct Token* token = new_token(tag, lexer->line, lexer->pos);
     list_insert_at_end(lexer->tokens, list_from(token));
+    advance(lexer);
     return tag;
 }
 
@@ -228,10 +231,9 @@ static enum TokenTag tokenize_complex_lexeme(struct Lexer* lexer) {
             assert(false);
     }
 
-    advance_k(lexer, num_advance);
-
-    struct Token* token = new_token(tag);
+    struct Token* token = new_token(tag, lexer->line, lexer->pos);
     list_insert_at_end(lexer->tokens, list_from(token));
+    advance_k(lexer, num_advance);
     return tag;
 }
 
@@ -250,8 +252,13 @@ static void tokenize(struct Lexer* lexer) {
         else if (c == '#')
             break;
         else {
-            assert(c == '\n' || c == ' ');
-            advance(lexer);
+            if (c == '\n' || c == ' ')
+                advance(lexer);
+            else {
+                fprintf(stderr, "line = %zu, pos = %zu\n", lexer->line,
+                        lexer->pos);
+                assert(false);
+            }
         }
     }
 }
@@ -263,20 +270,24 @@ static bool read(struct Lexer* lexer) {
 }
 
 void lexer_read_and_tokenize(struct Lexer* lexer) {
-    list_insert_at_end(lexer->tokens,
-                       list_from(new_token(Token_PseudoFileBegin)));
+    list_insert_at_end(
+        lexer->tokens,
+        list_from(new_token(Token_PseudoFileBegin, lexer->line, lexer->pos)));
     while (read(lexer)) {
+        ++lexer->line;
         lexer->pos = 0;
         tokenize(lexer);
     }
-    list_insert_at_end(lexer->tokens,
-                       list_from(new_token(Token_PseudoFileEnd)));
+    list_insert_at_end(
+        lexer->tokens,
+        list_from(new_token(Token_PseudoFileEnd, lexer->line, lexer->pos)));
 }
 
 void lexer_initialize(struct Lexer* lexer, struct Context* context,
                       struct List* tokens, FILE* input_stream) {
     lexer->context = context;
     lexer->buf = malloc(LEXER_INPUT_STREAM_BUFFER_SIZE);
+    lexer->line = 0;
     lexer->pos = 0;
     lexer->input_stream = input_stream;
     lexer->tokens = tokens;

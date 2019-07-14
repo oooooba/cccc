@@ -54,6 +54,8 @@ enum TokenTag {
 
 struct Token {
     struct ListHeader as_list;
+    size_t line;
+    size_t position;
     enum TokenTag tag;
     union {
         intptr_t integer;

@@ -9,6 +9,7 @@
 struct Lexer {
     struct Context* context;
     char* buf;
+    size_t line;
     size_t pos;
     struct List* tokens;
     FILE* input_stream;
