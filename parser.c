@@ -363,6 +363,17 @@ static struct ExprIr* parse_postfix_expression(struct Parser* parser) {
             struct DerefExprIr* deref =
                 ir_new_deref_expr(ir_member_expr_cast(member));
             expr = ir_deref_expr_cast(deref);
+        } else if (acceptable(parser, Token_Arrow)) {
+            advance(parser);
+            strtable_id name_index = parse_identifier(parser);
+            struct DerefExprIr* inner_deref = ir_new_deref_expr(expr);
+            struct AddrofExprIr* base =
+                ir_new_addrof_expr(ir_deref_expr_cast(inner_deref));
+            struct MemberExprIr* member =
+                ir_new_member_expr(ir_addrof_expr_cast(base), name_index);
+            struct DerefExprIr* deref =
+                ir_new_deref_expr(ir_member_expr_cast(member));
+            expr = ir_deref_expr_cast(deref);
         } else
             break;
     }

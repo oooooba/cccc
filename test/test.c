@@ -109,3 +109,12 @@ Int test20(Int2 n) {
     }
     return ts.x + ts.y;
 }
+
+int test21(void) {
+    struct S s;
+    s.y = 1;
+    s.x = 2;
+    struct S* sp = &s;
+    sp->x = sp->y;
+    return sp->x;
+}

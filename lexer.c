@@ -202,6 +202,10 @@ static enum TokenTag tokenize_complex_lexeme(struct Lexer* lexer) {
                     tag = Token_MinusEqual;
                     num_advance = 2;
                     break;
+                case '>':
+                    tag = Token_Arrow;
+                    num_advance = 2;
+                    break;
                 default:
                     tag = Token_Minus;
                     num_advance = 1;

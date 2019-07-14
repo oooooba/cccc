@@ -44,6 +44,7 @@ enum TokenTag {
     Token_MinusEqual,
     Token_Asterisk,
     Token_AsteriskEqual,
+    Token_Arrow,
 
     Token_Integer,
     Token_Id,
