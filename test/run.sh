@@ -7,7 +7,7 @@ SRC_TARGET=test.c
 SRC_MAIN=main.c
 TMP_C=/tmp/test.c
 ASM=/tmp/output.S
-INCLUDE=../include
+INCLUDE=../test_include
 
 $GCC -std=c11 -Wall -I$INCLUDE -E $SRC_TARGET >$TMP_C
 $CC <$TMP_C >$ASM

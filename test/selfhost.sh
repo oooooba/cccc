@@ -5,10 +5,11 @@ CC=../build/cccc
 CC2=cccc
 GCC=gcc
 SRC=..
+INCLUDE=../test_include
 TMP=/tmp
 
 function compile_cccc () {
-    $GCC -std=c11 -Wall -E $SRC/$1.c >$TMP/$1.c
+    $GCC -std=c11 -Wall -I$INCLUDE -E $SRC/$1.c >$TMP/$1.c
     $CC <$TMP/$1.c >$TMP/$1.S
 }
 
