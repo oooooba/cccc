@@ -176,7 +176,19 @@ void context_dump_type(struct Context* context, FILE* stream,
             break;
         case Type_Pointer: {
             struct PointerTypeIr* p = type_as_pointer(type);
-            context_dump_type(context, stream, type_pointer_elem_type(p));
+            struct TypeIr* elem_type = type_pointer_elem_type(p);
+            if (type_tag(elem_type) == Type_Struct) {
+                struct StructTypeIr* s = type_as_struct(elem_type);
+                strtable_id name_index = type_struct_name_index(s);
+                if (name_index == STRTABLE_INVALID_ID) {
+                    context_dump_type(context, stream, elem_type);
+                } else {
+                    fprintf(stream, "struct");
+                    fprintf(stream, " %s",
+                            strtable_at(&context->strtable, name_index));
+                }
+            } else
+                context_dump_type(context, stream, elem_type);
             fprintf(stream, "*");
         } break;
         case Type_Struct: {
