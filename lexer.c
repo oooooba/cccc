@@ -67,12 +67,12 @@ static bool is_alpha(char c) {
 
 static bool is_simple_lexeme(char c) {
     return (c == '(') || (c == ')') || (c == '{') || (c == '}') || (c == ';') ||
-           (c == '&') || (c == ',') || (c == '.') || (c == '[') || (c == ']') ||
-           (c == '!');
+           (c == '&') || (c == ',') || (c == '.') || (c == '[') || (c == ']');
 }
 
 static bool is_complex_lexeme(char c) {
-    return (c == '+') || (c == '-') || (c == '*') || (c == '/') || (c == '=');
+    return (c == '+') || (c == '-') || (c == '*') || (c == '/') || (c == '=') ||
+           (c == '!');
 }
 
 static enum TokenTag tokenize_number(struct Lexer* lexer) {
@@ -149,9 +149,6 @@ static enum TokenTag tokenize_simple_lexeme(struct Lexer* lexer) {
             break;
         case ']':
             tag = Token_RightBracket;
-            break;
-        case '!':
-            tag = Token_Exclamation;
             break;
         default:
             assert(false);
@@ -233,6 +230,17 @@ static enum TokenTag tokenize_complex_lexeme(struct Lexer* lexer) {
                     return Token_Invalid;
                 default:
                     assert("unimplemented" && false);
+            }
+            break;
+        case '!':
+            switch (peek_k(lexer, 1)) {
+                case '=':
+                    tag = Token_ExclamationEqual;
+                    num_advance = 2;
+                    break;
+                default:
+                    tag = Token_Exclamation;
+                    num_advance = 1;
             }
             break;
         default:

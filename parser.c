@@ -458,14 +458,19 @@ static struct ExprIr* parse_additive_expression(struct Parser* parser) {
 static struct ExprIr* parse_equality_expression(struct Parser* parser) {
     struct ExprIr* lhs = parse_additive_expression(parser);
     for (;;) {
-        enum BinopExprIrTag op;
-        if (acceptable(parser, Token_EqualEqual))
-            op = BinopExprIrTag_Equal;
-        else
+        if (acceptable(parser, Token_EqualEqual)) {
+            advance(parser);
+            struct ExprIr* rhs = parse_additive_expression(parser);
+            lhs = ir_binop_expr_cast(
+                ir_new_binop_expr(BinopExprIrTag_Equal, lhs, rhs));
+        } else if (acceptable(parser, Token_ExclamationEqual)) {
+            advance(parser);
+            struct ExprIr* rhs = parse_additive_expression(parser);
+            lhs = ir_binop_expr_cast(
+                ir_new_binop_expr(BinopExprIrTag_Equal, lhs, rhs));
+            lhs = ir_unop_expr_cast(ir_new_unop_expr(UnopExprIrTag_Not, lhs));
+        } else
             break;
-        advance(parser);
-        struct ExprIr* rhs = parse_additive_expression(parser);
-        lhs = ir_binop_expr_cast(ir_new_binop_expr(op, lhs, rhs));
     }
     return lhs;
 }

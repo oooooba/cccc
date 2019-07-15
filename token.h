@@ -33,7 +33,6 @@ enum TokenTag {
     Token_Dot,
 
     Token_Ampersand,
-    Token_Exclamation,
 
     Token_Equal,
     Token_EqualEqual,
@@ -46,6 +45,8 @@ enum TokenTag {
     Token_Asterisk,
     Token_AsteriskEqual,
     Token_Arrow,
+    Token_Exclamation,
+    Token_ExclamationEqual,
 
     Token_Integer,
     Token_Id,
