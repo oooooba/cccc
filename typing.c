@@ -60,6 +60,14 @@ static struct ExprIr* visit_binop_expr(struct TypingVisitor* visitor,
     return ir_binop_expr_cast(ir);
 }
 
+static struct ExprIr* visit_unop_expr(struct TypingVisitor* visitor,
+                                      struct UnopExprIr* ir) {
+    visitor_visit_unop_expr(as_visitor(visitor), ir);
+    struct TypeIr* operand_type = ir_expr_type(ir_unop_expr_operand(ir));
+    ir_expr_set_type(ir_unop_expr_cast(ir), operand_type);
+    return ir_unop_expr_cast(ir);
+}
+
 static struct ExprIr* visit_call_expr(struct TypingVisitor* visitor,
                                       struct CallExprIr* ir) {
     struct ExprIr* func_expr = ir_call_expr_function(ir);
@@ -222,6 +230,7 @@ struct TypingVisitor* new_typing_visitor(struct Context* context) {
 
     register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr);
     register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr);
+    register_visitor(visitor->as_visitor, visit_unop_expr, visit_unop_expr);
     register_visitor(visitor->as_visitor, visit_call_expr, visit_call_expr);
     register_visitor(visitor->as_visitor, visit_var_expr, visit_var_expr);
     register_visitor(visitor->as_visitor, visit_subst_expr, visit_subst_expr);

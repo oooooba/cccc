@@ -59,6 +59,25 @@ static struct ExprIr* visit_binop_expr(struct DumpVisitor* visitor,
     return ir_binop_expr_cast(ir);
 }
 
+static struct ExprIr* visit_unop_expr(struct DumpVisitor* visitor,
+                                      struct UnopExprIr* ir) {
+    visitor_visit_unop_expr(as_visitor(visitor), ir);
+    struct ExprIr* operand = ir_unop_expr_operand(ir);
+    const char* op;
+    switch (ir_unop_expr_op(ir)) {
+        case UnopExprIrTag_Not:
+            op = "not";
+            break;
+        default:
+            assert(false);
+    }
+    fprintf(visitor->stream, "v%p = %s v%p :: ", ir, op, operand);
+    context_dump_type(ctx(visitor), visitor->stream,
+                      ir_expr_type(ir_unop_expr_cast(ir)));
+    fprintf(visitor->stream, "\n");
+    return ir_unop_expr_cast(ir);
+}
+
 static struct ExprIr* visit_call_expr(struct DumpVisitor* visitor,
                                       struct CallExprIr* ir) {
     visitor_visit_call_expr(as_visitor(visitor), ir);
@@ -229,6 +248,7 @@ struct DumpVisitor* new_dump_visitor(struct Context* context, FILE* stream) {
 
     register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr);
     register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr);
+    register_visitor(visitor->as_visitor, visit_unop_expr, visit_unop_expr);
     register_visitor(visitor->as_visitor, visit_call_expr, visit_call_expr);
     register_visitor(visitor->as_visitor, visit_var_expr, visit_var_expr);
     register_visitor(visitor->as_visitor, visit_subst_expr, visit_subst_expr);

@@ -69,6 +69,16 @@ static struct ExprIr* visit_binop_expr(struct RegallocVisitor* visitor,
     return ir_binop_expr_cast(ir);
 }
 
+static struct ExprIr* visit_unop_expr(struct RegallocVisitor* visitor,
+                                      struct UnopExprIr* ir) {
+    visitor_visit_unop_expr(as_visitor(visitor), ir);
+    release_register(visitor);
+    strtable_id reg_id =
+        acquire_register(visitor, ir_expr_type(ir_unop_expr_cast(ir)));
+    ir_expr_set_reg_id(ir_unop_expr_cast(ir), reg_id);
+    return ir_unop_expr_cast(ir);
+}
+
 static struct ExprIr* visit_call_expr(struct RegallocVisitor* visitor,
                                       struct CallExprIr* ir) {
     struct VarExprIr* func_name = ir_expr_as_var(ir_call_expr_function(ir));
@@ -230,6 +240,7 @@ struct RegallocVisitor* new_regalloc_visitor(struct Context* context) {
 
     register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr);
     register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr);
+    register_visitor(visitor->as_visitor, visit_unop_expr, visit_unop_expr);
     register_visitor(visitor->as_visitor, visit_call_expr, visit_call_expr);
     register_visitor(visitor->as_visitor, visit_var_expr, visit_var_expr);
     register_visitor(visitor->as_visitor, visit_subst_expr, visit_subst_expr);

@@ -78,7 +78,7 @@ enum BinopExprIrTag {
 };
 
 enum UnopExprIrTag {
-    UnopExprIrTag_Notused,
+    UnopExprIrTag_Not,
 };
 
 struct ExprIr* ir_as_expr(struct Ir* ir);

@@ -103,8 +103,9 @@ struct ExprIr* visitor_visit_const_expr(struct Visitor* visitor,
 
 struct ExprIr* visitor_visit_unop_expr(struct Visitor* visitor,
                                        struct UnopExprIr* ir) {
-    (void)visitor;
-    assert(false);
+    struct ExprIr* operand =
+        visitor_visit_expr(visitor, ir_unop_expr_operand(ir));
+    ir_unop_expr_set_operand(ir, operand);
     return ir_unop_expr_cast(ir);
 }
 

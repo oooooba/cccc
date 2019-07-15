@@ -33,6 +33,7 @@ enum TokenTag {
     Token_Dot,
 
     Token_Ampersand,
+    Token_Exclamation,
 
     Token_Equal,
     Token_EqualEqual,

@@ -18,11 +18,12 @@ int test14(void);
 int test15(void);
 int test16(void);
 int test17(int);
-long test18(int i, char c);
+long test18(int, char);
 int test19(void);
 int test20(int);
 int test21(void);
 int test22(int, int);
+int test23(int, int);
 
 static void check(const char* msg, int expected, int actual) {
     if (actual == expected) {
@@ -56,5 +57,7 @@ int main(void) {
     check("test21", 1, test21());
     check("test22", 1, test22(3, 3));
     check("test22", 0, test22(3, 4));
+    check("test23", 0, test23(3, 3));
+    check("test23", 1, test23(3, 4));
     return 0;
 }

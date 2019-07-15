@@ -108,6 +108,36 @@ static struct ExprIr* visit_binop_expr(struct CodegenVisitor* visitor,
     return ir_binop_expr_cast(ir);
 }
 
+static struct ExprIr* visit_unop_expr(struct CodegenVisitor* visitor,
+                                      struct UnopExprIr* ir) {
+    visitor_visit_unop_expr(as_visitor(visitor), ir);
+    struct ExprIr* operand = ir_unop_expr_operand(ir);
+
+    strtable_id operand_reg_id = ir_expr_reg_id(operand);
+    strtable_id result_reg_id = ir_expr_reg_id(ir_unop_expr_cast(ir));
+    assert(operand_reg_id == result_reg_id);
+
+    const char* result_reg = register_name(visitor, result_reg_id);
+
+    const char* op;
+    switch (ir_unop_expr_op(ir)) {
+        case UnopExprIrTag_Not:
+            fprintf(visitor->stream, "\tand\t%s, %s\n", result_reg, result_reg);
+            fprintf(visitor->stream, "\tjz\tlab_%p_else\n", ir);
+            fprintf(visitor->stream, "\tmov\t%s, 0\n", result_reg);
+            fprintf(visitor->stream, "\tjmp\tlab_%p_cont\n", ir);
+            fprintf(visitor->stream, "lab_%p_else:\n", ir);
+            fprintf(visitor->stream, "\tmov\t%s, 1\n", result_reg);
+            fprintf(visitor->stream, "lab_%p_cont:\n", ir);
+            return ir_unop_expr_cast(ir);
+        default:
+            assert(false);
+    }
+
+    fprintf(visitor->stream, "\t%s\t%s\n", op, result_reg);
+    return ir_unop_expr_cast(ir);
+}
+
 static struct ExprIr* visit_call_expr(struct CodegenVisitor* visitor,
                                       struct CallExprIr* ir) {
     struct VarExprIr* func_name = ir_expr_as_var(ir_call_expr_function(ir));
@@ -297,6 +327,7 @@ struct CodegenVisitor* new_codegen_visitor(struct Context* context,
 
     register_visitor(visitor->as_visitor, visit_const_expr, visit_const_expr);
     register_visitor(visitor->as_visitor, visit_binop_expr, visit_binop_expr);
+    register_visitor(visitor->as_visitor, visit_unop_expr, visit_unop_expr);
     register_visitor(visitor->as_visitor, visit_call_expr, visit_call_expr);
     register_visitor(visitor->as_visitor, visit_var_expr, visit_var_expr);
     register_visitor(visitor->as_visitor, visit_subst_expr, visit_subst_expr);
