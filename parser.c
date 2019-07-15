@@ -61,8 +61,9 @@ static bool acceptable_type_specifier(struct Parser* parser) {
 
 static void expect(struct Parser* parser, enum TokenTag expected) {
     if (!acceptable(parser, expected)) {
-        fprintf(stderr, "expected %d, actual %d\n", expected,
-                peek(parser)->tag);
+        struct Token* token = peek(parser);
+        fprintf(stderr, "expected %d, actual %d (line = %zu, pos = %zu)\n",
+                expected, peek(parser)->tag, token->line, token->position);
         assert(false);
     }
     advance(parser);
@@ -450,12 +451,27 @@ static struct ExprIr* parse_additive_expression(struct Parser* parser) {
     return lhs;
 }
 
-static struct ExprIr* parse_assignment_expression(struct Parser* parser) {
+static struct ExprIr* parse_equality_expression(struct Parser* parser) {
     struct ExprIr* lhs = parse_additive_expression(parser);
+    for (;;) {
+        enum BinopExprIrTag op;
+        if (acceptable(parser, Token_EqualEqual))
+            op = BinopExprIrTag_Equal;
+        else
+            break;
+        advance(parser);
+        struct ExprIr* rhs = parse_additive_expression(parser);
+        lhs = ir_binop_expr_cast(ir_new_binop_expr(op, lhs, rhs));
+    }
+    return lhs;
+}
+
+static struct ExprIr* parse_assignment_expression(struct Parser* parser) {
+    struct ExprIr* lhs = parse_equality_expression(parser);
     if (acceptable(parser, Token_Equal)) {
         advance(parser);
         struct AddrofExprIr* addrof = ir_new_addrof_expr(lhs);
-        struct ExprIr* rhs = parse_additive_expression(parser);
+        struct ExprIr* rhs = parse_equality_expression(parser);
         struct SubstExprIr* subst =
             ir_new_subst_expr(ir_addrof_expr_cast(addrof), rhs);
         lhs = ir_subst_expr_cast(subst);

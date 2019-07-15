@@ -46,6 +46,9 @@ static struct ExprIr* visit_binop_expr(struct DumpVisitor* visitor,
         case BinopExprIrTag_Mul:
             op = "mul";
             break;
+        case BinopExprIrTag_Equal:
+            op = "equal";
+            break;
         default:
             assert(false);
     }

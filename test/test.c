@@ -118,3 +118,5 @@ int test21(void) {
     sp->x = sp->y;
     return sp->x;
 }
+
+int test22(int x, int y) { return x == y; }

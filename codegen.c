@@ -51,6 +51,18 @@ static struct ExprIr* visit_const_expr(struct CodegenVisitor* visitor,
     return ir_const_expr_cast(ir);
 }
 
+static void print_relational_instr(struct CodegenVisitor* visitor, void* label,
+                                   const char* op, const char* lhs_reg,
+                                   const char* rhs_reg) {
+    fprintf(visitor->stream, "\tcmp\t%s, %s\n", lhs_reg, rhs_reg);
+    fprintf(visitor->stream, "\t%s\tlab_%p_else\n", op, label);
+    fprintf(visitor->stream, "\tmov\t%s, 1\n", lhs_reg);
+    fprintf(visitor->stream, "\tjmp\tlab_%p_cont\n", label);
+    fprintf(visitor->stream, "lab_%p_else:\n", label);
+    fprintf(visitor->stream, "\tmov\t%s, 0\n", lhs_reg);
+    fprintf(visitor->stream, "lab_%p_cont:\n", label);
+}
+
 static struct ExprIr* visit_binop_expr(struct CodegenVisitor* visitor,
                                        struct BinopExprIr* ir) {
     visitor_visit_binop_expr(as_visitor(visitor), ir);
@@ -76,6 +88,9 @@ static struct ExprIr* visit_binop_expr(struct CodegenVisitor* visitor,
         case BinopExprIrTag_Mul:
             op = "imul";
             break;
+        case BinopExprIrTag_Equal:
+            print_relational_instr(visitor, ir, "jnz", result_reg, rhs_reg);
+            return ir_binop_expr_cast(ir);
         default:
             assert(false);
     }
