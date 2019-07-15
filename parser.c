@@ -206,6 +206,20 @@ static struct Declaration2* new_declaration(struct List* declaration_specifiers,
     return declaration;
 }
 
+struct StructDeclaration {
+    struct TypeIr* type_specifier;
+    struct Declarator* declarator;
+};
+
+static struct StructDeclaration* new_struct_declaration(
+    struct TypeIr* type_specifier, struct Declarator* declarator) {
+    struct StructDeclaration* declaration =
+        malloc(sizeof(struct StructDeclaration));
+    declaration->type_specifier = type_specifier;
+    declaration->declarator = declarator;
+    return declaration;
+}
+
 static struct List* normalize_declaration(struct Declaration2* declaration) {
     struct List* decl_list = malloc(sizeof(struct List));
     list_initialize(decl_list);
@@ -277,6 +291,8 @@ static enum StorageClassSpecifierTag parse_storage_class_specifier(
     struct Parser* parser);
 static struct TypeIr* parse_type_specifier(struct Parser* parser);
 static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser);
+static struct StructDeclaration* parse_struct_declaration(
+    struct Parser* parser);
 static struct Declarator* parse_declarator2(struct Parser* parser);
 static struct DirectDeclarator* parse_direct_declarator(struct Parser* parser);
 static struct List* parse_parameter_type_list(struct Parser* parser);
@@ -632,15 +648,22 @@ static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser) {
 
         while (!acceptable(parser,
                            Token_RightCurry)) {  // ToDo: fix to parse precisely
-            struct TypeIr* type = parse_type_specifier(parser);
-            strtable_id member_index = parse_identifier(parser);
+            struct StructDeclaration* declaration =
+                parse_struct_declaration(parser);
+
+            struct TypeIr* type = declaration->type_specifier;
+            if (declaration->declarator->has_pointer)
+                type = type_pointer_super(type_new_pointer(type));
+
+            struct DirectDeclarator* direct_declarator =
+                declaration->declarator->direct_declarator;
+            assert(direct_declarator->tag == DirectDeclaratorTag_Identifier);
+            strtable_id member_index = direct_declarator->identifier;
 
             struct MemberEntry* entry =
                 type_new_member_entry(member_index, type);
             list_insert_at_end(elem_types,
                                type_member_entry_as_list_header(entry));
-
-            expect(parser, Token_Semicolon);
         }
         expect(parser, Token_RightCurry);
 
@@ -648,6 +671,16 @@ static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser) {
     }
 
     return type;
+}
+
+static struct StructDeclaration* parse_struct_declaration(
+    struct Parser* parser) {
+    assert(acceptable_type_specifier(parser));
+    struct TypeIr* type_specifier = parse_type_specifier(parser);
+    struct Declarator* declarator = parse_declarator2(parser);
+    assert(declarator);
+    expect(parser, Token_Semicolon);
+    return new_struct_declaration(type_specifier, declarator);
 }
 
 static struct Declarator* parse_declarator2(struct Parser* parser) {
