@@ -21,12 +21,12 @@ static const struct ReservedKeywordsEntry reserved_keywords[] = {
 #define register_keyword(symbol, tag) \
     { .keyword = #symbol, .token_tag = Token_Keyword##tag }
 
-    register_keyword(char, Char),     register_keyword(else, Else),
-    register_keyword(if, If),         register_keyword(int, Int),
-    register_keyword(long, Long),     register_keyword(return, Return),
-    register_keyword(sizeof, Sizeof), register_keyword(static, Static),
-    register_keyword(struct, Struct), register_keyword(typedef, Typedef),
-    register_keyword(void, Void),
+    register_keyword(const, Const),     register_keyword(char, Char),
+    register_keyword(else, Else),       register_keyword(if, If),
+    register_keyword(int, Int),         register_keyword(long, Long),
+    register_keyword(return, Return),   register_keyword(sizeof, Sizeof),
+    register_keyword(static, Static),   register_keyword(struct, Struct),
+    register_keyword(typedef, Typedef), register_keyword(void, Void),
 
 #undef register_keyword
 };
@@ -111,7 +111,10 @@ static enum TokenTag tokenize_lexeme(struct Lexer* lexer) {
         if (!index) index = strtable_register(&lexer->context->strtable, str);
         token->strtable_index = index;
     }
-    list_insert_at_end(lexer->tokens, list_from(token));
+    if (tag == Token_KeywordConst) {
+        // ignore const keyword, ToDo: fix
+    } else
+        list_insert_at_end(lexer->tokens, list_from(token));
     return tag;
 }
 
