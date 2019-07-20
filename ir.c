@@ -667,6 +667,48 @@ void ir_cast_expr_set_operand(struct CastExprIr* ir, struct ExprIr* operand) {
     ir->operand = operand;
 }
 
+struct ExprIr* ir_expr_clone(struct ExprIr* ir) {
+    switch (ir->tag) {
+        case ExprIrTag_Const: {
+            struct ConstExprIr* expr = ir_expr_as_const(ir);
+            intptr_t value = ir_const_expr_integer_value(expr);
+            return ir_const_expr_cast(ir_new_integer_const_expr(value));
+        }
+        case ExprIrTag_Binop: {
+            struct BinopExprIr* expr = ir_expr_as_binop(ir);
+            enum BinopExprIrTag op = ir_binop_expr_op(expr);
+            struct ExprIr* lhs = ir_expr_clone(ir_binop_expr_lhs(expr));
+            struct ExprIr* rhs = ir_expr_clone(ir_binop_expr_rhs(expr));
+            return ir_binop_expr_cast(ir_new_binop_expr(op, lhs, rhs));
+        }
+        case ExprIrTag_Var: {
+            struct VarExprIr* expr = ir_expr_as_var(ir);
+            strtable_id id = ir_var_expr_index(expr);
+            return ir_var_expr_cast(ir_new_var_expr(id));
+        }
+        case ExprIrTag_Member: {
+            struct MemberExprIr* expr = ir_expr_as_member(ir);
+            struct ExprIr* base = ir_expr_clone(ir_member_expr_base(expr));
+            strtable_id name_index = ir_member_expr_name_index(expr);
+            return ir_member_expr_cast(ir_new_member_expr(base, name_index));
+        }
+        case ExprIrTag_Deref: {
+            struct DerefExprIr* expr = ir_expr_as_deref(ir);
+            struct ExprIr* operand = ir_expr_clone(ir_deref_expr_operand(expr));
+            return ir_deref_expr_cast(ir_new_deref_expr(operand));
+        }
+        case ExprIrTag_Addrof: {
+            struct AddrofExprIr* expr = ir_expr_as_addrof(ir);
+            struct ExprIr* operand =
+                ir_expr_clone(ir_addrof_expr_operand(expr));
+            return ir_addrof_expr_cast(ir_new_addrof_expr(operand));
+        }
+        default:
+            assert(false);
+            return NULL;
+    }
+}
+
 struct StmtIr {
     struct Ir as_ir;
     enum StmtIrTag tag;

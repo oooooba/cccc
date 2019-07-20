@@ -25,6 +25,7 @@ int test21(void);
 int test22(int, int);
 int test23(int, int);
 int test24(int, int);
+int test25(int);
 
 static void check(const char* msg, int expected, int actual) {
     if (actual == expected) {
@@ -62,5 +63,6 @@ int main(void) {
     check("test23", 1, test23(3, 4));
     check("test24", 0, test24(3, 3));
     check("test24", 1, test24(3, 4));
+    check("test25", 2, test25(1));
     return 0;
 }

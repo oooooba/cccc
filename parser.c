@@ -425,6 +425,17 @@ static struct ExprIr* parse_unary_expression(struct Parser* parser) {
         }
         expect(parser, Token_RightParen);
         return const_expr;
+    } else if (acceptable(parser, Token_PlusPlus)) {
+        advance(parser);
+        struct ExprIr* operand = parse_unary_expression(parser);
+        struct ExprIr* dst = ir_expr_clone(operand);
+        struct AddrofExprIr* dst_addr = ir_new_addrof_expr(dst);
+        struct BinopExprIr* add =
+            ir_new_binop_expr(BinopExprIrTag_Add, operand,
+                              ir_const_expr_cast(ir_new_integer_const_expr(1)));
+        struct SubstExprIr* subst = ir_new_subst_expr(
+            ir_addrof_expr_cast(dst_addr), ir_binop_expr_cast(add));
+        return ir_subst_expr_cast(subst);
     } else
         return parse_postfix_expression(parser);
 }

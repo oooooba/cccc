@@ -124,3 +124,8 @@ int test22(int x, int y) { return x == y; }
 int test23(int x, int y) { return !test22(x, y); }
 
 int test24(int x, int y) { return x != y; }
+
+int test25(int x) {
+    ++x;
+    return x;
+}

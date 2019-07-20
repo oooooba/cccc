@@ -201,6 +201,7 @@ struct CastExprIr* ir_new_cast_expr(struct ExprIr* operand,
 struct ExprIr* ir_cast_expr_cast(struct CastExprIr* ir);
 struct ExprIr* ir_cast_expr_operand(struct CastExprIr* ir);
 void ir_cast_expr_set_operand(struct CastExprIr* ir, struct ExprIr* operand);
+struct ExprIr* ir_expr_clone(struct ExprIr* ir);
 
 enum StmtIrTag ir_stmt_tag(struct StmtIr* ir);
 strtable_id ir_stmt_label_index(struct StmtIr* ir);
