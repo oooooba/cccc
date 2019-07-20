@@ -38,6 +38,12 @@ static struct ExprIr* visit_binop_expr(struct TypingVisitor* visitor,
         else if (type_tag(lhs_type) == Type_Char &&
                  type_tag(rhs_type) == Type_Int)
             lhs = ir_cast_expr_cast(ir_new_cast_expr(lhs, rhs_type));
+        else if (type_tag(lhs_type) == Type_Long &&
+                 type_tag(rhs_type) == Type_Int)
+            rhs = ir_cast_expr_cast(ir_new_cast_expr(rhs, lhs_type));
+        else if (type_tag(lhs_type) == Type_Int &&
+                 type_tag(rhs_type) == Type_Long)
+            lhs = ir_cast_expr_cast(ir_new_cast_expr(lhs, rhs_type));
         else if (ir_binop_expr_op(ir) == BinopExprIrTag_Add ||
                  ir_binop_expr_op(ir) == BinopExprIrTag_Sub) {
             if (type_tag(lhs_type) == Type_Int &&
