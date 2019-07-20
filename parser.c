@@ -791,8 +791,15 @@ static struct List* parse_parameter_list(struct Parser* parser) {
         struct DeclarationSpecifier* first_specifiers =
             nth_list_item(first_decl->declaration_specifiers, 0);
         assert(first_specifiers->tag == DeclarationSpecifierTag_Type);
-        if (type_as_void(first_specifiers->type))
-            list_initialize(parameter_list);
+        if (type_as_void(first_specifiers->type)) {
+            struct InitDeclarator* first_init =
+                nth_list_item(first_decl->init_declarator_list, 0);
+            struct Declarator* first_declarator = first_init->declarator;
+            if (first_init->declarator)
+                assert(first_declarator->has_pointer);
+            else
+                list_initialize(parameter_list);
+        }
     }
 
     return parameter_list;
