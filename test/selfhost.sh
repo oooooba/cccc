@@ -24,7 +24,7 @@ compile_gcc dump
 compile_gcc fixup
 compile_gcc ir
 compile_gcc lexer
-compile_gcc list
+compile_cccc list
 compile_gcc map
 compile_gcc nameresolve
 compile_gcc parser

@@ -2,8 +2,6 @@
 
 #include <assert.h>
 
-#include <stdio.h>  // for debug
-
 void list_initialize(struct List* list) {
     list->size = 0;
     list->head.prev = &list->head;
@@ -83,25 +81,3 @@ struct ListHeader* list_from(void* p) {
 }
 
 void* list_cast(struct ListHeader* l) { return l; }
-
-void list_validate(struct List* list, const char* msg) {
-    struct ListHeader* it = list_begin(list);
-    struct ListHeader* eit = list_end(list);
-    size_t cnt = 0;
-    for (; it != eit; it = list_next(it)) {
-        printf("%p\n", it);
-        ++cnt;
-    }
-    printf("[next] eit=%p, %s\n", eit, msg);
-    assert(cnt == list_size(list));
-
-    it = list_end(list);
-    eit = list_begin(list);
-    cnt = 0;
-    for (; it != eit; it = list_prev(it)) {
-        printf("%p\n", it);
-        ++cnt;
-    }
-    printf("[prev] eit=%p, %s\n", eit, msg);
-    assert(cnt == list_size(list));
-}
