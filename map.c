@@ -2,7 +2,6 @@
 
 #include "list.h"
 
-#include <stdint.h>
 #include <stdlib.h>
 
 // map-like structure
