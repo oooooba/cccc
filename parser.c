@@ -945,6 +945,8 @@ static struct Res* parse_function_declaration(
         // ignore storage class specifier, ToDo: fix
         specifier = nth_list_item(declaration_specifier_list, 1);
     struct TypeIr* return_type = specifier->type;
+    if (declarator->has_pointer)
+        return_type = type_pointer_super(type_new_pointer(return_type));
 
     struct DirectDeclarator* direct_declarator = declarator->direct_declarator;
     assert(direct_declarator->tag == DirectDeclaratorTag_Parameters);
