@@ -337,6 +337,12 @@ static struct ExprIr* parse_primary_expression(struct Parser* parser) {
                 ir_new_deref_expr(ir_var_expr_cast(var));
             return ir_deref_expr_cast(deref_var);
         } break;
+        case Token_LeftParen: {
+            advance(parser);
+            struct ExprIr* expr = parse_expression(parser);
+            expect(parser, Token_RightParen);
+            return expr;
+        } break;
         default:
             assert(false);
             return NULL;
