@@ -237,7 +237,10 @@ static struct FunctionIr* visit_function2(struct DumpVisitor* visitor,
         context_dump_type(ctx(visitor), visitor->stream,
                           ir_decl_stmt_type(decl));
     }
-    fprintf(visitor->stream, ") ");
+    fprintf(visitor->stream, ") :: ");
+    context_dump_type(ctx(visitor), visitor->stream,
+                      ir_function_result_type(ir));
+    fprintf(visitor->stream, " ");
     visit_block_stmt(visitor, ir_function_body2(ir));
     return ir;
 }
