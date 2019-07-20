@@ -129,3 +129,8 @@ int test25(int x) {
     ++x;
     return x;
 }
+
+int test26(int x) {
+    --x;
+    return x;
+}
