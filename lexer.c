@@ -27,6 +27,7 @@ static const struct ReservedKeywordsEntry reserved_keywords[] = {
     register_keyword(return, Return),   register_keyword(sizeof, Sizeof),
     register_keyword(static, Static),   register_keyword(struct, Struct),
     register_keyword(typedef, Typedef), register_keyword(void, Void),
+    register_keyword(while, While),
 
 #undef register_keyword
 };

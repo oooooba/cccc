@@ -30,6 +30,7 @@ struct StmtIr;
 struct ExprStmtIr;
 struct BlockStmtIr;
 struct IfStmtIr;
+struct WhileStmtIr;
 struct ReturnStmtIr;
 struct PushStmtIr;
 struct PopStmtIr;
@@ -59,6 +60,7 @@ enum StmtIrTag {
     StmtIrTag_Expr,
     StmtIrTag_Block,
     StmtIrTag_If,
+    StmtIrTag_While,
     StmtIrTag_Return,
     StmtIrTag_Push,
     StmtIrTag_Pop,
@@ -210,6 +212,7 @@ struct Ir* ir_stmt_cast(struct StmtIr* ir);
 struct ExprStmtIr* ir_stmt_as_expr(struct StmtIr* ir);
 struct BlockStmtIr* ir_stmt_as_block(struct StmtIr* ir);
 struct IfStmtIr* ir_stmt_as_if(struct StmtIr* ir);
+struct WhileStmtIr* ir_stmt_as_while(struct StmtIr* ir);
 struct ReturnStmtIr* ir_stmt_as_return(struct StmtIr* ir);
 struct PushStmtIr* ir_stmt_as_push(struct StmtIr* ir);
 struct PopStmtIr* ir_stmt_as_pop(struct StmtIr* ir);
@@ -238,6 +241,16 @@ struct StmtIr* ir_if_stmt_true_stmt(struct IfStmtIr* ir);
 void ir_if_stmt_set_true_stmt(struct IfStmtIr* ir, struct StmtIr* true_stmt);
 struct StmtIr* ir_if_stmt_false_stmt(struct IfStmtIr* ir);
 void ir_if_stmt_set_false_stmt(struct IfStmtIr* ir, struct StmtIr* false_stmt);
+
+struct WhileStmtIr* ir_new_while_stmt(struct ExprIr* cond_expr,
+                                      struct StmtIr* body_stmt);
+struct StmtIr* ir_while_stmt_super(struct WhileStmtIr* ir);
+struct ExprIr* ir_while_stmt_cond_expr(struct WhileStmtIr* ir);
+void ir_while_stmt_set_cond_expr(struct WhileStmtIr* ir,
+                                 struct ExprIr* cond_expr);
+struct StmtIr* ir_while_stmt_body_stmt(struct WhileStmtIr* ir);
+void ir_while_stmt_set_body_stmt(struct WhileStmtIr* ir,
+                                 struct StmtIr* body_stmt);
 
 struct ReturnStmtIr* ir_new_return_stmt(struct ExprIr* expr);
 struct StmtIr* ir_return_stmt_super(struct ReturnStmtIr* ir);

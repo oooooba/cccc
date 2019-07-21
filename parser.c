@@ -905,6 +905,21 @@ static struct StmtIr* parse_selection_statement(struct Parser* parser) {
     assert(false);
 }
 
+static struct StmtIr* parse_iteration_statement(struct Parser* parser) {
+    if (acceptable(parser, Token_KeywordWhile)) {
+        advance(parser);
+
+        expect(parser, Token_LeftParen);
+        struct ExprIr* cond_expr = parse_expression(parser);
+        expect(parser, Token_RightParen);
+
+        struct StmtIr* body_stmt = parse_statement(parser);
+
+        return ir_while_stmt_super(ir_new_while_stmt(cond_expr, body_stmt));
+    }
+    assert(false);
+}
+
 static struct StmtIr* parse_jump_statement(struct Parser* parser) {
     if (acceptable(parser, Token_KeywordReturn)) {
         advance(parser);
@@ -923,6 +938,8 @@ static struct StmtIr* parse_statement(struct Parser* parser) {
         return ir_block_stmt_super(parse_compound_statement(parser, NULL));
     else if (acceptable(parser, Token_KeywordIf))
         return parse_selection_statement(parser);
+    else if (acceptable(parser, Token_KeywordWhile))
+        return parse_iteration_statement(parser);
     else if (acceptable(parser, Token_KeywordReturn))
         return parse_jump_statement(parser);
     else if (acceptable(parser, Token_Semicolon)) {

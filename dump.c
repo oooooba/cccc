@@ -195,6 +195,18 @@ static struct StmtIr* visit_if_stmt(struct DumpVisitor* visitor,
     return ir_if_stmt_super(ir);
 }
 
+static struct StmtIr* visit_while_stmt(struct DumpVisitor* visitor,
+                                       struct WhileStmtIr* ir) {
+    struct ExprIr* cond_expr = ir_while_stmt_cond_expr(ir);
+    visitor_visit_expr(as_visitor(visitor), cond_expr);
+    fprintf(visitor->stream, "while (v%p) ", cond_expr);
+
+    struct StmtIr* body_stmt = ir_while_stmt_body_stmt(ir);
+    visitor_visit_stmt(as_visitor(visitor), body_stmt);
+
+    return ir_while_stmt_super(ir);
+}
+
 static struct StmtIr* visit_return_stmt(struct DumpVisitor* visitor,
                                         struct ReturnStmtIr* ir) {
     struct ExprIr* expr = ir_return_stmt_expr(ir);
@@ -262,6 +274,7 @@ struct DumpVisitor* new_dump_visitor(struct Context* context, FILE* stream) {
 
     register_visitor(visitor->as_visitor, visit_block_stmt, visit_block_stmt);
     register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);
+    register_visitor(visitor->as_visitor, visit_while_stmt, visit_while_stmt);
     register_visitor(visitor->as_visitor, visit_return_stmt, visit_return_stmt);
     register_visitor(visitor->as_visitor, visit_decl_stmt, visit_decl_stmt);
 

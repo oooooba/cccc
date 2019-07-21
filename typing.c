@@ -200,6 +200,15 @@ static struct StmtIr* visit_if_stmt(struct TypingVisitor* visitor,
     return ir_if_stmt_super(ir);
 }
 
+static struct StmtIr* visit_while_stmt(struct TypingVisitor* visitor,
+                                       struct WhileStmtIr* ir) {
+    visitor_visit_while_stmt(as_visitor(visitor), ir);
+    struct ExprIr* cond_expr = ir_while_stmt_cond_expr(ir);
+    cond_expr = visitor_visit_expr(as_visitor(visitor), cond_expr);
+    ir_while_stmt_set_cond_expr(ir, cond_expr);
+    return ir_while_stmt_super(ir);
+}
+
 static struct StmtIr* visit_return_stmt(struct TypingVisitor* visitor,
                                         struct ReturnStmtIr* ir) {
     visitor_visit_return_stmt(as_visitor(visitor), ir);
@@ -245,6 +254,7 @@ struct TypingVisitor* new_typing_visitor(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_addrof_expr, visit_addrof_expr);
 
     register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);
+    register_visitor(visitor->as_visitor, visit_while_stmt, visit_while_stmt);
     register_visitor(visitor->as_visitor, visit_return_stmt, visit_return_stmt);
     register_visitor(visitor->as_visitor, visit_decl_stmt, visit_decl_stmt);
 

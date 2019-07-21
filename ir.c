@@ -745,6 +745,10 @@ struct IfStmtIr* ir_stmt_as_if(struct StmtIr* ir) {
     return ir->tag == StmtIrTag_If ? (struct IfStmtIr*)ir : NULL;
 }
 
+struct WhileStmtIr* ir_stmt_as_while(struct StmtIr* ir) {
+    return ir->tag == StmtIrTag_While ? (struct WhileStmtIr*)ir : NULL;
+}
+
 struct ReturnStmtIr* ir_stmt_as_return(struct StmtIr* ir) {
     return ir->tag == StmtIrTag_Return ? (struct ReturnStmtIr*)ir : NULL;
 }
@@ -868,6 +872,43 @@ struct StmtIr* ir_if_stmt_false_stmt(struct IfStmtIr* ir) {
 
 void ir_if_stmt_set_false_stmt(struct IfStmtIr* ir, struct StmtIr* false_stmt) {
     ir->false_stmt = false_stmt;
+}
+
+struct WhileStmtIr {
+    struct StmtIr super;
+    struct ExprIr* cond_expr;
+    struct StmtIr* body_stmt;
+};
+
+struct WhileStmtIr* ir_new_while_stmt(struct ExprIr* cond_expr,
+                                      struct StmtIr* body_stmt) {
+    struct WhileStmtIr* ir = malloc(sizeof(struct WhileStmtIr));
+    initialize_stmt(ir_while_stmt_super(ir), StmtIrTag_While);
+    ir->cond_expr = cond_expr;
+    ir->body_stmt = body_stmt;
+    return ir;
+}
+
+struct StmtIr* ir_while_stmt_super(struct WhileStmtIr* ir) {
+    return &ir->super;
+}
+
+struct ExprIr* ir_while_stmt_cond_expr(struct WhileStmtIr* ir) {
+    return ir->cond_expr;
+}
+
+void ir_while_stmt_set_cond_expr(struct WhileStmtIr* ir,
+                                 struct ExprIr* cond_expr) {
+    ir->cond_expr = cond_expr;
+}
+
+struct StmtIr* ir_while_stmt_body_stmt(struct WhileStmtIr* ir) {
+    return ir->body_stmt;
+}
+
+void ir_while_stmt_set_body_stmt(struct WhileStmtIr* ir,
+                                 struct StmtIr* body_stmt) {
+    ir->body_stmt = body_stmt;
 }
 
 struct ReturnStmtIr {

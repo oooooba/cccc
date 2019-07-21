@@ -66,6 +66,9 @@ struct StmtIr* visitor_visit_stmt(struct Visitor* visitor, struct StmtIr* ir) {
         case StmtIrTag_If:
             stmt = visitor->visit_if_stmt(visitor, ir_stmt_as_if(ir));
             break;
+        case StmtIrTag_While:
+            stmt = visitor->visit_while_stmt(visitor, ir_stmt_as_while(ir));
+            break;
         case StmtIrTag_Return:
             stmt = visitor->visit_return_stmt(visitor, ir_stmt_as_return(ir));
             break;
@@ -221,6 +224,19 @@ struct StmtIr* visitor_visit_if_stmt(struct Visitor* visitor,
     return ir_if_stmt_super(ir);
 }
 
+struct StmtIr* visitor_visit_while_stmt(struct Visitor* visitor,
+                                        struct WhileStmtIr* ir) {
+    struct ExprIr* cond =
+        visitor_visit_expr(visitor, ir_while_stmt_cond_expr(ir));
+    ir_while_stmt_set_cond_expr(ir, cond);
+
+    struct StmtIr* body_stmt =
+        visitor_visit_stmt(visitor, ir_while_stmt_body_stmt(ir));
+    ir_while_stmt_set_body_stmt(ir, body_stmt);
+
+    return ir_while_stmt_super(ir);
+}
+
 struct StmtIr* visitor_visit_return_stmt(struct Visitor* visitor,
                                          struct ReturnStmtIr* ir) {
     struct ExprIr* expr = ir_return_stmt_expr(ir);
@@ -256,6 +272,7 @@ void visitor_initialize(struct Visitor* visitor, struct Context* context) {
     register_visitor(*visitor, visit_expr_stmt, visitor_visit_expr_stmt);
     register_visitor(*visitor, visit_block_stmt, visitor_visit_block_stmt);
     register_visitor(*visitor, visit_if_stmt, visitor_visit_if_stmt);
+    register_visitor(*visitor, visit_while_stmt, visitor_visit_while_stmt);
     register_visitor(*visitor, visit_return_stmt, visitor_visit_return_stmt);
     register_visitor(*visitor, visit_push_stmt, NULL);
     register_visitor(*visitor, visit_pop_stmt, NULL);

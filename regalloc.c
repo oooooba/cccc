@@ -217,6 +217,16 @@ static struct StmtIr* visit_if_stmt(struct RegallocVisitor* visitor,
     return ir_if_stmt_super(ir);
 }
 
+static struct StmtIr* visit_while_stmt(struct RegallocVisitor* visitor,
+                                       struct WhileStmtIr* ir) {
+    visitor_visit_expr(as_visitor(visitor), ir_while_stmt_cond_expr(ir));
+    release_register(visitor);
+
+    visitor_visit_stmt(as_visitor(visitor), ir_while_stmt_body_stmt(ir));
+
+    return ir_while_stmt_super(ir);
+}
+
 static struct StmtIr* visit_return_stmt(struct RegallocVisitor* visitor,
                                         struct ReturnStmtIr* ir) {
     struct ExprIr* expr = ir_return_stmt_expr(ir);
@@ -251,6 +261,7 @@ struct RegallocVisitor* new_regalloc_visitor(struct Context* context) {
 
     register_visitor(visitor->as_visitor, visit_expr_stmt, visit_expr_stmt);
     register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);
+    register_visitor(visitor->as_visitor, visit_while_stmt, visit_while_stmt);
     register_visitor(visitor->as_visitor, visit_return_stmt, visit_return_stmt);
 
     register_visitor(visitor->as_visitor, visit_function, visit_function);

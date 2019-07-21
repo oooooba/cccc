@@ -134,3 +134,12 @@ int test26(int x) {
     --x;
     return x;
 }
+
+int test27(int x) {
+    int sum = 0;
+    while (x) {
+        sum = sum + x;
+        --x;
+    }
+    return sum;
+}

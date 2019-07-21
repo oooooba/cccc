@@ -280,6 +280,26 @@ static struct StmtIr* visit_if_stmt(struct CodegenVisitor* visitor,
     return ir_if_stmt_super(ir);
 }
 
+static struct StmtIr* visit_while_stmt(struct CodegenVisitor* visitor,
+                                       struct WhileStmtIr* ir) {
+    fprintf(visitor->stream, "lab_%p_head:\n", ir);
+
+    struct ExprIr* cond_expr = ir_while_stmt_cond_expr(ir);
+    visitor_visit_expr(as_visitor(visitor), cond_expr);
+
+    strtable_id cond_reg_id = ir_expr_reg_id(cond_expr);
+    const char* cond_reg = register_name(visitor, cond_reg_id);
+
+    fprintf(visitor->stream, "\tand\t%s, %s\n", cond_reg, cond_reg);
+    fprintf(visitor->stream, "\tjz\tlab_%p_cont\n", ir);
+
+    visitor_visit_stmt(as_visitor(visitor), ir_while_stmt_body_stmt(ir));
+    fprintf(visitor->stream, "\tjmp\tlab_%p_head\n", ir);
+
+    fprintf(visitor->stream, "lab_%p_cont:\n", ir);
+    return ir_while_stmt_super(ir);
+}
+
 static struct StmtIr* visit_return_stmt(struct CodegenVisitor* visitor,
                                         struct ReturnStmtIr* ir) {
     visitor_visit_return_stmt(as_visitor(visitor), ir);
@@ -339,6 +359,7 @@ struct CodegenVisitor* new_codegen_visitor(struct Context* context,
     register_visitor(visitor->as_visitor, visit_stmt_pre, visit_stmt_pre);
 
     register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);
+    register_visitor(visitor->as_visitor, visit_while_stmt, visit_while_stmt);
     register_visitor(visitor->as_visitor, visit_return_stmt, visit_return_stmt);
     register_visitor(visitor->as_visitor, visit_push_stmt, visit_push_stmt);
     register_visitor(visitor->as_visitor, visit_pop_stmt, visit_pop_stmt);
