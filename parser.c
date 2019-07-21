@@ -281,6 +281,20 @@ static struct DeclStmtIr* insert_normalized_declaration_statement(
     return decl;
 }
 
+static void handle_declaration(struct Declaration2* declaration,
+                               struct BlockStmtIr* block,
+                               struct Context* context) {
+    assert(block);
+    struct List* decl_list = normalize_declaration(declaration);
+    for (struct ListHeader *it = list_begin(decl_list),
+                           *eit = list_end(decl_list);
+         it != eit; it = list_next(it)) {
+        struct ListItem* list_item = (struct ListItem*)it;
+        struct Declaration2* decl = list_item->item;
+        insert_normalized_declaration_statement(decl, context, block);
+    }
+}
+
 /***** prototypes *****/
 
 static struct Declaration2* parse_declaration2(struct Parser* parser);
@@ -872,15 +886,7 @@ static struct BlockStmtIr* parse_compound_statement(struct Parser* parser,
     while (!acceptable(parser, Token_RightCurry)) {
         struct Declaration2* declaration = parse_declaration2(parser);
         if (declaration) {
-            struct List* decl_list = normalize_declaration(declaration);
-            for (struct ListHeader *it = list_begin(decl_list),
-                                   *eit = list_end(decl_list);
-                 it != eit; it = list_next(it)) {
-                struct ListItem* list_item = (struct ListItem*)it;
-                struct Declaration2* decl = list_item->item;
-                insert_normalized_declaration_statement(decl, parser->context,
-                                                        block);
-            }
+            handle_declaration(declaration, block, parser->context);
             continue;
         }
         struct StmtIr* stmt = parse_statement(parser);
@@ -933,6 +939,65 @@ static struct StmtIr* parse_iteration_statement(struct Parser* parser) {
         struct StmtIr* body_stmt = parse_statement(parser);
 
         return ir_while_stmt_super(ir_new_while_stmt(cond_expr, body_stmt));
+    } else if (acceptable(parser, Token_KeywordFor)) {
+        advance(parser);
+
+        expect(parser, Token_LeftParen);
+        struct ListHeader* saved_current_token = parser->current_token;
+
+        struct ExprIr* head_expr = NULL;
+        struct Declaration2* head_decl = NULL;
+        if (!acceptable(parser, Token_Semicolon)) {
+            head_decl = parse_declaration2(parser);
+            if (!head_decl) {
+                parser->current_token = saved_current_token;
+                head_expr = parse_expression(parser);
+                assert(head_expr);
+            }
+        }
+        assert(!(head_expr && head_decl));
+        if (!head_decl) expect(parser, Token_Semicolon);
+
+        struct BlockStmtIr* block = NULL;
+        if (head_decl) {
+            block = ir_new_block_stmt();
+            handle_declaration(head_decl, block, parser->context);
+        } else if (head_expr) {
+            block = ir_new_block_stmt();
+            struct ExprStmtIr* expr_stmt = ir_new_expr_stmt(head_expr);
+            ir_block_stmt_insert_at_end(block, ir_expr_stmt_super(expr_stmt));
+        }
+
+        struct ExprIr* cond_expr = NULL;
+        if (!acceptable(parser, Token_Semicolon))
+            cond_expr = parse_expression(parser);
+        expect(parser, Token_Semicolon);
+
+        struct ExprIr* tail_expr = NULL;
+        (void)tail_expr;
+        if (!acceptable(parser, Token_RightParen))
+            tail_expr = parse_expression(parser);
+        expect(parser, Token_RightParen);
+
+        struct StmtIr* body_stmt = parse_statement(parser);
+        if (tail_expr) {
+            struct BlockStmtIr* body_block = ir_stmt_as_block(body_stmt);
+            if (!body_block) {
+                body_block = ir_new_block_stmt();
+                ir_block_stmt_insert_at_end(body_block, body_stmt);
+                body_stmt = ir_block_stmt_super(body_block);
+            }
+            struct ExprStmtIr* expr_stmt = ir_new_expr_stmt(tail_expr);
+            ir_block_stmt_insert_at_end(body_block,
+                                        ir_expr_stmt_super(expr_stmt));
+        }
+
+        struct WhileStmtIr* stmt = ir_new_while_stmt(cond_expr, body_stmt);
+        if (block) {
+            ir_block_stmt_insert_at_end(block, ir_while_stmt_super(stmt));
+            return ir_block_stmt_super(block);
+        } else
+            return ir_while_stmt_super(stmt);
     }
     assert(false);
 }
@@ -955,7 +1020,8 @@ static struct StmtIr* parse_statement(struct Parser* parser) {
         return ir_block_stmt_super(parse_compound_statement(parser, NULL));
     else if (acceptable(parser, Token_KeywordIf))
         return parse_selection_statement(parser);
-    else if (acceptable(parser, Token_KeywordWhile))
+    else if (acceptable(parser, Token_KeywordWhile) ||
+             acceptable(parser, Token_KeywordFor))
         return parse_iteration_statement(parser);
     else if (acceptable(parser, Token_KeywordReturn))
         return parse_jump_statement(parser);

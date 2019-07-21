@@ -12,6 +12,7 @@ enum TokenTag {
     Token_KeywordChar,
     Token_KeywordConst,
     Token_KeywordElse,
+    Token_KeywordFor,
     Token_KeywordIf,
     Token_KeywordInt,
     Token_KeywordLong,

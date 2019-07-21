@@ -147,3 +147,29 @@ int test27(int x) {
 int test28(int x, int y) { return x < y; }
 
 int test29(int x, int y) { return x <= y; }
+
+int test30(int x) {
+    int sum = 0;
+    for (int i = 1; i <= x; ++i) {
+        sum = sum + i;
+    }
+    return sum;
+}
+
+int test31(int x) {
+    int sum = 0;
+    int i;
+    for (i = 1; i <= x; ++i) {
+        sum = sum + i;
+    }
+    return sum;
+}
+
+int test32(int x) {
+    int sum = 0;
+    int i = 1;
+    for (; i <= x; ++i) {
+        sum = sum + i;
+    }
+    return sum;
+}
