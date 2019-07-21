@@ -57,6 +57,7 @@ $GCC -std=c11 -Wall \
     $TMP/visitor.S \
     -o $CC2
 
-$CC <test.c >/tmp/output.S
+$GCC -std=c11 -Wall -I$INCLUDE -E test.c >$TMP/test.c
+$CC <$TMP/test.c >/tmp/output.S
 $GCC -std=c11 -Wall main.c /tmp/output.S
 ./a.out
