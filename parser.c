@@ -499,17 +499,34 @@ static struct ExprIr* parse_additive_expression(struct Parser* parser) {
     return lhs;
 }
 
-static struct ExprIr* parse_equality_expression(struct Parser* parser) {
+static struct ExprIr* parse_relational_expression(struct Parser* parser) {
     struct ExprIr* lhs = parse_additive_expression(parser);
+    for (;;) {
+        enum BinopExprIrTag op;
+        if (acceptable(parser, Token_LeftAngle))
+            op = BinopExprIrTag_Lt;
+        else if (acceptable(parser, Token_LeftAngleEqual))
+            op = BinopExprIrTag_Le;
+        else
+            break;
+        advance(parser);
+        struct ExprIr* rhs = parse_additive_expression(parser);
+        lhs = ir_binop_expr_cast(ir_new_binop_expr(op, lhs, rhs));
+    }
+    return lhs;
+}
+
+static struct ExprIr* parse_equality_expression(struct Parser* parser) {
+    struct ExprIr* lhs = parse_relational_expression(parser);
     for (;;) {
         if (acceptable(parser, Token_EqualEqual)) {
             advance(parser);
-            struct ExprIr* rhs = parse_additive_expression(parser);
+            struct ExprIr* rhs = parse_relational_expression(parser);
             lhs = ir_binop_expr_cast(
                 ir_new_binop_expr(BinopExprIrTag_Equal, lhs, rhs));
         } else if (acceptable(parser, Token_ExclamationEqual)) {
             advance(parser);
-            struct ExprIr* rhs = parse_additive_expression(parser);
+            struct ExprIr* rhs = parse_relational_expression(parser);
             lhs = ir_binop_expr_cast(
                 ir_new_binop_expr(BinopExprIrTag_Equal, lhs, rhs));
             lhs = ir_unop_expr_cast(ir_new_unop_expr(UnopExprIrTag_Not, lhs));

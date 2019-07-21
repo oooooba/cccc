@@ -73,7 +73,7 @@ static bool is_simple_lexeme(char c) {
 
 static bool is_complex_lexeme(char c) {
     return (c == '+') || (c == '-') || (c == '*') || (c == '/') || (c == '=') ||
-           (c == '!');
+           (c == '!') || (c == '<');
 }
 
 static enum TokenTag tokenize_number(struct Lexer* lexer) {
@@ -244,6 +244,17 @@ static enum TokenTag tokenize_complex_lexeme(struct Lexer* lexer) {
                     break;
                 default:
                     tag = Token_Exclamation;
+                    num_advance = 1;
+            }
+            break;
+        case '<':
+            switch (peek_k(lexer, 1)) {
+                case '=':
+                    tag = Token_LeftAngleEqual;
+                    num_advance = 2;
+                    break;
+                default:
+                    tag = Token_LeftAngle;
                     num_advance = 1;
             }
             break;

@@ -77,6 +77,8 @@ enum BinopExprIrTag {
     BinopExprIrTag_Sub,
     BinopExprIrTag_Mul,
     BinopExprIrTag_Equal,
+    BinopExprIrTag_Lt,
+    BinopExprIrTag_Le,
 };
 
 enum UnopExprIrTag {

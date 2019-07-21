@@ -143,3 +143,7 @@ int test27(int x) {
     }
     return sum;
 }
+
+int test28(int x, int y) { return x < y; }
+
+int test29(int x, int y) { return x <= y; }
