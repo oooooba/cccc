@@ -94,9 +94,12 @@ static struct ExprIr* visit_call_expr(struct TypingVisitor* visitor,
         struct ExprIr* arg_expr = ((struct ListItem*)ita)->item;
         struct TypeIr* param_type = ((struct ListItem*)itp)->item;
 
+        if (!type_equal(param_type, ir_expr_type(arg_expr)))
+            arg_expr =
+                ir_cast_expr_cast(ir_new_cast_expr(arg_expr, param_type));
+
         arg_expr = visitor_visit_expr(as_visitor(visitor), arg_expr);
         ((struct ListItem*)ita)->item = arg_expr;
-        assert(type_equal(param_type, ir_expr_type(arg_expr)));
 
         ita = list_next(ita);
         itp = list_next(itp);
@@ -219,8 +222,10 @@ static struct StmtIr* visit_return_stmt(struct TypingVisitor* visitor,
         if (!type_equal(ir_expr_type(expr), result_type))
             expr = ir_cast_expr_cast(ir_new_cast_expr(expr, result_type));
         ir_return_stmt_set_expr(ir, expr);
-    } else
-        assert(false && "unimplemented");  // ToDo: compare to void
+    } else {
+        struct TypeIr* return_type = ir_function_result_type(visitor->function);
+        assert(type_as_void(return_type));
+    }
     return ir_return_stmt_super(ir);
 }
 

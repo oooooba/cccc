@@ -245,7 +245,9 @@ struct List* type_function_param_types(struct FunctionTypeIr* type) {
 }
 
 bool type_equal(struct TypeIr* type1, struct TypeIr* type2) {
-    if (type1 == type2)
+    if (type1 == NULL || type2 == NULL)
+        return false;
+    else if (type1 == type2)
         return true;
     else if (type1->tag == Type_Pointer && type2->tag == Type_Pointer)
         return type_equal(type_as_pointer(type1)->elem_type,
