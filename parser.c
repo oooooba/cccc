@@ -920,6 +920,8 @@ static struct StmtIr* parse_selection_statement(struct Parser* parser) {
             advance(parser);
             false_stmt = parse_statement(parser);
             false_stmt = to_block_stmt(false_stmt);
+        } else {
+            false_stmt = ir_block_stmt_super(ir_new_block_stmt());
         }
 
         return ir_if_stmt_super(
