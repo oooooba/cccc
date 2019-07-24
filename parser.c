@@ -474,6 +474,8 @@ static struct ExprIr* parse_unary_expression(struct Parser* parser) {
 static struct ExprIr* parse_cast_expression(struct Parser* parser) {
     if (!acceptable(parser, Token_LeftParen))
         return parse_unary_expression(parser);
+    if (peek_k(parser, 1)->tag == Token_LeftParen)
+        return parse_unary_expression(parser);
     expect(parser, Token_LeftParen);
     struct TypeIr* type = parse_type_name(parser);
     expect(parser, Token_RightParen);
