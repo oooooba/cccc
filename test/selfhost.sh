@@ -29,7 +29,7 @@ compile_cccc map
 compile_gcc nameresolve
 compile_gcc parser
 compile_gcc regalloc
-compile_gcc strtable
+compile_cccc strtable
 compile_gcc simplify
 compile_gcc type
 compile_gcc typing
