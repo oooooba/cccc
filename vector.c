@@ -2,7 +2,6 @@
 
 #include <assert.h>
 #include <stddef.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -11,12 +10,10 @@
 void vector_initialize(struct Vector* vector, size_t elem_size) {
     void* buf = malloc(elem_size * INITIAL_NUM_ENTRIES);
     assert(buf != NULL);
-    *vector = (struct Vector){
-        .size = 0,
-        .capacity = INITIAL_NUM_ENTRIES,
-        .elem_size = elem_size,
-        .buf = buf,
-    };
+    vector->size = 0;
+    vector->capacity = INITIAL_NUM_ENTRIES;
+    vector->elem_size = elem_size;
+    vector->buf = buf;
 }
 
 #undef INITIAL_NUM_ENTRIES
@@ -25,7 +22,7 @@ size_t vector_size(struct Vector* vector) { return vector->size; }
 
 void* vector_at(struct Vector* vector, size_t i) {
     assert(i < vector->size);
-    uint8_t* buf = vector->buf;
+    char* buf = vector->buf;
     return &buf[i * vector->elem_size];
 }
 

@@ -33,7 +33,7 @@ compile_gcc strtable
 compile_gcc simplify
 compile_gcc type
 compile_gcc typing
-compile_gcc vector
+compile_cccc vector
 compile_gcc visitor
 
 $GCC -std=c11 -Wall \
