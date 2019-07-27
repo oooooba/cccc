@@ -177,3 +177,23 @@ int test32(int x) {
 int test33(int x, int y) { return x > y; }
 
 int test34(int x, int y) { return x >= y; }
+
+int test35(int x, int y) {
+    int sum = 0;
+    for (int i = 1; i <= x; ++i) {
+        if (i > y) break;
+        sum = sum + i;
+    }
+    return sum;
+}
+
+int test36(int x, int y) {
+    int sum = 0;
+    for (int i = 0; i < x; ++i) {
+        for (int j = 1; j <= y; ++j) {
+            if (j > y - 1) break;
+            sum = sum + j;
+        }
+    }
+    return sum;
+}

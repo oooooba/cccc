@@ -32,6 +32,7 @@ struct BlockStmtIr;
 struct IfStmtIr;
 struct WhileStmtIr;
 struct ReturnStmtIr;
+struct BreakStmtIr;
 struct PushStmtIr;
 struct PopStmtIr;
 struct DeclStmtIr;
@@ -62,6 +63,7 @@ enum StmtIrTag {
     StmtIrTag_If,
     StmtIrTag_While,
     StmtIrTag_Return,
+    StmtIrTag_Break,
     StmtIrTag_Push,
     StmtIrTag_Pop,
     StmtIrTag_Decl,
@@ -218,6 +220,7 @@ struct BlockStmtIr* ir_stmt_as_block(struct StmtIr* ir);
 struct IfStmtIr* ir_stmt_as_if(struct StmtIr* ir);
 struct WhileStmtIr* ir_stmt_as_while(struct StmtIr* ir);
 struct ReturnStmtIr* ir_stmt_as_return(struct StmtIr* ir);
+struct BreakStmtIr* ir_stmt_as_break(struct StmtIr* ir);
 struct PushStmtIr* ir_stmt_as_push(struct StmtIr* ir);
 struct PopStmtIr* ir_stmt_as_pop(struct StmtIr* ir);
 struct DeclStmtIr* ir_stmt_as_decl(struct StmtIr* ir);
@@ -260,6 +263,9 @@ struct ReturnStmtIr* ir_new_return_stmt(struct ExprIr* expr);
 struct StmtIr* ir_return_stmt_super(struct ReturnStmtIr* ir);
 struct ExprIr* ir_return_stmt_expr(struct ReturnStmtIr* ir);
 void ir_return_stmt_set_expr(struct ReturnStmtIr* ir, struct ExprIr* expr);
+
+struct BreakStmtIr* ir_new_break_stmt(void);
+struct StmtIr* ir_break_stmt_super(struct BreakStmtIr* ir);
 
 struct PushStmtIr* ir_new_push_stmt(strtable_id reg_id);
 struct StmtIr* ir_push_stmt_super(struct PushStmtIr* ir);

@@ -1019,6 +1019,9 @@ static struct StmtIr* parse_jump_statement(struct Parser* parser) {
             expect(parser, Token_Semicolon);
         }
         return ir_return_stmt_super(ir_new_return_stmt(expr));
+    } else if (acceptable(parser, Token_KeywordBreak)) {
+        advance(parser);
+        return ir_break_stmt_super(ir_new_break_stmt());
     }
     assert(false);
 }
@@ -1031,7 +1034,8 @@ static struct StmtIr* parse_statement(struct Parser* parser) {
     else if (acceptable(parser, Token_KeywordWhile) ||
              acceptable(parser, Token_KeywordFor))
         return parse_iteration_statement(parser);
-    else if (acceptable(parser, Token_KeywordReturn))
+    else if (acceptable(parser, Token_KeywordReturn) ||
+             acceptable(parser, Token_KeywordBreak))
         return parse_jump_statement(parser);
     else if (acceptable(parser, Token_Semicolon)) {
         advance(parser);

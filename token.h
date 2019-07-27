@@ -9,6 +9,7 @@
 enum TokenTag {
     Token_Invalid,
 
+    Token_KeywordBreak,
     Token_KeywordChar,
     Token_KeywordConst,
     Token_KeywordElse,

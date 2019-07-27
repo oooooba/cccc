@@ -21,13 +21,21 @@ static const struct ReservedKeywordsEntry reserved_keywords[] = {
 #define register_keyword(symbol, tag) \
     { .keyword = #symbol, .token_tag = Token_Keyword##tag }
 
-    register_keyword(const, Const),   register_keyword(char, Char),
-    register_keyword(else, Else),     register_keyword(for, For),
-    register_keyword(if, If),         register_keyword(int, Int),
-    register_keyword(long, Long),     register_keyword(return, Return),
-    register_keyword(sizeof, Sizeof), register_keyword(static, Static),
-    register_keyword(struct, Struct), register_keyword(typedef, Typedef),
-    register_keyword(void, Void),     register_keyword(while, While),
+    register_keyword(break, Break),
+    register_keyword(char, Char),
+    register_keyword(const, Const),
+    register_keyword(else, Else),
+    register_keyword(for, For),
+    register_keyword(if, If),
+    register_keyword(int, Int),
+    register_keyword(long, Long), 
+    register_keyword(return, Return),
+    register_keyword(sizeof, Sizeof),
+    register_keyword(static, Static),
+    register_keyword(struct, Struct),
+    register_keyword(typedef, Typedef),
+    register_keyword(void, Void),  
+    register_keyword(while, While),
 
 #undef register_keyword
 };

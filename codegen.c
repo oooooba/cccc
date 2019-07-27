@@ -11,6 +11,7 @@ struct CodegenVisitor {
     struct Visitor as_visitor;
     FILE* stream;
     struct FunctionIr* function;
+    struct StmtIr* break_dst;
 };
 
 static struct Visitor* as_visitor(struct CodegenVisitor* visitor) {
@@ -294,6 +295,9 @@ static struct StmtIr* visit_if_stmt(struct CodegenVisitor* visitor,
 
 static struct StmtIr* visit_while_stmt(struct CodegenVisitor* visitor,
                                        struct WhileStmtIr* ir) {
+    struct StmtIr* prev_break_dst = visitor->break_dst;
+    visitor->break_dst = ir_while_stmt_super(ir);
+
     fprintf(visitor->stream, "lab_%p_head:\n", ir);
 
     struct ExprIr* cond_expr = ir_while_stmt_cond_expr(ir);
@@ -309,6 +313,9 @@ static struct StmtIr* visit_while_stmt(struct CodegenVisitor* visitor,
     fprintf(visitor->stream, "\tjmp\tlab_%p_head\n", ir);
 
     fprintf(visitor->stream, "lab_%p_cont:\n", ir);
+
+    visitor->break_dst = prev_break_dst;
+
     return ir_while_stmt_super(ir);
 }
 
@@ -317,6 +324,13 @@ static struct StmtIr* visit_return_stmt(struct CodegenVisitor* visitor,
     visitor_visit_return_stmt(as_visitor(visitor), ir);
     fprintf(visitor->stream, "\tjmp\tlab_%p_end\n", visitor->function);
     return ir_return_stmt_super(ir);
+}
+
+static struct StmtIr* visit_break_stmt(struct CodegenVisitor* visitor,
+                                       struct BreakStmtIr* ir) {
+    (void)visitor;
+    fprintf(visitor->stream, "\tjmp\tlab_%p_cont\n", visitor->break_dst);
+    return ir_break_stmt_super(ir);
 }
 
 static struct StmtIr* visit_push_stmt(struct CodegenVisitor* visitor,
@@ -373,12 +387,14 @@ struct CodegenVisitor* new_codegen_visitor(struct Context* context,
     register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);
     register_visitor(visitor->as_visitor, visit_while_stmt, visit_while_stmt);
     register_visitor(visitor->as_visitor, visit_return_stmt, visit_return_stmt);
+    register_visitor(visitor->as_visitor, visit_break_stmt, visit_break_stmt);
     register_visitor(visitor->as_visitor, visit_push_stmt, visit_push_stmt);
     register_visitor(visitor->as_visitor, visit_pop_stmt, visit_pop_stmt);
 
     register_visitor(visitor->as_visitor, visit_function, visit_function);
 
     visitor->stream = stream;
+    visitor->break_dst = NULL;
 
     fprintf(stream, ".intel_syntax noprefix\n");
     fprintf(stream, ".text\n");

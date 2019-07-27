@@ -753,6 +753,10 @@ struct ReturnStmtIr* ir_stmt_as_return(struct StmtIr* ir) {
     return ir->tag == StmtIrTag_Return ? (struct ReturnStmtIr*)ir : NULL;
 }
 
+struct BreakStmtIr* ir_stmt_as_break(struct StmtIr* ir) {
+    return ir->tag == StmtIrTag_Break ? (struct BreakStmtIr*)ir : NULL;
+}
+
 struct PushStmtIr* ir_stmt_as_push(struct StmtIr* ir) {
     return ir->tag == StmtIrTag_Push ? (struct PushStmtIr*)ir : NULL;
 }
@@ -933,6 +937,20 @@ struct ExprIr* ir_return_stmt_expr(struct ReturnStmtIr* ir) {
 
 void ir_return_stmt_set_expr(struct ReturnStmtIr* ir, struct ExprIr* expr) {
     ir->expr = expr;
+}
+
+struct BreakStmtIr {
+    struct StmtIr super;
+};
+
+struct BreakStmtIr* ir_new_break_stmt(void) {
+    struct BreakStmtIr* ir = malloc(sizeof(struct BreakStmtIr));
+    initialize_stmt(ir_break_stmt_super(ir), StmtIrTag_Break);
+    return ir;
+}
+
+struct StmtIr* ir_break_stmt_super(struct BreakStmtIr* ir) {
+    return &ir->super;
 }
 
 struct PushStmtIr {
