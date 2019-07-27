@@ -32,6 +32,8 @@ enum TokenTag {
     Token_RightBracket,
     Token_LeftAngle,
     Token_LeftAngleEqual,
+    Token_RightAngle,
+    Token_RightAngleEqual,
 
     Token_Comma,
     Token_Semicolon,

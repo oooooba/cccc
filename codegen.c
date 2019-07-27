@@ -97,6 +97,12 @@ static struct ExprIr* visit_binop_expr(struct CodegenVisitor* visitor,
         case BinopExprIrTag_Le:
             print_relational_instr(visitor, ir, "jg", result_reg, rhs_reg);
             return ir_binop_expr_cast(ir);
+        case BinopExprIrTag_Gt:
+            print_relational_instr(visitor, ir, "jle", result_reg, rhs_reg);
+            return ir_binop_expr_cast(ir);
+        case BinopExprIrTag_Ge:
+            print_relational_instr(visitor, ir, "jl", result_reg, rhs_reg);
+            return ir_binop_expr_cast(ir);
         default:
             assert(false);
     }

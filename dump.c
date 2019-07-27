@@ -55,6 +55,12 @@ static struct ExprIr* visit_binop_expr(struct DumpVisitor* visitor,
         case BinopExprIrTag_Le:
             op = "le";
             break;
+        case BinopExprIrTag_Gt:
+            op = "gt";
+            break;
+        case BinopExprIrTag_Ge:
+            op = "ge";
+            break;
         default:
             assert(false);
     }

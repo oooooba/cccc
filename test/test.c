@@ -173,3 +173,7 @@ int test32(int x) {
     }
     return sum;
 }
+
+int test33(int x, int y) { return x > y; }
+
+int test34(int x, int y) { return x >= y; }

@@ -33,6 +33,8 @@ int test29(int, int);
 int test30(int);
 int test31(int);
 int test32(int);
+int test33(int, int);
+int test34(int, int);
 
 static void check(const char* msg, int expected, int actual) {
     if (actual == expected) {
@@ -82,5 +84,11 @@ int main(void) {
     check("test30", 55, test30(10));
     check("test31", 55, test31(10));
     check("test32", 55, test32(10));
+    check("test33", 0, test33(1, 2));
+    check("test33", 0, test33(2, 2));
+    check("test33", 1, test33(2, 1));
+    check("test34", 0, test34(1, 2));
+    check("test34", 1, test34(2, 2));
+    check("test34", 1, test34(2, 1));
     return 0;
 }

@@ -44,6 +44,12 @@ static struct ExprIr* visit_binop_expr(struct SimplifyVisitor* visitor,
         case BinopExprIrTag_Le:
             value = lhs_const <= rhs_const;
             break;
+        case BinopExprIrTag_Gt:
+            value = lhs_const > rhs_const;
+            break;
+        case BinopExprIrTag_Ge:
+            value = lhs_const >= rhs_const;
+            break;
         default:
             assert(false);
     }

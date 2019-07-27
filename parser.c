@@ -523,6 +523,10 @@ static struct ExprIr* parse_relational_expression(struct Parser* parser) {
             op = BinopExprIrTag_Lt;
         else if (acceptable(parser, Token_LeftAngleEqual))
             op = BinopExprIrTag_Le;
+        else if (acceptable(parser, Token_RightAngle))
+            op = BinopExprIrTag_Gt;
+        else if (acceptable(parser, Token_RightAngleEqual))
+            op = BinopExprIrTag_Ge;
         else
             break;
         advance(parser);
