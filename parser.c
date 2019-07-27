@@ -872,7 +872,7 @@ static struct Declaration2* parse_parameter_declaration(struct Parser* parser) {
 static struct TypeIr* parse_type_name(
     struct Parser* parser) {  // ToDo: fix to handle precisely
     struct TypeIr* type = parse_type_specifier(parser);
-    if (acceptable(parser, Token_Asterisk)) {
+    while (acceptable(parser, Token_Asterisk)) {
         advance(parser);
         type = type_pointer_super(type_new_pointer(type));
     }
