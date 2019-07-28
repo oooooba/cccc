@@ -22,8 +22,10 @@ static const struct ReservedKeywordsEntry reserved_keywords[] = {
     { .keyword = #symbol, .token_tag = Token_Keyword##tag }
 
     register_keyword(break, Break),
+    register_keyword(case, Case),
     register_keyword(char, Char),
     register_keyword(const, Const),
+    register_keyword(default, Default),
     register_keyword(else, Else),
     register_keyword(for, For),
     register_keyword(if, If),
@@ -33,6 +35,7 @@ static const struct ReservedKeywordsEntry reserved_keywords[] = {
     register_keyword(sizeof, Sizeof),
     register_keyword(static, Static),
     register_keyword(struct, Struct),
+    register_keyword(switch, Switch),
     register_keyword(typedef, Typedef),
     register_keyword(void, Void),  
     register_keyword(while, While),
@@ -76,7 +79,8 @@ static bool is_alpha(char c) {
 
 static bool is_simple_lexeme(char c) {
     return (c == '(') || (c == ')') || (c == '{') || (c == '}') || (c == ';') ||
-           (c == '&') || (c == ',') || (c == '.') || (c == '[') || (c == ']');
+           (c == '&') || (c == ',') || (c == '.') || (c == '[') || (c == ']') ||
+           (c == ':');
 }
 
 static bool is_complex_lexeme(char c) {
@@ -161,6 +165,9 @@ static enum TokenTag tokenize_simple_lexeme(struct Lexer* lexer) {
             break;
         case ']':
             tag = Token_RightBracket;
+            break;
+        case ':':
+            tag = Token_Colon;
             break;
         default:
             assert(false);

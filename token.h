@@ -10,8 +10,10 @@ enum TokenTag {
     Token_Invalid,
 
     Token_KeywordBreak,
+    Token_KeywordCase,
     Token_KeywordChar,
     Token_KeywordConst,
+    Token_KeywordDefault,
     Token_KeywordElse,
     Token_KeywordFor,
     Token_KeywordIf,
@@ -21,6 +23,7 @@ enum TokenTag {
     Token_KeywordSizeof,
     Token_KeywordStatic,
     Token_KeywordStruct,
+    Token_KeywordSwitch,
     Token_KeywordTypedef,
     Token_KeywordVoid,
     Token_KeywordWhile,
@@ -37,6 +40,7 @@ enum TokenTag {
     Token_RightAngleEqual,
 
     Token_Comma,
+    Token_Colon,
     Token_Semicolon,
     Token_Dot,
 

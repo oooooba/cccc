@@ -197,3 +197,31 @@ int test36(int x, int y) {
     }
     return sum;
 }
+
+int test37(int x) {
+    int result;
+    switch (x) {
+        case 0:
+            result = 0;
+            break;
+        case 1:
+            result = 1;
+            break;
+        default:
+            result = 2;
+    }
+    return result;
+}
+
+int test38(int x) {
+    int result;
+    switch (x) {
+        case 0:
+            result = 0;
+        case 1:
+            result = 1;
+        default:
+            result = 2;
+    }
+    return result;
+}

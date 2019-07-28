@@ -293,6 +293,48 @@ static struct StmtIr* visit_if_stmt(struct CodegenVisitor* visitor,
     return ir_if_stmt_super(ir);
 }
 
+static struct StmtIr* visit_switch_stmt(struct CodegenVisitor* visitor,
+                                        struct SwitchStmtIr* ir) {
+    struct StmtIr* prev_break_dst = visitor->break_dst;
+    visitor->break_dst = ir_switch_stmt_super(ir);
+
+    struct ExprIr* cond_expr = ir_switch_stmt_cond_expr(ir);
+    visitor_visit_expr(as_visitor(visitor), cond_expr);
+
+    strtable_id cond_reg_id = ir_expr_reg_id(cond_expr);
+    const char* cond_reg = register_name(visitor, cond_reg_id);
+
+    struct List* branches = ir_switch_stmt_branches(ir);
+    for (struct ListHeader *it = list_begin(branches),
+                           *eit = list_end(branches);
+         it != eit; it = list_next(it)) {
+        struct SwitchStmtBranch* branch = ((struct ListItem*)it)->item;
+
+        fprintf(visitor->stream, "\tcmp\t%s, %ld\n", cond_reg,
+                ir_switch_branch_case_value(branch));
+        fprintf(visitor->stream, "\tjz\tlab_%p_case\n", branch);
+    }
+    fprintf(visitor->stream, "\tjmp\tlab_%p_default\n", ir);
+
+    for (struct ListHeader *it = list_begin(branches),
+                           *eit = list_end(branches);
+         it != eit; it = list_next(it)) {
+        struct SwitchStmtBranch* branch = ((struct ListItem*)it)->item;
+
+        fprintf(visitor->stream, "lab_%p_case:\n", branch);
+        visitor_visit_stmt(as_visitor(visitor), ir_switch_branch_stmt(branch));
+    }
+
+    fprintf(visitor->stream, "lab_%p_default:\n", ir);
+    visitor_visit_stmt(as_visitor(visitor), ir_switch_stmt_default_stmt(ir));
+
+    fprintf(visitor->stream, "lab_%p_cont:\n", ir);
+
+    visitor->break_dst = prev_break_dst;
+
+    return ir_switch_stmt_super(ir);
+}
+
 static struct StmtIr* visit_while_stmt(struct CodegenVisitor* visitor,
                                        struct WhileStmtIr* ir) {
     struct StmtIr* prev_break_dst = visitor->break_dst;
@@ -385,6 +427,7 @@ struct CodegenVisitor* new_codegen_visitor(struct Context* context,
     register_visitor(visitor->as_visitor, visit_stmt_pre, visit_stmt_pre);
 
     register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);
+    register_visitor(visitor->as_visitor, visit_switch_stmt, visit_switch_stmt);
     register_visitor(visitor->as_visitor, visit_while_stmt, visit_while_stmt);
     register_visitor(visitor->as_visitor, visit_return_stmt, visit_return_stmt);
     register_visitor(visitor->as_visitor, visit_break_stmt, visit_break_stmt);

@@ -910,6 +910,58 @@ static struct ExprIr* parse_expression_statement(struct Parser* parser) {
     return expr;
 }
 
+static struct SwitchStmtIr* parse_switch_statement(struct Parser* parser) {
+    expect(parser, Token_KeywordSwitch);
+
+    expect(parser, Token_LeftParen);
+    struct ExprIr* cond_expr = parse_expression(parser);
+    expect(parser, Token_RightParen);
+
+    expect(parser, Token_LeftCurry);
+    struct List* branches = malloc(sizeof(struct List));
+    list_initialize(branches);
+    struct StmtIr* default_stmt = NULL;
+    while (!acceptable(parser, Token_RightCurry)) {
+        bool is_default_label = false;
+        intptr_t case_value;
+        if (acceptable(parser, Token_KeywordCase)) {
+            advance(parser);
+            struct ExprIr* expr = parse_integer_constant(parser);
+            struct ConstExprIr* const_expr = ir_expr_as_const(expr);
+            assert(const_expr);
+            case_value = ir_const_expr_integer_value(const_expr);
+            expect(parser, Token_Colon);
+        } else if (acceptable(parser, Token_KeywordDefault)) {
+            assert(!default_stmt);
+            advance(parser);
+            expect(parser, Token_Colon);
+            is_default_label = true;
+        } else
+            assert(false);
+
+        struct BlockStmtIr* block = ir_new_block_stmt();
+        while (!(acceptable(parser, Token_KeywordCase) ||
+                 acceptable(parser, Token_KeywordDefault) ||
+                 acceptable(parser, Token_RightCurry))) {
+            struct StmtIr* stmt = parse_statement(parser);
+            ir_block_stmt_insert_at_end(block, stmt);
+        }
+
+        if (is_default_label) {
+            default_stmt = ir_block_stmt_super(block);
+        } else {
+            struct SwitchStmtBranch* branch =
+                ir_new_switch_branch(case_value, ir_block_stmt_super(block));
+            struct ListItem* item = malloc(sizeof(struct ListItem));
+            item->item = branch;
+            list_insert_at_end(branches, list_from(item));
+        }
+    }
+    advance(parser);
+
+    return ir_new_switch_stmt(cond_expr, branches, default_stmt);
+}
+
 static struct StmtIr* parse_selection_statement(struct Parser* parser) {
     if (acceptable(parser, Token_KeywordIf)) {
         advance(parser);
@@ -932,6 +984,8 @@ static struct StmtIr* parse_selection_statement(struct Parser* parser) {
 
         return ir_if_stmt_super(
             ir_new_if_stmt(cond_expr, true_stmt, false_stmt));
+    } else if (acceptable(parser, Token_KeywordSwitch)) {
+        return ir_switch_stmt_super(parse_switch_statement(parser));
     }
     assert(false);
 }
@@ -1030,7 +1084,8 @@ static struct StmtIr* parse_jump_statement(struct Parser* parser) {
 static struct StmtIr* parse_statement(struct Parser* parser) {
     if (acceptable(parser, Token_LeftCurry))
         return ir_block_stmt_super(parse_compound_statement(parser, NULL));
-    else if (acceptable(parser, Token_KeywordIf))
+    else if (acceptable(parser, Token_KeywordIf) ||
+             acceptable(parser, Token_KeywordSwitch))
         return parse_selection_statement(parser);
     else if (acceptable(parser, Token_KeywordWhile) ||
              acceptable(parser, Token_KeywordFor))

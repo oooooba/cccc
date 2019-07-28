@@ -207,6 +207,30 @@ static struct StmtIr* visit_if_stmt(struct DumpVisitor* visitor,
     return ir_if_stmt_super(ir);
 }
 
+static struct StmtIr* visit_switch_stmt(struct DumpVisitor* visitor,
+                                        struct SwitchStmtIr* ir) {
+    struct ExprIr* cond_expr = ir_switch_stmt_cond_expr(ir);
+    visitor_visit_expr(as_visitor(visitor), cond_expr);
+    fprintf(visitor->stream, "switch (v%p) {\n", cond_expr);
+
+    struct List* branches = ir_switch_stmt_branches(ir);
+    for (struct ListHeader *it = list_begin(branches),
+                           *eit = list_end(branches);
+         it != eit; it = list_next(it)) {
+        struct SwitchStmtBranch* branch = ((struct ListItem*)it)->item;
+        fprintf(visitor->stream, "case %ld:\n",
+                ir_switch_branch_case_value(branch));
+        visitor_visit_stmt(as_visitor(visitor), ir_switch_branch_stmt(branch));
+    }
+
+    fprintf(visitor->stream, "default:\n");
+    visitor_visit_stmt(as_visitor(visitor), ir_switch_stmt_default_stmt(ir));
+
+    fprintf(visitor->stream, "}\n");
+
+    return ir_switch_stmt_super(ir);
+}
+
 static struct StmtIr* visit_while_stmt(struct DumpVisitor* visitor,
                                        struct WhileStmtIr* ir) {
     struct ExprIr* cond_expr = ir_while_stmt_cond_expr(ir);
@@ -293,6 +317,7 @@ struct DumpVisitor* new_dump_visitor(struct Context* context, FILE* stream) {
 
     register_visitor(visitor->as_visitor, visit_block_stmt, visit_block_stmt);
     register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);
+    register_visitor(visitor->as_visitor, visit_switch_stmt, visit_switch_stmt);
     register_visitor(visitor->as_visitor, visit_while_stmt, visit_while_stmt);
     register_visitor(visitor->as_visitor, visit_return_stmt, visit_return_stmt);
     register_visitor(visitor->as_visitor, visit_break_stmt, visit_break_stmt);

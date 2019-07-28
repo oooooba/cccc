@@ -66,6 +66,9 @@ struct StmtIr* visitor_visit_stmt(struct Visitor* visitor, struct StmtIr* ir) {
         case StmtIrTag_If:
             stmt = visitor->visit_if_stmt(visitor, ir_stmt_as_if(ir));
             break;
+        case StmtIrTag_Switch:
+            stmt = visitor->visit_switch_stmt(visitor, ir_stmt_as_switch(ir));
+            break;
         case StmtIrTag_While:
             stmt = visitor->visit_while_stmt(visitor, ir_stmt_as_while(ir));
             break;
@@ -227,6 +230,29 @@ struct StmtIr* visitor_visit_if_stmt(struct Visitor* visitor,
     return ir_if_stmt_super(ir);
 }
 
+struct StmtIr* visitor_visit_switch_stmt(struct Visitor* visitor,
+                                         struct SwitchStmtIr* ir) {
+    struct ExprIr* cond =
+        visitor_visit_expr(visitor, ir_switch_stmt_cond_expr(ir));
+    ir_switch_stmt_set_cond_expr(ir, cond);
+
+    struct List* branches = ir_switch_stmt_branches(ir);
+    for (struct ListHeader *it = list_begin(branches),
+                           *eit = list_end(branches);
+         it != eit; it = list_next(it)) {
+        struct SwitchStmtBranch* branch = ((struct ListItem*)it)->item;
+        struct StmtIr* stmt = ir_switch_branch_stmt(branch);
+        visitor_visit_stmt(visitor, stmt);
+        ir_switch_branch_set_stmt(branch, stmt);
+    }
+
+    struct StmtIr* default_stmt =
+        visitor_visit_stmt(visitor, ir_switch_stmt_default_stmt(ir));
+    ir_switch_stmt_set_default_stmt(ir, default_stmt);
+
+    return ir_switch_stmt_super(ir);
+}
+
 struct StmtIr* visitor_visit_while_stmt(struct Visitor* visitor,
                                         struct WhileStmtIr* ir) {
     struct ExprIr* cond =
@@ -281,6 +307,7 @@ void visitor_initialize(struct Visitor* visitor, struct Context* context) {
     register_visitor(*visitor, visit_expr_stmt, visitor_visit_expr_stmt);
     register_visitor(*visitor, visit_block_stmt, visitor_visit_block_stmt);
     register_visitor(*visitor, visit_if_stmt, visitor_visit_if_stmt);
+    register_visitor(*visitor, visit_switch_stmt, visitor_visit_switch_stmt);
     register_visitor(*visitor, visit_while_stmt, visitor_visit_while_stmt);
     register_visitor(*visitor, visit_return_stmt, visitor_visit_return_stmt);
     register_visitor(*visitor, visit_break_stmt, visitor_visit_break_stmt);

@@ -30,12 +30,15 @@ struct StmtIr;
 struct ExprStmtIr;
 struct BlockStmtIr;
 struct IfStmtIr;
+struct SwitchStmtIr;
 struct WhileStmtIr;
 struct ReturnStmtIr;
 struct BreakStmtIr;
 struct PushStmtIr;
 struct PopStmtIr;
 struct DeclStmtIr;
+
+struct SwitchStmtBranch;
 
 enum IrTag {
     IrTag_Expr,
@@ -61,6 +64,7 @@ enum StmtIrTag {
     StmtIrTag_Expr,
     StmtIrTag_Block,
     StmtIrTag_If,
+    StmtIrTag_Switch,
     StmtIrTag_While,
     StmtIrTag_Return,
     StmtIrTag_Break,
@@ -218,6 +222,7 @@ struct Ir* ir_stmt_cast(struct StmtIr* ir);
 struct ExprStmtIr* ir_stmt_as_expr(struct StmtIr* ir);
 struct BlockStmtIr* ir_stmt_as_block(struct StmtIr* ir);
 struct IfStmtIr* ir_stmt_as_if(struct StmtIr* ir);
+struct SwitchStmtIr* ir_stmt_as_switch(struct StmtIr* ir);
 struct WhileStmtIr* ir_stmt_as_while(struct StmtIr* ir);
 struct ReturnStmtIr* ir_stmt_as_return(struct StmtIr* ir);
 struct BreakStmtIr* ir_stmt_as_break(struct StmtIr* ir);
@@ -248,6 +253,25 @@ struct StmtIr* ir_if_stmt_true_stmt(struct IfStmtIr* ir);
 void ir_if_stmt_set_true_stmt(struct IfStmtIr* ir, struct StmtIr* true_stmt);
 struct StmtIr* ir_if_stmt_false_stmt(struct IfStmtIr* ir);
 void ir_if_stmt_set_false_stmt(struct IfStmtIr* ir, struct StmtIr* false_stmt);
+
+struct SwitchStmtIr* ir_new_switch_stmt(struct ExprIr* cond_expr,
+                                        struct List* branches,
+                                        struct StmtIr* default_stmt);
+struct StmtIr* ir_switch_stmt_super(struct SwitchStmtIr* ir);
+struct ExprIr* ir_switch_stmt_cond_expr(struct SwitchStmtIr* ir);
+void ir_switch_stmt_set_cond_expr(struct SwitchStmtIr* ir,
+                                  struct ExprIr* cond_expr);
+struct List* ir_switch_stmt_branches(struct SwitchStmtIr* ir);
+struct StmtIr* ir_switch_stmt_default_stmt(struct SwitchStmtIr* ir);
+void ir_switch_stmt_set_default_stmt(struct SwitchStmtIr* ir,
+                                     struct StmtIr* default_stmt);
+
+struct SwitchStmtBranch* ir_new_switch_branch(intptr_t case_value,
+                                              struct StmtIr* stmt);
+intptr_t ir_switch_branch_case_value(struct SwitchStmtBranch* branch);
+struct StmtIr* ir_switch_branch_stmt(struct SwitchStmtBranch* branch);
+void ir_switch_branch_set_stmt(struct SwitchStmtBranch* branch,
+                               struct StmtIr* stmt);
 
 struct WhileStmtIr* ir_new_while_stmt(struct ExprIr* cond_expr,
                                       struct StmtIr* body_stmt);

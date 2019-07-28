@@ -745,6 +745,10 @@ struct IfStmtIr* ir_stmt_as_if(struct StmtIr* ir) {
     return ir->tag == StmtIrTag_If ? (struct IfStmtIr*)ir : NULL;
 }
 
+struct SwitchStmtIr* ir_stmt_as_switch(struct StmtIr* ir) {
+    return ir->tag == StmtIrTag_Switch ? (struct SwitchStmtIr*)ir : NULL;
+}
+
 struct WhileStmtIr* ir_stmt_as_while(struct StmtIr* ir) {
     return ir->tag == StmtIrTag_While ? (struct WhileStmtIr*)ir : NULL;
 }
@@ -876,6 +880,76 @@ struct StmtIr* ir_if_stmt_false_stmt(struct IfStmtIr* ir) {
 
 void ir_if_stmt_set_false_stmt(struct IfStmtIr* ir, struct StmtIr* false_stmt) {
     ir->false_stmt = false_stmt;
+}
+
+struct SwitchStmtBranch {
+    intptr_t case_value;
+    struct StmtIr* stmt;
+};
+
+struct SwitchStmtBranch* ir_new_switch_branch(intptr_t case_value,
+                                              struct StmtIr* stmt) {
+    struct SwitchStmtBranch* branch = malloc(sizeof(struct SwitchStmtBranch));
+    branch->case_value = case_value;
+    branch->stmt = stmt;
+    return branch;
+}
+
+intptr_t ir_switch_branch_case_value(struct SwitchStmtBranch* branch) {
+    return branch->case_value;
+}
+
+struct StmtIr* ir_switch_branch_stmt(struct SwitchStmtBranch* branch) {
+    return branch->stmt;
+}
+
+void ir_switch_branch_set_stmt(struct SwitchStmtBranch* branch,
+                               struct StmtIr* stmt) {
+    branch->stmt = stmt;
+}
+
+struct SwitchStmtIr {
+    struct StmtIr super;
+    struct ExprIr* cond_expr;
+    struct List* branches;  // ListItem list, item=SwitchStmtBranch
+    struct StmtIr* default_stmt;
+};
+
+struct SwitchStmtIr* ir_new_switch_stmt(struct ExprIr* cond_expr,
+                                        struct List* branches,
+                                        struct StmtIr* default_stmt) {
+    struct SwitchStmtIr* ir = malloc(sizeof(struct SwitchStmtIr));
+    initialize_stmt(ir_switch_stmt_super(ir), StmtIrTag_Switch);
+    ir->cond_expr = cond_expr;
+    ir->branches = branches;
+    ir->default_stmt = default_stmt;
+    return ir;
+}
+
+struct StmtIr* ir_switch_stmt_super(struct SwitchStmtIr* ir) {
+    return &ir->super;
+}
+
+struct ExprIr* ir_switch_stmt_cond_expr(struct SwitchStmtIr* ir) {
+    return ir->cond_expr;
+}
+
+void ir_switch_stmt_set_cond_expr(struct SwitchStmtIr* ir,
+                                  struct ExprIr* cond_expr) {
+    ir->cond_expr = cond_expr;
+}
+
+struct List* ir_switch_stmt_branches(struct SwitchStmtIr* ir) {
+    return ir->branches;
+}
+
+struct StmtIr* ir_switch_stmt_default_stmt(struct SwitchStmtIr* ir) {
+    return ir->default_stmt;
+}
+
+void ir_switch_stmt_set_default_stmt(struct SwitchStmtIr* ir,
+                                     struct StmtIr* default_stmt) {
+    ir->default_stmt = default_stmt;
 }
 
 struct WhileStmtIr {

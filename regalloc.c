@@ -217,6 +217,24 @@ static struct StmtIr* visit_if_stmt(struct RegallocVisitor* visitor,
     return ir_if_stmt_super(ir);
 }
 
+struct StmtIr* visit_switch_stmt(struct RegallocVisitor* visitor,
+                                 struct SwitchStmtIr* ir) {
+    visitor_visit_expr(as_visitor(visitor), ir_switch_stmt_cond_expr(ir));
+    release_register(visitor);
+
+    struct List* branches = ir_switch_stmt_branches(ir);
+    for (struct ListHeader *it = list_begin(branches),
+                           *eit = list_end(branches);
+         it != eit; it = list_next(it)) {
+        struct SwitchStmtBranch* branch = ((struct ListItem*)it)->item;
+        visitor_visit_stmt(as_visitor(visitor), ir_switch_branch_stmt(branch));
+    }
+
+    visitor_visit_stmt(as_visitor(visitor), ir_switch_stmt_default_stmt(ir));
+
+    return ir_switch_stmt_super(ir);
+}
+
 static struct StmtIr* visit_while_stmt(struct RegallocVisitor* visitor,
                                        struct WhileStmtIr* ir) {
     visitor_visit_expr(as_visitor(visitor), ir_while_stmt_cond_expr(ir));
@@ -261,6 +279,7 @@ struct RegallocVisitor* new_regalloc_visitor(struct Context* context) {
 
     register_visitor(visitor->as_visitor, visit_expr_stmt, visit_expr_stmt);
     register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);
+    register_visitor(visitor->as_visitor, visit_switch_stmt, visit_switch_stmt);
     register_visitor(visitor->as_visitor, visit_while_stmt, visit_while_stmt);
     register_visitor(visitor->as_visitor, visit_return_stmt, visit_return_stmt);
 

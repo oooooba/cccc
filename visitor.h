@@ -37,6 +37,8 @@ struct Visitor {
                                        struct BlockStmtIr* ir);
     struct StmtIr* (*visit_if_stmt)(struct Visitor* visitor,
                                     struct IfStmtIr* ir);
+    struct StmtIr* (*visit_switch_stmt)(struct Visitor* visitor,
+                                        struct SwitchStmtIr* ir);
     struct StmtIr* (*visit_while_stmt)(struct Visitor* visitor,
                                        struct WhileStmtIr* ir);
     struct StmtIr* (*visit_return_stmt)(struct Visitor* visitor,
@@ -96,6 +98,8 @@ struct StmtIr* visitor_visit_block_stmt(struct Visitor* visitor,
                                         struct BlockStmtIr* ir);
 struct StmtIr* visitor_visit_if_stmt(struct Visitor* visitor,
                                      struct IfStmtIr* ir);
+struct StmtIr* visitor_visit_switch_stmt(struct Visitor* visitor,
+                                         struct SwitchStmtIr* ir);
 struct StmtIr* visitor_visit_while_stmt(struct Visitor* visitor,
                                         struct WhileStmtIr* ir);
 struct StmtIr* visitor_visit_return_stmt(struct Visitor* visitor,
