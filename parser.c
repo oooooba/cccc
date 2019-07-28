@@ -1021,6 +1021,7 @@ static struct StmtIr* parse_jump_statement(struct Parser* parser) {
         return ir_return_stmt_super(ir_new_return_stmt(expr));
     } else if (acceptable(parser, Token_KeywordBreak)) {
         advance(parser);
+        expect(parser, Token_Semicolon);
         return ir_break_stmt_super(ir_new_break_stmt());
     }
     assert(false);
