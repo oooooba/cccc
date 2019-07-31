@@ -16,7 +16,7 @@ struct Parser {
     struct Context* context;
     struct List* tokens;
     struct ListHeader* current_token;
-    // struct Env* current_env;
+    struct Map* enumeration_constant_map;
 };
 
 /***** helper functions *****/
@@ -56,6 +56,7 @@ static bool acceptable_type_specifier(struct Parser* parser) {
            acceptable(parser, Token_KeywordInt) ||
            acceptable(parser, Token_KeywordChar) ||
            acceptable(parser, Token_KeywordVoid) ||
+           acceptable(parser, Token_KeywordEnum) ||
            acceptable(parser, Token_KeywordStruct);
 }
 
@@ -304,6 +305,7 @@ static struct InitDeclarator* parse_init_declarator(struct Parser* parser);
 static enum StorageClassSpecifierTag parse_storage_class_specifier(
     struct Parser* parser);
 static struct TypeIr* parse_type_specifier(struct Parser* parser);
+static struct TypeIr* parse_enum_specifier(struct Parser* parser);
 static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser);
 static struct StructDeclaration* parse_struct_declaration(
     struct Parser* parser);
@@ -678,6 +680,8 @@ static struct TypeIr* parse_type_specifier(struct Parser* parser) {
         case Token_KeywordVoid:
             type = type_void_super(type_new_void());
             break;
+        case Token_KeywordEnum:
+            return parse_enum_specifier(parser);
         case Token_KeywordStruct:
             return parse_struct_or_union_specifier(parser);
         case Token_Id:
@@ -688,6 +692,37 @@ static struct TypeIr* parse_type_specifier(struct Parser* parser) {
             assert(false);
     }
     advance(parser);
+    return type;
+}
+
+static struct TypeIr* parse_enum_specifier(struct Parser* parser) {
+    expect(parser, Token_KeywordEnum);
+
+    strtable_id name_index = parse_identifier(parser);
+    struct TypeIr* type =
+        context_find_user_defined_type(parser->context, name_index);
+    if (type) {
+        assert(!acceptable(parser, Token_LeftCurry));
+        return type;
+    }
+
+    type = type_int_super(type_new_int());
+    context_insert_user_defined_type(parser->context, name_index, type);
+
+    if (!acceptable(parser, Token_LeftCurry)) return type;
+
+    advance(parser);
+    intptr_t enumeration_constant_value = 0;
+    while (!acceptable(parser, Token_RightCurry)) {
+        strtable_id enumeration_constant = parse_identifier(parser);
+        map_insert(parser->enumeration_constant_map,
+                   (void*)enumeration_constant,
+                   (void*)(enumeration_constant_value + 1));
+        ++enumeration_constant_value;
+        expect(parser, Token_Comma);
+    }
+    advance(parser);
+
     return type;
 }
 
@@ -926,8 +961,20 @@ static struct SwitchStmtIr* parse_switch_statement(struct Parser* parser) {
         intptr_t case_value;
         if (acceptable(parser, Token_KeywordCase)) {
             advance(parser);
-            struct ExprIr* expr = parse_integer_constant(parser);
-            struct ConstExprIr* const_expr = ir_expr_as_const(expr);
+            struct ConstExprIr* const_expr = NULL;
+            if (acceptable(parser, Token_Integer)) {
+                struct ExprIr* expr = parse_integer_constant(parser);
+                const_expr = ir_expr_as_const(expr);
+            } else if (acceptable(parser, Token_Id)) {
+                strtable_id enumeration_constant = parse_identifier(parser);
+                intptr_t value =
+                    (intptr_t)map_find(parser->enumeration_constant_map,
+                                       (void*)enumeration_constant);
+                assert(value);
+                --value;
+                const_expr = ir_new_integer_const_expr(value);
+            } else
+                assert(false);
             assert(const_expr);
             case_value = ir_const_expr_integer_value(const_expr);
             expect(parser, Token_Colon);
@@ -1266,5 +1313,7 @@ struct Parser* parser_new(struct Context* context, struct List* tokens) {
     parser->context = context;
     parser->tokens = tokens;
     parser->current_token = list_begin(tokens);
+    parser->enumeration_constant_map = malloc(sizeof(struct Map));
+    map_initialize(parser->enumeration_constant_map);
     return parser;
 }

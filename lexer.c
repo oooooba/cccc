@@ -27,6 +27,7 @@ static const struct ReservedKeywordsEntry reserved_keywords[] = {
     register_keyword(const, Const),
     register_keyword(default, Default),
     register_keyword(else, Else),
+    register_keyword(enum, Enum),
     register_keyword(for, For),
     register_keyword(if, If),
     register_keyword(int, Int),

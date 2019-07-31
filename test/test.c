@@ -225,3 +225,23 @@ int test38(int x) {
     }
     return result;
 }
+
+enum E {
+    E_0,
+    E_1,
+};
+
+int test39(enum E x) {
+    int result;
+    switch (x) {
+        case E_0:
+            result = 0;
+            break;
+        case E_1:
+            result = 1;
+            break;
+        default:
+            result = 2;
+    }
+    return result;
+}
