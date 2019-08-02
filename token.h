@@ -62,6 +62,7 @@ enum TokenTag {
     Token_ExclamationEqual,
 
     Token_Integer,
+    Token_String,
     Token_Id,
 
     Token_PseudoFileBegin,

@@ -89,6 +89,8 @@ static bool is_complex_lexeme(char c) {
            (c == '!') || (c == '<') || (c == '>');
 }
 
+static bool is_string_quote(char c) { return c == '"'; }
+
 static enum TokenTag tokenize_number(struct Lexer* lexer) {
     assert(is_digit(peek(lexer)));
     size_t pos = lexer->pos;
@@ -295,6 +297,31 @@ static enum TokenTag tokenize_complex_lexeme(struct Lexer* lexer) {
     return tag;
 }
 
+static void tokenize_string(struct Lexer* lexer) {
+    char c = peek(lexer);
+    assert(is_string_quote(c));
+
+    advance(lexer);
+    size_t begin_pos = lexer->pos;
+    for (;;) {
+        char c = peek(lexer);
+        if (is_string_quote(c)) break;
+        advance(lexer);
+    }
+    advance(lexer);
+    size_t len = lexer->pos - begin_pos;
+
+    char* str = malloc(len + 2);
+    memcpy(str + 1, lexer->buf + begin_pos, len);
+    str[0] = '@';
+    str[len] = 0;
+
+    strtable_id index = strtable_register(&lexer->context->strtable, str);
+    struct Token* token = new_token(Token_String, lexer->line, begin_pos);
+    token->strtable_index = index;
+    list_insert_at_end(lexer->tokens, list_from(token));
+}
+
 static void tokenize(struct Lexer* lexer) {
     for (;;) {
         char c = peek(lexer);
@@ -307,6 +334,8 @@ static void tokenize(struct Lexer* lexer) {
             tokenize_simple_lexeme(lexer);
         else if (is_complex_lexeme(c))
             tokenize_complex_lexeme(lexer);
+        else if (is_string_quote(c))
+            tokenize_string(lexer);
         else if (c == '#')
             break;
         else {
