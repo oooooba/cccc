@@ -32,3 +32,7 @@ const char* strtable_at(struct Strtable* strtable, strtable_id id) {
     assert(id < vector_size(&strtable->table));
     return *((const char**)vector_at(&strtable->table, id));
 }
+
+size_t strtable_len(struct Strtable* strtable) {
+    return vector_size(&strtable->table);
+}

@@ -39,6 +39,10 @@ static struct ExprIr* visit_const_expr(struct CodegenVisitor* visitor,
             fprintf(visitor->stream, "\tmov\t%s, %ld\n", dst_reg,
                     ir_const_expr_integer_value(ir));
             break;
+        case ConstExprIrTag_String:
+            fprintf(visitor->stream, "\tlea\t%s, strlab_%ld[rip]\n", dst_reg,
+                    ir_const_expr_string_literal_id(ir));
+            break;
         case ConstExprIrTag_Register: {
             strtable_id src_reg_id = ir_const_expr_register_id(ir);
             if (src_reg_id == dst_reg_id) break;
@@ -408,6 +412,16 @@ static struct FunctionIr* visit_function(struct CodegenVisitor* visitor,
     return ir;
 }
 
+static void emit_string_literals(struct CodegenVisitor* visitor) {
+    for (size_t i = 1, len = strtable_len(&ctx(visitor)->strtable); i < len;
+         ++i) {
+        const char* str = strtable_at(&ctx(visitor)->strtable, i);
+        if (str[0] != '@') continue;
+        fprintf(visitor->stream, "strlab_%ld:\n", i);
+        fprintf(visitor->stream, ".string\t\"%s\"\n", str + 1);
+    }
+}
+
 struct CodegenVisitor* new_codegen_visitor(struct Context* context,
                                            FILE* stream) {
     struct CodegenVisitor* visitor = malloc(sizeof(struct CodegenVisitor));
@@ -440,6 +454,7 @@ struct CodegenVisitor* new_codegen_visitor(struct Context* context,
     visitor->break_dst = NULL;
 
     fprintf(stream, ".intel_syntax noprefix\n");
+    emit_string_literals(visitor);
     fprintf(stream, ".text\n");
 
     return visitor;

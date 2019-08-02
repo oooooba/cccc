@@ -326,6 +326,14 @@ static struct ExprIr* parse_integer_constant(struct Parser* parser) {
     return ir_const_expr_cast(ir);
 }
 
+static struct ExprIr* parse_string_literal(struct Parser* parser) {
+    assert(acceptable(parser, Token_String));
+    struct Token* token = peek(parser);
+    struct ConstExprIr* ir = ir_new_string_const_expr(token->strtable_index);
+    advance(parser);
+    return ir_const_expr_cast(ir);
+}
+
 static strtable_id parse_identifier(struct Parser* parser) {
     assert(acceptable(parser, Token_Id));
     strtable_id index = peek(parser)->strtable_index;
@@ -334,8 +342,12 @@ static strtable_id parse_identifier(struct Parser* parser) {
 }
 
 static struct ExprIr* parse_constant(struct Parser* parser) {
-    assert(acceptable(parser, Token_Integer));
-    return parse_integer_constant(parser);
+    if (acceptable(parser, Token_Integer))
+        return parse_integer_constant(parser);
+    else if (acceptable(parser, Token_String))
+        return parse_string_literal(parser);
+    else
+        assert(false);
 }
 
 /***** expressions *****/
@@ -345,6 +357,7 @@ static struct ExprIr* parse_expression(struct Parser* parser);
 static struct ExprIr* parse_primary_expression(struct Parser* parser) {
     switch (peek(parser)->tag) {
         case Token_Integer:
+        case Token_String:
             return parse_constant(parser);
         case Token_Id: {
             strtable_id index = parse_identifier(parser);

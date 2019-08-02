@@ -281,6 +281,7 @@ struct ConstExprIr {
     enum ConstExprIrTag tag;
     union {
         intptr_t integer;
+        strtable_id string_literal_id;
         strtable_id register_id;
     };
 };
@@ -290,6 +291,14 @@ struct ConstExprIr* ir_new_integer_const_expr(intptr_t value) {
     initialize_expr(ir_const_expr_cast(ir), ExprIrTag_Const);
     ir->tag = ConstExprIrTag_Integer;
     ir->integer = value;
+    return ir;
+}
+
+struct ConstExprIr* ir_new_string_const_expr(strtable_id string_literal_id) {
+    struct ConstExprIr* ir = malloc(sizeof(struct ConstExprIr));
+    initialize_expr(ir_const_expr_cast(ir), ExprIrTag_Const);
+    ir->tag = ConstExprIrTag_String;
+    ir->string_literal_id = string_literal_id;
     return ir;
 }
 
@@ -312,6 +321,11 @@ enum ConstExprIrTag ir_const_expr_tag(struct ConstExprIr* ir) {
 intptr_t ir_const_expr_integer_value(struct ConstExprIr* ir) {
     assert(ir->tag == ConstExprIrTag_Integer);
     return ir->integer;
+}
+
+strtable_id ir_const_expr_string_literal_id(struct ConstExprIr* ir) {
+    assert(ir->tag == ConstExprIrTag_String);
+    return ir->string_literal_id;
 }
 
 strtable_id ir_const_expr_register_id(struct ConstExprIr* ir) {

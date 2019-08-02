@@ -19,7 +19,19 @@ static struct Visitor* as_visitor(struct TypingVisitor* visitor) {
 static struct ExprIr* visit_const_expr(struct TypingVisitor* visitor,
                                        struct ConstExprIr* ir) {
     (void)visitor;
-    ir_expr_set_type(ir_const_expr_cast(ir), type_int_super(type_new_int()));
+    struct TypeIr* type = NULL;
+    switch (ir_const_expr_tag(ir)) {
+        case ConstExprIrTag_Integer:
+            type = type_int_super(type_new_int());
+            break;
+        case ConstExprIrTag_String:
+            type = type_char_super(type_new_char());
+            type = type_pointer_super(type_new_pointer(type));
+            break;
+        default:
+            assert(false);
+    }
+    ir_expr_set_type(ir_const_expr_cast(ir), type);
     return ir_const_expr_cast(ir);
 }
 

@@ -18,5 +18,6 @@ void strtable_initialize(struct Strtable* strtable);
 strtable_id strtable_register(struct Strtable* strtable, const char* str);
 strtable_id strtable_find(struct Strtable* strtable, const char* str);
 const char* strtable_at(struct Strtable* strtable, strtable_id id);
+size_t strtable_len(struct Strtable* strtable);
 
 #endif

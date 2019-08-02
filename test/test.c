@@ -245,3 +245,7 @@ int test39(enum E x) {
     }
     return result;
 }
+
+#include <string.h>
+
+int test40(const char* s) { return strcmp(s, "cccc"); }

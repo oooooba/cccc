@@ -22,8 +22,19 @@ static struct Context* ctx(struct DumpVisitor* visitor) {
 
 static struct ExprIr* visit_const_expr(struct DumpVisitor* visitor,
                                        struct ConstExprIr* ir) {
-    fprintf(visitor->stream, "v%p = %ld :: ", ir,
-            ir_const_expr_integer_value(ir));
+    switch (ir_const_expr_tag(ir)) {
+        case ConstExprIrTag_Integer:
+            fprintf(visitor->stream, "v%p = %ld :: ", ir,
+                    ir_const_expr_integer_value(ir));
+            break;
+        case ConstExprIrTag_String:
+            fprintf(visitor->stream, "v%p = <<%s>> :: ", ir,
+                    strtable_at(&ctx(visitor)->strtable,
+                                ir_const_expr_string_literal_id(ir)));
+            break;
+        default:
+            assert(false);
+    }
     context_dump_type(ctx(visitor), visitor->stream,
                       ir_expr_type(ir_const_expr_cast(ir)));
     fprintf(visitor->stream, "\n");
