@@ -208,8 +208,10 @@ void context_dump_type(struct Context* context, FILE* stream,
                 struct MemberEntry* entry = (struct MemberEntry*)it;
                 context_dump_type(context, stream,
                                   type_member_entry_type(entry));
-                const char* name = strtable_at(
-                    &context->strtable, type_member_entry_name_index(entry));
+                strtable_id name_index = type_member_entry_name_index(entry);
+                const char* name = "";
+                if (name_index != STRTABLE_INVALID_ID)
+                    name = strtable_at(&context->strtable, name_index);
                 fprintf(stream, " %s; ", name);
             }
 

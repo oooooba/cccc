@@ -742,18 +742,20 @@ static struct TypeIr* parse_enum_specifier(struct Parser* parser) {
 }
 
 static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser) {
-    expect(parser, Token_KeywordStruct);
+    assert(acceptable(parser, Token_KeywordStruct));
+    advance(parser);
 
-    // ToDo: currently, anonymous struct is not supported
-    assert(acceptable(parser, Token_Id));
-    strtable_id name_index = parse_identifier(parser);
-
-    struct TypeIr* type =
-        context_find_user_defined_type(parser->context, name_index);
-    if (!type) {
-        type = type_struct_super(type_new_struct(name_index, NULL));
-        context_insert_user_defined_type(parser->context, name_index, type);
-    }
+    struct TypeIr* type = NULL;
+    if (acceptable(parser, Token_Id)) {
+        strtable_id name_index = parse_identifier(parser);
+        type = context_find_user_defined_type(parser->context, name_index);
+        if (!type) {
+            type = type_struct_super(type_new_struct(name_index, NULL));
+            context_insert_user_defined_type(parser->context, name_index, type);
+        }
+    } else
+        type = type_struct_super(type_new_struct(STRTABLE_INVALID_ID, NULL));
+    assert(type);
 
     if (acceptable(parser, Token_LeftCurry)) {
         advance(parser);
@@ -767,13 +769,16 @@ static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser) {
                 parse_struct_declaration(parser);
 
             struct TypeIr* type = declaration->type_specifier;
-            if (declaration->declarator->has_pointer)
-                type = type_pointer_super(type_new_pointer(type));
-
-            struct DirectDeclarator* direct_declarator =
-                declaration->declarator->direct_declarator;
-            assert(direct_declarator->tag == DirectDeclaratorTag_Identifier);
-            strtable_id member_index = direct_declarator->identifier;
+            strtable_id member_index = STRTABLE_INVALID_ID;
+            if (declaration->declarator) {  // NULL for anonymous struct
+                if (declaration->declarator->has_pointer)
+                    type = type_pointer_super(type_new_pointer(type));
+                struct DirectDeclarator* direct_declarator =
+                    declaration->declarator->direct_declarator;
+                assert(direct_declarator->tag ==
+                       DirectDeclaratorTag_Identifier);
+                member_index = direct_declarator->identifier;
+            }
 
             struct MemberEntry* entry =
                 type_new_member_entry(member_index, type);
@@ -792,8 +797,11 @@ static struct StructDeclaration* parse_struct_declaration(
     struct Parser* parser) {
     assert(acceptable_type_specifier(parser));
     struct TypeIr* type_specifier = parse_type_specifier(parser);
-    struct Declarator* declarator = parse_declarator2(parser);
-    assert(declarator);
+    struct Declarator* declarator = NULL;
+    if (!acceptable(parser, Token_Semicolon)) {
+        declarator = parse_declarator2(parser);
+        assert(declarator);
+    }
     expect(parser, Token_Semicolon);
     return new_struct_declaration(type_specifier, declarator);
 }

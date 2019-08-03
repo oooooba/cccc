@@ -185,25 +185,35 @@ struct List* type_struct_elem_types(struct StructTypeIr* type) {
     return type->elem_types;
 }
 
+static size_t set_member_offset(struct StructTypeIr* type, size_t base) {
+    size_t offset = base;
+    for (struct ListHeader *it = list_begin(type->elem_types),
+                           *eit = list_end(type->elem_types);
+         it != eit; it = list_next(it)) {
+        struct MemberEntry* entry = (struct MemberEntry*)it;
+        struct TypeIr* member_type = entry->type;
+        size_t s = member_type->size;
+        offset = (offset + s - 1) / s * s;
+        entry->offset = offset;
+        if (entry->name_index == STRTABLE_INVALID_ID) {
+            assert(type_as_struct(member_type));
+            size_t size =
+                set_member_offset(type_as_struct(member_type), offset);
+            assert(size == member_type->size);
+        }
+        offset += s;
+    }
+    size_t alignment = sizeof(void*);
+    offset = (offset + alignment - 1) / alignment * alignment;
+
+    return offset - base;
+}
+
 void type_struct_set_elem_types(struct StructTypeIr* type,
                                 struct List* elem_types) {
     type->elem_types = elem_types;
 
-    size_t size = 0;
-    for (struct ListHeader *it = list_begin(elem_types),
-                           *eit = list_end(elem_types);
-         it != eit; it = list_next(it)) {
-        struct MemberEntry* entry = (struct MemberEntry*)it;
-        struct TypeIr* member_type = entry->type;
-        entry->offset = size;
-        size_t s = member_type->size;
-        size = (size + s - 1) / s * s;
-        size += s;
-    }
-    size_t alignment = sizeof(void*);
-    size = (size + alignment - 1) / alignment * alignment;
-
-    type_struct_super(type)->size = size;
+    type_struct_super(type)->size = set_member_offset(type, 0);
 }
 
 struct MemberEntry* type_struct_find_member(struct StructTypeIr* type,
@@ -213,6 +223,14 @@ struct MemberEntry* type_struct_find_member(struct StructTypeIr* type,
          it != eit; it = list_next(it)) {
         struct MemberEntry* entry = (struct MemberEntry*)it;
         if (entry->name_index == name_index) return entry;
+        if (entry->name_index != STRTABLE_INVALID_ID) continue;
+
+        // search in anonymous member
+        struct StructTypeIr* elem_type =
+            type_as_struct(type_member_entry_type(entry));
+        assert(elem_type);
+        entry = type_struct_find_member(elem_type, name_index);
+        if (entry) return entry;
     }
     return NULL;
 }

@@ -256,3 +256,31 @@ int test41(const char* s) {
     printf("[[%s]]\n", s);
     return 0;
 }
+
+struct SI {
+    int s1;
+    struct {
+        int s2;
+        char s3;
+    };
+    int s4;
+};
+
+int test42(int i) {
+    struct SI si;
+    si.s1 = 1;
+    si.s2 = 2;
+    si.s3 = 3;
+    si.s4 = 4;
+    if (i == 1) {
+        return si.s1;
+    } else if (i == 2) {
+        return si.s2;
+    } else if (i == 3) {
+        return si.s3;
+    } else if (i == 4) {
+        return si.s4;
+    } else {
+        return 0;
+    }
+}
