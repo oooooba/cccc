@@ -198,7 +198,8 @@ static struct ExprIr* visit_call_expr(struct CodegenVisitor* visitor,
 
 static struct ExprIr* visit_var_expr(struct CodegenVisitor* visitor,
                                      struct VarExprIr* ir) {
-    size_t offset = ir_var_expr_offset(ir);
+    size_t offset =
+        ir_function_region_size(visitor->function) - ir_var_expr_offset(ir);
     strtable_id reg_id = ir_expr_reg_id(ir_var_expr_cast(ir));
     const char* reg = register_name(visitor, reg_id);
     fprintf(visitor->stream, "\tlea\t%s, [rbp - %ld]\n", reg, offset);
