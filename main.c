@@ -6,6 +6,7 @@
 #include "token.h"
 #include "visitor.h"
 
+#include <assert.h>
 #include <stdio.h>
 
 struct DumpVisitor;
@@ -37,6 +38,13 @@ int main(void) {
 
     struct List tokens;
     list_initialize(&tokens);
+
+    FILE* stdin = fopen("/dev/stdin", "r");
+    assert(stdin);
+    FILE* stdout = fopen("/dev/stdout", "w");
+    assert(stdout);
+    FILE* stderr = fopen("/dev/stderr", "w");
+    assert(stderr);
 
     struct Lexer lexer;
     lexer_initialize(&lexer, &context, &tokens, stdin);
