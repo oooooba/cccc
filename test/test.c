@@ -249,3 +249,10 @@ int test39(enum E x) {
 #include <string.h>
 
 int test40(const char* s) { return strcmp(s, "cccc"); }
+
+#include <stdio.h>
+
+int test41(const char* s) {
+    printf("[[%s]]\n", s);
+    return 0;
+}

@@ -221,14 +221,17 @@ struct FunctionTypeIr {
     struct TypeIr super;
     struct TypeIr* result_type;
     struct List* param_types;  // TypeIr* list
+    bool is_parameters_variable_length;
 };
 
 struct FunctionTypeIr* type_new_function(struct TypeIr* result_type,
-                                         struct List* param_types) {
+                                         struct List* param_types,
+                                         bool is_parameters_variable_length) {
     struct FunctionTypeIr* type = malloc(sizeof(struct FunctionTypeIr));
     initialize_type(type_function_super(type), Type_Function, (size_t)-1);
     type->result_type = result_type;
     type->param_types = param_types;
+    type->is_parameters_variable_length = is_parameters_variable_length;
     return type;
 }
 
@@ -242,6 +245,10 @@ struct TypeIr* type_function_result_type(struct FunctionTypeIr* type) {
 
 struct List* type_function_param_types(struct FunctionTypeIr* type) {
     return type->param_types;
+}
+
+bool type_function_is_parameters_variable_length(struct FunctionTypeIr* type) {
+    return type->is_parameters_variable_length;
 }
 
 bool type_equal(struct TypeIr* type1, struct TypeIr* type2) {

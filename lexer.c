@@ -80,13 +80,12 @@ static bool is_alpha(char c) {
 
 static bool is_simple_lexeme(char c) {
     return (c == '(') || (c == ')') || (c == '{') || (c == '}') || (c == ';') ||
-           (c == '&') || (c == ',') || (c == '.') || (c == '[') || (c == ']') ||
-           (c == ':');
+           (c == '&') || (c == ',') || (c == '[') || (c == ']') || (c == ':');
 }
 
 static bool is_complex_lexeme(char c) {
     return (c == '+') || (c == '-') || (c == '*') || (c == '/') || (c == '=') ||
-           (c == '!') || (c == '<') || (c == '>');
+           (c == '!') || (c == '<') || (c == '>') || (c == '.');
 }
 
 static bool is_string_quote(char c) { return c == '"'; }
@@ -159,9 +158,6 @@ static enum TokenTag tokenize_simple_lexeme(struct Lexer* lexer) {
             break;
         case ',':
             tag = Token_Comma;
-            break;
-        case '.':
-            tag = Token_Dot;
             break;
         case '[':
             tag = Token_LeftBracket;
@@ -285,6 +281,15 @@ static enum TokenTag tokenize_complex_lexeme(struct Lexer* lexer) {
                 default:
                     tag = Token_RightAngle;
                     num_advance = 1;
+            }
+            break;
+        case '.':
+            if (peek_k(lexer, 1) == '.' && peek_k(lexer, 2) == '.') {
+                tag = Token_DotDotDot;
+                num_advance = 3;
+            } else {
+                tag = Token_Dot;
+                num_advance = 1;
             }
             break;
         default:

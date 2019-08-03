@@ -117,6 +117,7 @@ struct DirectDeclarator {
             struct DirectDeclarator* direct_declarator;
             struct List*
                 list;  // struct ListItem list, item: struct Declaration*
+            bool is_variable_length;
         } parameters;
     };
 };
@@ -311,7 +312,8 @@ static struct StructDeclaration* parse_struct_declaration(
     struct Parser* parser);
 static struct Declarator* parse_declarator2(struct Parser* parser);
 static struct DirectDeclarator* parse_direct_declarator(struct Parser* parser);
-static struct List* parse_parameter_type_list(struct Parser* parser);
+static struct List* parse_parameter_type_list(struct Parser* parser,
+                                              bool* is_variable_length);
 static struct List* parse_parameter_list(struct Parser* parser);
 static struct Declaration2* parse_parameter_declaration(struct Parser* parser);
 static struct TypeIr* parse_type_name(struct Parser* parser);
@@ -836,8 +838,9 @@ static struct DirectDeclarator* parse_direct_declarator(struct Parser* parser) {
     while (true) {
         if (acceptable(parser, Token_LeftParen)) {
             advance(parser);
+            bool is_variable_length;
             struct List* parameter_type_list =
-                parse_parameter_type_list(parser);
+                parse_parameter_type_list(parser, &is_variable_length);
             if (!parameter_type_list) return NULL;
             if (!acceptable(parser, Token_RightParen)) return NULL;
             expect(parser, Token_RightParen);
@@ -849,14 +852,22 @@ static struct DirectDeclarator* parse_direct_declarator(struct Parser* parser) {
             direct_declarator->parameters.direct_declarator =
                 inner_direct_declarator;
             direct_declarator->parameters.list = parameter_type_list;
+            direct_declarator->parameters.is_variable_length =
+                is_variable_length;
         } else
             break;
     }
     return direct_declarator;
 }
 
-static struct List* parse_parameter_type_list(struct Parser* parser) {
+static struct List* parse_parameter_type_list(struct Parser* parser,
+                                              bool* is_variable_length) {
     struct List* parameter_list = parse_parameter_list(parser);
+    *is_variable_length = false;
+    if (!acceptable(parser, Token_Comma)) return parameter_list;
+    advance(parser);
+    expect(parser, Token_DotDotDot);
+    *is_variable_length = true;
     return parameter_list;
 }
 
@@ -872,6 +883,7 @@ static struct List* parse_parameter_list(struct Parser* parser) {
     struct Declaration2* first_decl = parameter;
 
     while (acceptable(parser, Token_Comma)) {
+        if (peek_k(parser, 1)->tag == Token_DotDotDot) break;
         advance(parser);
         parameter = parse_parameter_declaration(parser);
         if (!parameter) return NULL;
@@ -1190,6 +1202,7 @@ static struct Res* parse_function_declaration(
     assert(inner_direct_declarator->tag == DirectDeclaratorTag_Identifier);
     strtable_id name_index = inner_direct_declarator->identifier;
 
+    bool is_variable_length = direct_declarator->parameters.is_variable_length;
     struct List* param_decl_list = direct_declarator->parameters.list;
     struct List* param_types = malloc(sizeof(struct List));
     list_initialize(param_types);
@@ -1208,7 +1221,7 @@ static struct Res* parse_function_declaration(
         insert_at_end_as_list_item(param_decl_stmt_list, decl_stmt);
     }
     struct FunctionTypeIr* func_type =
-        type_new_function(return_type, param_types);
+        type_new_function(return_type, param_types, is_variable_length);
 
     struct Res* res = malloc(sizeof(struct Res));
     res->id = name_index;

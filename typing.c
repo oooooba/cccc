@@ -96,13 +96,15 @@ static struct ExprIr* visit_call_expr(struct TypingVisitor* visitor,
 
     struct List* arg_exprs = ir_call_expr_args(ir);
     struct List* param_types = type_function_param_types(func_type);
-    assert(list_size(arg_exprs) == list_size(param_types));
+    assert(list_size(arg_exprs) >= list_size(param_types));
 
     struct ListHeader* ita = list_begin(arg_exprs);
     struct ListHeader* itp = list_begin(param_types);
     struct ListHeader* eita = list_end(arg_exprs);
     struct ListHeader* eitp = list_end(param_types);
-    while (ita != eita && itp != eitp) {
+    while (itp != eitp) {
+        assert(ita != eita);
+
         struct ExprIr* arg_expr = ((struct ListItem*)ita)->item;
         struct TypeIr* param_type = ((struct ListItem*)itp)->item;
 
@@ -115,6 +117,16 @@ static struct ExprIr* visit_call_expr(struct TypingVisitor* visitor,
 
         ita = list_next(ita);
         itp = list_next(itp);
+    }
+
+    // for variable length parameters
+    while (ita != eita) {
+        struct ExprIr* arg_expr = ((struct ListItem*)ita)->item;
+
+        arg_expr = visitor_visit_expr(as_visitor(visitor), arg_expr);
+        ((struct ListItem*)ita)->item = arg_expr;
+
+        ita = list_next(ita);
     }
 
     struct TypeIr* result_type = type_function_result_type(func_type);

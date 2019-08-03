@@ -62,10 +62,12 @@ struct MemberEntry* type_struct_find_member(struct StructTypeIr* type,
                                             strtable_id name_index);
 
 struct FunctionTypeIr* type_new_function(struct TypeIr* result_type,
-                                         struct List* param_types);
+                                         struct List* param_types,
+                                         bool is_parameters_variable_length);
 struct TypeIr* type_function_super(struct FunctionTypeIr* type);
 struct TypeIr* type_function_result_type(struct FunctionTypeIr* type);
 struct List* type_function_param_types(struct FunctionTypeIr* type);
+bool type_function_is_parameters_variable_length(struct FunctionTypeIr* type);
 
 struct MemberEntry* type_new_member_entry(strtable_id name_index,
                                           struct TypeIr* type);
