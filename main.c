@@ -86,5 +86,9 @@ int main(void) {
         new_codegen_visitor(&context, stdout);
     visitor_apply((struct Visitor*)codegen_visitor);
 
+    fclose(stdin);
+    fclose(stdout);
+    fclose(stderr);
+
     return 0;
 }
