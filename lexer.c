@@ -301,8 +301,8 @@ static void tokenize_string(struct Lexer* lexer) {
     char c = peek(lexer);
     assert(is_string_quote(c));
 
-    advance(lexer);
     size_t begin_pos = lexer->pos;
+    advance(lexer);
     for (;;) {
         char c = peek(lexer);
         if (is_string_quote(c)) break;
@@ -311,9 +311,8 @@ static void tokenize_string(struct Lexer* lexer) {
     advance(lexer);
     size_t len = lexer->pos - begin_pos;
 
-    char* str = malloc(len + 2);
-    memcpy(str + 1, lexer->buf + begin_pos, len);
-    str[0] = '@';
+    char* str = malloc(len + 1);
+    memcpy(str, lexer->buf + begin_pos, len);
     str[len] = 0;
 
     strtable_id index = strtable_register(&lexer->context->strtable, str);

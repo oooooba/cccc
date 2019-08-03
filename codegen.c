@@ -416,9 +416,9 @@ static void emit_string_literals(struct CodegenVisitor* visitor) {
     for (size_t i = 1, len = strtable_len(&ctx(visitor)->strtable); i < len;
          ++i) {
         const char* str = strtable_at(&ctx(visitor)->strtable, i);
-        if (str[0] != '@') continue;
+        if (str[0] != '"') continue;
         fprintf(visitor->stream, "strlab_%ld:\n", i);
-        fprintf(visitor->stream, ".string\t\"%s\"\n", str + 1);
+        fprintf(visitor->stream, ".string\t%s\n", str);
     }
 }
 
