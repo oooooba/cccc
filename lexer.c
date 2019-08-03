@@ -21,6 +21,7 @@ static const struct ReservedKeywordsEntry reserved_keywords[] = {
 #define register_keyword(symbol, tag) \
     { .keyword = #symbol, .token_tag = Token_Keyword##tag }
 
+    register_keyword(_Bool, Char),
     register_keyword(break, Break),
     register_keyword(case, Case),
     register_keyword(char, Char),
@@ -78,6 +79,8 @@ static bool is_alpha(char c) {
     return (('A' <= c) && (c <= 'Z')) || (('a' <= c) && (c <= 'z'));
 }
 
+static bool is_underscore(char c) { return c == '_'; }
+
 static bool is_simple_lexeme(char c) {
     return (c == '(') || (c == ')') || (c == '{') || (c == '}') || (c == ';') ||
            (c == '&') || (c == ',') || (c == '[') || (c == ']') || (c == ':');
@@ -110,7 +113,7 @@ static enum TokenTag tokenize_lexeme(struct Lexer* lexer) {
     size_t begin_pos = lexer->pos;
     for (;;) {
         char c = peek(lexer);
-        if (!(is_alpha(c) || is_digit(c) || (c == '_'))) break;
+        if (!(is_alpha(c) || is_digit(c) || is_underscore(c))) break;
         advance(lexer);
     }
     size_t len = lexer->pos - begin_pos;
@@ -332,7 +335,7 @@ static void tokenize(struct Lexer* lexer) {
         if (!c) break;
         if (is_digit(c))
             tokenize_number(lexer);
-        else if (is_alpha(c))
+        else if (is_alpha(c) || is_underscore(c))
             tokenize_lexeme(lexer);
         else if (is_simple_lexeme(c))
             tokenize_simple_lexeme(lexer);
