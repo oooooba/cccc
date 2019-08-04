@@ -95,8 +95,11 @@ static struct FunctionIr* visit_function(struct FixupVisitor* visitor,
 
     // insert allocating stack frame code
     {
-        struct ConstExprIr* size = ir_new_integer_const_expr(
-            ir_function_region_size(ir) + sizeof(void*));
+        size_t sp_alignment = 16;
+        size_t frame_size = (ir_function_region_size(ir) + sp_alignment - 1) /
+                            sp_alignment * sp_alignment;
+        frame_size += sizeof(void*);  // for 'push rbx'
+        struct ConstExprIr* size = ir_new_integer_const_expr(frame_size);
         ir_expr_set_reg_id(
             ir_const_expr_cast(size),
             context_func_call_result_reg(ctx(visitor), RegisterSizeKind_64));

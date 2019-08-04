@@ -284,3 +284,9 @@ int test42(int i) {
         return 0;
     }
 }
+
+int test43(void) {
+    printf("[[%s]]\n", "hoge");
+    printf("%d\n", printf("%s\n", "foo"));
+    return 0;
+}

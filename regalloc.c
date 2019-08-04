@@ -142,6 +142,16 @@ static struct ExprIr* visit_call_expr(struct RegallocVisitor* visitor,
             ir_new_expr_stmt(ir_const_expr_cast(copy_instr));
         ir_block_stmt_insert_at_end(post_block, ir_expr_stmt_super(stmt));
 
+        // insert padding instruction to align stack poiner
+        struct PushStmtIr* push_instr_padding = ir_new_push_stmt(result_reg_id);
+        ir_block_stmt_insert_at_end(pre_block,
+                                    ir_push_stmt_super(push_instr_padding));
+
+        // insert instruction to remove padding
+        struct PopStmtIr* pop_instr_padding = ir_new_pop_stmt(result_reg_id);
+        ir_block_stmt_insert_at_end(post_block,
+                                    ir_pop_stmt_super(pop_instr_padding));
+
         // restore result register
         struct PopStmtIr* pop_instr = ir_new_pop_stmt(result_reg_id);
         ir_block_stmt_insert_at_end(post_block, ir_pop_stmt_super(pop_instr));
