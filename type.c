@@ -200,7 +200,7 @@ static size_t set_member_offset(struct StructTypeIr* type, size_t base) {
         struct TypeIr* member_type = entry->type;
         size_t s = member_type->size;
         if (!is_union) offset = (offset + s - 1) / s * s;
-        entry->offset = offset;
+        entry->offset = base + offset;
         if (entry->name_index == STRTABLE_INVALID_ID) {
             assert(type_as_struct(member_type));
             size_t anonymous_size =
