@@ -161,14 +161,16 @@ struct TypeIr* type_pointer_elem_type(struct PointerTypeIr* type) {
 struct StructTypeIr {
     struct TypeIr super;
     strtable_id name_index;
+    bool is_union;
     struct List* elem_types;  // MemberEntry* list
 };
 
-struct StructTypeIr* type_new_struct(strtable_id name_index,
+struct StructTypeIr* type_new_struct(strtable_id name_index, bool is_union,
                                      struct List* elem_types) {
     struct StructTypeIr* type = malloc(sizeof(struct StructTypeIr));
     initialize_type(type_struct_super(type), Type_Struct, (size_t)-1);
     type->name_index = name_index;
+    type->is_union = is_union;
     type->elem_types = elem_types;
     return type;
 }
@@ -181,32 +183,40 @@ strtable_id type_struct_name_index(struct StructTypeIr* type) {
     return type->name_index;
 }
 
+bool type_struct_is_union(struct StructTypeIr* type) { return type->is_union; }
+
 struct List* type_struct_elem_types(struct StructTypeIr* type) {
     return type->elem_types;
 }
 
 static size_t set_member_offset(struct StructTypeIr* type, size_t base) {
-    size_t offset = base;
+    size_t offset = 0;
+    size_t size = 0;
+    bool is_union = type->is_union;
     for (struct ListHeader *it = list_begin(type->elem_types),
                            *eit = list_end(type->elem_types);
          it != eit; it = list_next(it)) {
         struct MemberEntry* entry = (struct MemberEntry*)it;
         struct TypeIr* member_type = entry->type;
         size_t s = member_type->size;
-        offset = (offset + s - 1) / s * s;
+        if (!is_union) offset = (offset + s - 1) / s * s;
         entry->offset = offset;
         if (entry->name_index == STRTABLE_INVALID_ID) {
             assert(type_as_struct(member_type));
-            size_t size =
-                set_member_offset(type_as_struct(member_type), offset);
-            assert(size == member_type->size);
+            size_t anonymous_size =
+                set_member_offset(type_as_struct(member_type), offset + base);
+            assert(anonymous_size == s);
         }
-        offset += s;
+        if (is_union)
+            size = size > s ? size : s;
+        else {
+            offset += s;
+            size = offset;
+        }
     }
     size_t alignment = sizeof(void*);
-    offset = (offset + alignment - 1) / alignment * alignment;
-
-    return offset - base;
+    size = (size + alignment - 1) / alignment * alignment;
+    return size;
 }
 
 void type_struct_set_elem_types(struct StructTypeIr* type,

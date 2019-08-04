@@ -57,7 +57,8 @@ static bool acceptable_type_specifier(struct Parser* parser) {
            acceptable(parser, Token_KeywordChar) ||
            acceptable(parser, Token_KeywordVoid) ||
            acceptable(parser, Token_KeywordEnum) ||
-           acceptable(parser, Token_KeywordStruct);
+           acceptable(parser, Token_KeywordStruct) ||
+           acceptable(parser, Token_KeywordUnion);
 }
 
 static void expect(struct Parser* parser, enum TokenTag expected) {
@@ -698,6 +699,7 @@ static struct TypeIr* parse_type_specifier(struct Parser* parser) {
         case Token_KeywordEnum:
             return parse_enum_specifier(parser);
         case Token_KeywordStruct:
+        case Token_KeywordUnion:
             return parse_struct_or_union_specifier(parser);
         case Token_Id:
             type = context_find_user_defined_type(parser->context,
@@ -742,19 +744,27 @@ static struct TypeIr* parse_enum_specifier(struct Parser* parser) {
 }
 
 static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser) {
-    assert(acceptable(parser, Token_KeywordStruct));
+    assert(acceptable(parser, Token_KeywordStruct) ||
+           acceptable(parser, Token_KeywordUnion));
+    bool is_union = acceptable(parser, Token_KeywordUnion);
     advance(parser);
 
     struct TypeIr* type = NULL;
     if (acceptable(parser, Token_Id)) {
         strtable_id name_index = parse_identifier(parser);
         type = context_find_user_defined_type(parser->context, name_index);
-        if (!type) {
-            type = type_struct_super(type_new_struct(name_index, NULL));
+        if (type) {
+            struct StructTypeIr* struct_type = type_as_struct(type);
+            assert(struct_type);
+            assert(is_union == type_struct_is_union(struct_type));
+        } else {
+            type =
+                type_struct_super(type_new_struct(name_index, is_union, NULL));
             context_insert_user_defined_type(parser->context, name_index, type);
         }
     } else
-        type = type_struct_super(type_new_struct(STRTABLE_INVALID_ID, NULL));
+        type = type_struct_super(
+            type_new_struct(STRTABLE_INVALID_ID, is_union, NULL));
     assert(type);
 
     if (acceptable(parser, Token_LeftCurry)) {

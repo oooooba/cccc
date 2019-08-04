@@ -32,14 +32,15 @@ static const struct ReservedKeywordsEntry reserved_keywords[] = {
     register_keyword(for, For),
     register_keyword(if, If),
     register_keyword(int, Int),
-    register_keyword(long, Long), 
+    register_keyword(long, Long),
     register_keyword(return, Return),
     register_keyword(sizeof, Sizeof),
     register_keyword(static, Static),
     register_keyword(struct, Struct),
     register_keyword(switch, Switch),
     register_keyword(typedef, Typedef),
-    register_keyword(void, Void),  
+    register_keyword(union, Union),
+    register_keyword(void, Void),
     register_keyword(while, While),
 
 #undef register_keyword

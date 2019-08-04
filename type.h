@@ -51,10 +51,11 @@ struct PointerTypeIr* type_new_pointer(struct TypeIr* elem_type);
 struct TypeIr* type_pointer_super(struct PointerTypeIr* type);
 struct TypeIr* type_pointer_elem_type(struct PointerTypeIr* type);
 
-struct StructTypeIr* type_new_struct(strtable_id name_index,
+struct StructTypeIr* type_new_struct(strtable_id name_index, bool is_union,
                                      struct List* elem_types);
 struct TypeIr* type_struct_super(struct StructTypeIr* type);
 strtable_id type_struct_name_index(struct StructTypeIr* type);
+bool type_struct_is_union(struct StructTypeIr* type);
 struct List* type_struct_elem_types(struct StructTypeIr* type);
 void type_struct_set_elem_types(struct StructTypeIr* type,
                                 struct List* elem_types);

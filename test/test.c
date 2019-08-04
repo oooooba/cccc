@@ -290,3 +290,14 @@ int test43(void) {
     printf("%d\n", printf("%s\n", "foo"));
     return 0;
 }
+
+union U {
+    int u1;
+    char u2;
+};
+
+char test44(int x) {
+    union U u;
+    u.u1 = x;
+    return u.u2;
+}
