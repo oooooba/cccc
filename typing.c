@@ -93,6 +93,12 @@ static struct ExprIr* visit_call_expr(struct TypingVisitor* visitor,
     ir_call_expr_set_function(ir, func_expr);
     struct FunctionTypeIr* func_type =
         type_as_function(ir_expr_type(func_expr));
+    if (!func_type) {
+        struct PointerTypeIr* pointer_type =
+            type_as_pointer(ir_expr_type(func_expr));
+        assert(pointer_type);
+        func_type = type_as_function(type_pointer_elem_type(pointer_type));
+    }
 
     struct List* arg_exprs = ir_call_expr_args(ir);
     struct List* param_types = type_function_param_types(func_type);

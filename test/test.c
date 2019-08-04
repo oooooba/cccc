@@ -301,3 +301,12 @@ char test44(int x) {
     u.u1 = x;
     return u.u2;
 }
+
+int test45(int n, int x) {
+    int (*f)(int x);
+    if (n)
+        f = test25;
+    else
+        f = test26;
+    return f(x);
+}

@@ -223,6 +223,46 @@ static struct StructDeclaration* new_struct_declaration(
     return declaration;
 }
 
+struct Res {
+    strtable_id id;
+    struct FunctionTypeIr* type;
+    struct BlockStmtIr* block;
+    struct List* decl_stmt_list;
+};
+
+static struct DeclStmtIr* insert_normalized_declaration_statement(
+    struct Declaration2* declaration, struct Context* context,
+    struct BlockStmtIr* block);
+
+static void construct_function_type(struct Context* context,
+                                    struct TypeIr* return_type,
+                                    struct DirectDeclarator* direct_declarator,
+                                    struct Res* res) {
+    assert(direct_declarator->tag == DirectDeclaratorTag_Parameters);
+
+    bool is_variable_length = direct_declarator->parameters.is_variable_length;
+    struct List* param_decl_list = direct_declarator->parameters.list;
+    struct List* param_types = malloc(sizeof(struct List));
+    list_initialize(param_types);
+    struct List* param_decl_stmt_list = malloc(sizeof(struct List));
+    list_initialize(param_decl_stmt_list);
+    struct BlockStmtIr* block = ir_new_block_stmt();
+    for (struct ListHeader *it = list_begin(param_decl_list),
+                           *eit = list_end(param_decl_list);
+         it != eit; it = list_next(it)) {
+        struct Declaration2* decl = ((struct ListItem*)it)->item;
+        struct DeclStmtIr* decl_stmt =
+            insert_normalized_declaration_statement(decl, context, block);
+
+        struct TypeIr* param_type = ir_decl_stmt_type(decl_stmt);
+        insert_at_end_as_list_item(param_types, param_type);
+        insert_at_end_as_list_item(param_decl_stmt_list, decl_stmt);
+    }
+    res->type = type_new_function(return_type, param_types, is_variable_length);
+    res->block = block;
+    res->decl_stmt_list = param_decl_stmt_list;
+}
+
 static struct List* normalize_declaration(struct Declaration2* declaration) {
     struct List* decl_list = malloc(sizeof(struct List));
     list_initialize(decl_list);
@@ -264,13 +304,42 @@ static struct DeclStmtIr* insert_normalized_declaration_statement(
         nth_list_item(declaration->init_declarator_list, 0);
     struct Declarator* declarator = init_declarator->declarator;
     struct DirectDeclarator* direct_declarator = declarator->direct_declarator;
-    assert(direct_declarator->tag == DirectDeclaratorTag_Identifier);
 
-    strtable_id name_index = direct_declarator->identifier;
+    strtable_id name_index;
+    struct TypeIr* type = base_type;
+    switch (direct_declarator->tag) {
+        case DirectDeclaratorTag_Identifier:
+            name_index = direct_declarator->identifier;
+            type = declarator->has_pointer
+                       ? type_pointer_super(type_new_pointer(base_type))
+                       : base_type;
+            break;
+        case DirectDeclaratorTag_Declarator:
+            assert(false);
+            break;
+        case DirectDeclaratorTag_Parameters: {  // function pointer
+            struct DirectDeclarator* inner_direct_declarator =
+                direct_declarator->parameters.direct_declarator;
+            assert(inner_direct_declarator->tag ==
+                   DirectDeclaratorTag_Declarator);
+            struct Declarator* inner_declarator =
+                inner_direct_declarator->declarator;
+            assert(inner_declarator->has_pointer);
+            assert(inner_declarator->direct_declarator->tag ==
+                   DirectDeclaratorTag_Identifier);
+
+            name_index = inner_declarator->direct_declarator->identifier;
+            struct Res res;
+            construct_function_type(context, type, direct_declarator, &res);
+            type = type_function_super(res.type);
+            type = type_pointer_super(type_new_pointer(type));
+            break;
+        }
+        default:
+            assert(false);
+    }
+
     struct VarExprIr* var = ir_new_var_expr(name_index);
-    struct TypeIr* type = declarator->has_pointer
-                              ? type_pointer_super(type_new_pointer(base_type))
-                              : base_type;
     struct DeclStmtIr* decl = ir_new_decl_stmt(name_index, type, block);
     ir_block_stmt_insert_at_end(block, ir_decl_stmt_super(decl));
 
@@ -1193,13 +1262,6 @@ static struct StmtIr* parse_statement(struct Parser* parser) {
 
 /***** external definitions *****/
 
-struct Res {
-    strtable_id id;
-    struct FunctionTypeIr* type;
-    struct BlockStmtIr* block;
-    struct List* decl_stmt_list;
-};
-
 static struct Res* parse_function_declaration(
     struct Context* context, struct List* declaration_specifier_list,
     struct Declarator* declarator) {
@@ -1220,32 +1282,9 @@ static struct Res* parse_function_declaration(
     assert(inner_direct_declarator->tag == DirectDeclaratorTag_Identifier);
     strtable_id name_index = inner_direct_declarator->identifier;
 
-    bool is_variable_length = direct_declarator->parameters.is_variable_length;
-    struct List* param_decl_list = direct_declarator->parameters.list;
-    struct List* param_types = malloc(sizeof(struct List));
-    list_initialize(param_types);
-    struct List* param_decl_stmt_list = malloc(sizeof(struct List));
-    list_initialize(param_decl_stmt_list);
-    struct BlockStmtIr* block = ir_new_block_stmt();
-    for (struct ListHeader *it = list_begin(param_decl_list),
-                           *eit = list_end(param_decl_list);
-         it != eit; it = list_next(it)) {
-        struct Declaration2* decl = ((struct ListItem*)it)->item;
-        struct DeclStmtIr* decl_stmt =
-            insert_normalized_declaration_statement(decl, context, block);
-
-        struct TypeIr* param_type = ir_decl_stmt_type(decl_stmt);
-        insert_at_end_as_list_item(param_types, param_type);
-        insert_at_end_as_list_item(param_decl_stmt_list, decl_stmt);
-    }
-    struct FunctionTypeIr* func_type =
-        type_new_function(return_type, param_types, is_variable_length);
-
     struct Res* res = malloc(sizeof(struct Res));
+    construct_function_type(context, return_type, direct_declarator, res);
     res->id = name_index;
-    res->type = func_type;
-    res->block = block;
-    res->decl_stmt_list = param_decl_stmt_list;
     return res;
 }
 

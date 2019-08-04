@@ -158,7 +158,13 @@ static struct ExprIr* visit_unop_expr(struct CodegenVisitor* visitor,
 static struct ExprIr* visit_call_expr(struct CodegenVisitor* visitor,
                                       struct CallExprIr* ir) {
     struct VarExprIr* func_name = ir_expr_as_var(ir_call_expr_function(ir));
-    assert(func_name);
+    strtable_id name_id;
+    if (func_name)
+        name_id = ir_var_expr_index(func_name);
+    else {
+        visitor_visit_expr(as_visitor(visitor), ir_call_expr_function(ir));
+        name_id = ir_expr_reg_id(ir_call_expr_function(ir));
+    }
 
     for (struct ListHeader *it = list_begin(ir_call_expr_args(ir)),
                            *eit = list_end(ir_call_expr_args(ir));
@@ -170,7 +176,6 @@ static struct ExprIr* visit_call_expr(struct CodegenVisitor* visitor,
     visitor_visit_stmt(as_visitor(visitor),
                        ir_block_stmt_super(ir_call_expr_pre_expr_block(ir)));
 
-    strtable_id name_id = ir_var_expr_index(func_name);
     const char* name = strtable_at(&ctx(visitor)->strtable, name_id);
     fprintf(visitor->stream, "\tcall\t%s", name);
 
@@ -198,11 +203,17 @@ static struct ExprIr* visit_call_expr(struct CodegenVisitor* visitor,
 
 static struct ExprIr* visit_var_expr(struct CodegenVisitor* visitor,
                                      struct VarExprIr* ir) {
-    size_t offset =
-        ir_function_region_size(visitor->function) - ir_var_expr_offset(ir);
     strtable_id reg_id = ir_expr_reg_id(ir_var_expr_cast(ir));
     const char* reg = register_name(visitor, reg_id);
-    fprintf(visitor->stream, "\tlea\t%s, [rbp - %ld]\n", reg, offset);
+    if (ir_var_expr_is_function(ir)) {
+        strtable_id index = ir_var_expr_index(ir);
+        const char* name = strtable_at(&ctx(visitor)->strtable, index);
+        fprintf(visitor->stream, "\tlea\t%s, %s[rip]\n", reg, name);
+    } else {
+        size_t offset =
+            ir_function_region_size(visitor->function) - ir_var_expr_offset(ir);
+        fprintf(visitor->stream, "\tlea\t%s, [rbp - %ld]\n", reg, offset);
+    }
     return ir_var_expr_cast(ir);
 }
 

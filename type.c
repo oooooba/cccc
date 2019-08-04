@@ -256,7 +256,7 @@ struct FunctionTypeIr* type_new_function(struct TypeIr* result_type,
                                          struct List* param_types,
                                          bool is_parameters_variable_length) {
     struct FunctionTypeIr* type = malloc(sizeof(struct FunctionTypeIr));
-    initialize_type(type_function_super(type), Type_Function, (size_t)-1);
+    initialize_type(type_function_super(type), Type_Function, sizeof(void*));
     type->result_type = result_type;
     type->param_types = param_types;
     type->is_parameters_variable_length = is_parameters_variable_length;
