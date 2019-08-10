@@ -8,7 +8,7 @@ int printf(const char* format, ...);
 int fprintf(FILE* stream, const char* format, ...);
 
 FILE* fopen(const char* path, const char* mode);
-int fopen(FILE* stream);
+int fclose(FILE* stream);
 
 #endif  // CCCC_STDIO_H
 

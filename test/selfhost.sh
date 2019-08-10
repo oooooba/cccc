@@ -17,7 +17,7 @@ function compile_gcc () {
     $GCC -std=c11 -Wall $SRC/$1.c -S -o $TMP/$1.S
 }
 
-compile_gcc main
+compile_cccc main
 compile_gcc codegen
 compile_gcc context
 compile_gcc dump
