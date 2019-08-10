@@ -48,9 +48,13 @@ char test44(int x);
 int test45(int, int);
 int test46(int, int);
 
+static int num_test_counter = 0;
+static int num_passed_test_counter = 0;
+
 static void check(const char* msg, int expected, int actual) {
+    ++num_test_counter;
     if (actual == expected) {
-        printf("%s: pass\n", msg);
+        ++num_passed_test_counter;
     } else {
         printf("%s: fail (expected=%d, actual=%d)\n", msg, expected, actual);
     }
@@ -127,5 +131,7 @@ int main(void) {
     check("test45", 4, test45(0, 5));
     check("test46", 6, test46(1, 5));
     check("test46", 4, test46(0, 5));
+    printf("result: total = %d, passed = %d\n", num_test_counter,
+           num_passed_test_counter);
     return 0;
 }
