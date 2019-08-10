@@ -73,13 +73,9 @@ struct TypeIr* context_find_user_defined_type(struct Context* context,
 }
 
 void context_register_registers(struct Context* context) {
-    strtable_id id;
-
-#define reg(name)                                                           \
-    do {                                                                    \
-        id = strtable_register(&context->strtable, "%" #name);              \
-        *((strtable_id*)vector_allocate_back(&context->register_ids)) = id; \
-    } while (0)
+#define reg(name)                                                   \
+    *((strtable_id*)vector_allocate_back(&context->register_ids)) = \
+        strtable_register(&context->strtable, "%" #name)
 
     reg(al);
     reg(eax);
