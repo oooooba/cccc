@@ -310,3 +310,16 @@ int test45(int n, int x) {
         f = test26;
     return f(x);
 }
+
+struct F {
+    int (*f)(int x);
+};
+
+int test46(int n, int x) {
+    struct F f;
+    if (n)
+        f.f = test25;
+    else
+        f.f = test26;
+    return f.f(x);
+}

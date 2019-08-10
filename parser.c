@@ -388,6 +388,10 @@ static struct List* parse_parameter_list(struct Parser* parser);
 static struct Declaration2* parse_parameter_declaration(struct Parser* parser);
 static struct TypeIr* parse_type_name(struct Parser* parser);
 
+static struct Res* parse_function_declaration(
+    struct Context* context, struct List* declaration_specifier_list,
+    struct Declarator* declarator);
+
 /***** lexical elements *****/
 
 static struct ExprIr* parse_integer_constant(struct Parser* parser) {
@@ -854,9 +858,29 @@ static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser) {
                     type = type_pointer_super(type_new_pointer(type));
                 struct DirectDeclarator* direct_declarator =
                     declaration->declarator->direct_declarator;
-                assert(direct_declarator->tag ==
-                       DirectDeclaratorTag_Identifier);
-                member_index = direct_declarator->identifier;
+                switch (direct_declarator->tag) {
+                    case DirectDeclaratorTag_Identifier:
+                        member_index = direct_declarator->identifier;
+                        break;
+                    case DirectDeclaratorTag_Parameters: {
+                        struct DeclarationSpecifier* specifier =
+                            new_declaration_specifier(
+                                DeclarationSpecifierTag_Type);
+                        specifier->type = type;
+                        struct List* specifiers = malloc(sizeof(struct List));
+                        list_initialize(specifiers);
+                        insert_at_end_as_list_item(specifiers, specifier);
+
+                        struct Res* res = parse_function_declaration(
+                            parser->context, specifiers,
+                            declaration->declarator);
+
+                        member_index = res->id;
+                        type = type_function_super(res->type);
+                    } break;
+                    default:
+                        assert(false);
+                }
             }
 
             struct MemberEntry* entry =
@@ -1279,8 +1303,22 @@ static struct Res* parse_function_declaration(
 
     struct DirectDeclarator* inner_direct_declarator =
         direct_declarator->parameters.direct_declarator;
-    assert(inner_direct_declarator->tag == DirectDeclaratorTag_Identifier);
-    strtable_id name_index = inner_direct_declarator->identifier;
+    strtable_id name_index;
+    switch (inner_direct_declarator->tag) {
+        case DirectDeclaratorTag_Identifier:
+            name_index = inner_direct_declarator->identifier;
+            break;
+        case DirectDeclaratorTag_Declarator: {
+            struct Declarator* inner_declarator =
+                inner_direct_declarator->declarator;
+            assert(inner_declarator->has_pointer);
+            assert(inner_declarator->direct_declarator->tag ==
+                   DirectDeclaratorTag_Identifier);
+            name_index = inner_declarator->direct_declarator->identifier;
+        } break;
+        default:
+            assert(false);
+    }
 
     struct Res* res = malloc(sizeof(struct Res));
     construct_function_type(context, return_type, direct_declarator, res);
