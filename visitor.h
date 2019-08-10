@@ -113,9 +113,6 @@ void visitor_initialize(struct Visitor* visitor, struct Context* context);
 struct Context* visitor_context(struct Visitor* visitor);
 void visitor_apply(struct Visitor* visitor);
 
-#define register_visitor(obj, member, proc) \
-    do {                                    \
-        (obj).member = (void*)(proc);       \
-    } while (0)
+#define register_visitor(obj, handler, proc) (obj).handler = (void*)(proc)
 
 #endif
