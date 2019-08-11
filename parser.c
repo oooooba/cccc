@@ -649,8 +649,30 @@ static struct ExprIr* parse_equality_expression(struct Parser* parser) {
     return lhs;
 }
 
+static struct ExprIr* parse_logical_and_expression(struct Parser* parser) {
+    struct ExprIr* lhs = parse_equality_expression(parser);
+    while (acceptable(parser, Token_AmpersandAmpersand)) {
+        advance(parser);
+        struct ExprIr* rhs = parse_equality_expression(parser);
+        lhs = ir_binop_expr_cast(
+            ir_new_binop_expr(BinopExprIrTag_LogicalAnd, lhs, rhs));
+    }
+    return lhs;
+}
+
+static struct ExprIr* parse_logical_or_expression(struct Parser* parser) {
+    struct ExprIr* lhs = parse_logical_and_expression(parser);
+    while (acceptable(parser, Token_PipePipe)) {
+        advance(parser);
+        struct ExprIr* rhs = parse_logical_and_expression(parser);
+        lhs = ir_binop_expr_cast(
+            ir_new_binop_expr(BinopExprIrTag_LogicalOr, lhs, rhs));
+    }
+    return lhs;
+}
+
 static struct ExprIr* parse_conditional_expression(struct Parser* parser) {
-    struct ExprIr* cond = parse_equality_expression(parser);
+    struct ExprIr* cond = parse_logical_or_expression(parser);
     if (!acceptable(parser, Token_Question)) return cond;
     advance(parser);
     struct ExprIr* true_expr = parse_expression(parser);

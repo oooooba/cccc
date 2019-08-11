@@ -50,6 +50,12 @@ static struct ExprIr* visit_binop_expr(struct SimplifyVisitor* visitor,
         case BinopExprIrTag_Ge:
             value = lhs_const >= rhs_const;
             break;
+        case BinopExprIrTag_LogicalAnd:
+            value = lhs_const && rhs_const;
+            break;
+        case BinopExprIrTag_LogicalOr:
+            value = lhs_const || rhs_const;
+            break;
         default:
             assert(false);
     }

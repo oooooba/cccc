@@ -48,6 +48,8 @@ char test44(int x);
 int test45(int, int);
 int test46(int, int);
 int test47(int);
+int test48(int, int);
+int test49(int, int);
 
 static int num_test_counter = 0;
 static int num_passed_test_counter = 0;
@@ -135,6 +137,14 @@ int main(void) {
     check("test47", 1, test47(-1));
     check("test47", 2, test47(0));
     check("test47", 2, test47(1));
+    check("test48", 1, test48(1, 1));
+    check("test48", 0, test48(1, 0));
+    check("test48", 0, test48(0, 1));
+    check("test48", 0, test48(0, 0));
+    check("test49", 1, test49(1, 1));
+    check("test49", 1, test49(1, 0));
+    check("test49", 1, test49(0, 1));
+    check("test49", 0, test49(0, 0));
     printf("result: total = %d, passed = %d\n", num_test_counter,
            num_passed_test_counter);
     return 0;

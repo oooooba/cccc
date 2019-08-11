@@ -72,6 +72,12 @@ static struct ExprIr* visit_binop_expr(struct DumpVisitor* visitor,
         case BinopExprIrTag_Ge:
             op = "ge";
             break;
+        case BinopExprIrTag_LogicalAnd:
+            op = "land";
+            break;
+        case BinopExprIrTag_LogicalOr:
+            op = "lor";
+            break;
         default:
             assert(false);
     }

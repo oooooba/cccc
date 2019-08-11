@@ -68,8 +68,65 @@ static void print_relational_instr(struct CodegenVisitor* visitor, void* label,
     fprintf(visitor->stream, "lab_%p_cont:\n", label);
 }
 
+static void print_logical_op_instr(struct CodegenVisitor* visitor,
+                                   struct BinopExprIr* ir) {
+    const char* opcode;
+    const char* jmp_opcode;
+    int shortcut_value;
+    int final_value;
+    switch (ir_binop_expr_op(ir)) {
+        case BinopExprIrTag_LogicalAnd:
+            opcode = "and";
+            jmp_opcode = "jz";
+            shortcut_value = 0;
+            final_value = 1;
+            break;
+        case BinopExprIrTag_LogicalOr:
+            opcode = "or";
+            jmp_opcode = "jnz";
+            shortcut_value = 1;
+            final_value = 0;
+            break;
+        default:
+            assert(false);
+    }
+
+    struct ExprIr* lhs = ir_binop_expr_lhs(ir);
+    visitor_visit_expr(as_visitor(visitor), lhs);
+
+    strtable_id lhs_reg_id = ir_expr_reg_id(lhs);
+    strtable_id result_reg_id = ir_expr_reg_id(ir_binop_expr_cast(ir));
+    assert(lhs_reg_id == result_reg_id);
+    const char* result_reg = register_name(visitor, result_reg_id);
+
+    fprintf(visitor->stream, "\t%s\t%s, %s\n", opcode, result_reg, result_reg);
+    fprintf(visitor->stream, "\t%s\tlab_%p_shortcut\n", jmp_opcode, ir);
+
+    struct ExprIr* rhs = ir_binop_expr_rhs(ir);
+    visitor_visit_expr(as_visitor(visitor), rhs);
+
+    strtable_id rhs_reg_id = ir_expr_reg_id(rhs);
+    const char* rhs_reg = register_name(visitor, rhs_reg_id);
+
+    fprintf(visitor->stream, "\t%s\t%s, %s\n", opcode, rhs_reg, rhs_reg);
+    fprintf(visitor->stream, "\t%s\tlab_%p_shortcut\n", jmp_opcode, ir);
+
+    fprintf(visitor->stream, "\tmov\t%s, %d\n", result_reg, final_value);
+    fprintf(visitor->stream, "\tjmp\tlab_%p_cont\n", ir);
+
+    fprintf(visitor->stream, "lab_%p_shortcut:\n", ir);
+    fprintf(visitor->stream, "\tmov\t%s, %d\n", result_reg, shortcut_value);
+    fprintf(visitor->stream, "lab_%p_cont:\n", ir);
+}
+
 static struct ExprIr* visit_binop_expr(struct CodegenVisitor* visitor,
                                        struct BinopExprIr* ir) {
+    enum BinopExprIrTag op = ir_binop_expr_op(ir);
+    if (op == BinopExprIrTag_LogicalAnd || op == BinopExprIrTag_LogicalOr) {
+        print_logical_op_instr(visitor, ir);
+        return ir_binop_expr_cast(ir);
+    }
+
     visitor_visit_binop_expr(as_visitor(visitor), ir);
     struct ExprIr* lhs = ir_binop_expr_lhs(ir);
     struct ExprIr* rhs = ir_binop_expr_rhs(ir);
@@ -82,16 +139,16 @@ static struct ExprIr* visit_binop_expr(struct CodegenVisitor* visitor,
     const char* rhs_reg = register_name(visitor, rhs_reg_id);
     const char* result_reg = register_name(visitor, result_reg_id);
 
-    const char* op;
-    switch (ir_binop_expr_op(ir)) {
+    const char* opcode;
+    switch (op) {
         case BinopExprIrTag_Add:
-            op = "add";
+            opcode = "add";
             break;
         case BinopExprIrTag_Sub:
-            op = "sub";
+            opcode = "sub";
             break;
         case BinopExprIrTag_Mul:
-            op = "imul";
+            opcode = "imul";
             break;
         case BinopExprIrTag_Equal:
             print_relational_instr(visitor, ir, "jnz", result_reg, rhs_reg);
@@ -108,19 +165,22 @@ static struct ExprIr* visit_binop_expr(struct CodegenVisitor* visitor,
         case BinopExprIrTag_Ge:
             print_relational_instr(visitor, ir, "jl", result_reg, rhs_reg);
             return ir_binop_expr_cast(ir);
+        case BinopExprIrTag_LogicalAnd:
+            print_relational_instr(visitor, ir, "jl", result_reg, rhs_reg);
+            return ir_binop_expr_cast(ir);
         default:
             assert(false);
     }
 
     if (ir_expr_type(lhs) == NULL ||
         type_tag(ir_expr_type(lhs)) != Type_Pointer)
-        fprintf(visitor->stream, "\t%s\t%s, %s\n", op, result_reg, rhs_reg);
+        fprintf(visitor->stream, "\t%s\t%s, %s\n", opcode, result_reg, rhs_reg);
     else {
         struct TypeIr* elem_type =
             type_pointer_elem_type(type_as_pointer(ir_expr_type(lhs)));
         fprintf(visitor->stream, "\timul\t%s, %ld\n", rhs_reg,
                 type_size(elem_type));
-        fprintf(visitor->stream, "\t%s\t%s, %s\n", op, result_reg, rhs_reg);
+        fprintf(visitor->stream, "\t%s\t%s, %s\n", opcode, result_reg, rhs_reg);
     }
     return ir_binop_expr_cast(ir);
 }

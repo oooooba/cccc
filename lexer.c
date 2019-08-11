@@ -84,13 +84,13 @@ static bool is_underscore(char c) { return c == '_'; }
 
 static bool is_simple_lexeme(char c) {
     return (c == '(') || (c == ')') || (c == '{') || (c == '}') || (c == ';') ||
-           (c == '&') || (c == ',') || (c == '[') || (c == ']') || (c == ':') ||
-           (c == '?');
+           (c == ',') || (c == '[') || (c == ']') || (c == ':') || (c == '?');
 }
 
 static bool is_complex_lexeme(char c) {
     return (c == '+') || (c == '-') || (c == '*') || (c == '/') || (c == '=') ||
-           (c == '!') || (c == '<') || (c == '>') || (c == '.');
+           (c == '!') || (c == '<') || (c == '>') || (c == '.') || (c == '&') ||
+           (c == '|');
 }
 
 static bool is_string_quote(char c) { return c == '"'; }
@@ -157,9 +157,6 @@ static enum TokenTag tokenize_simple_lexeme(struct Lexer* lexer) {
             break;
         case ';':
             tag = Token_Semicolon;
-            break;
-        case '&':
-            tag = Token_Ampersand;
             break;
         case ',':
             tag = Token_Comma;
@@ -288,6 +285,28 @@ static enum TokenTag tokenize_complex_lexeme(struct Lexer* lexer) {
                     break;
                 default:
                     tag = Token_RightAngle;
+                    num_advance = 1;
+            }
+            break;
+        case '&':
+            switch (peek_k(lexer, 1)) {
+                case '&':
+                    tag = Token_AmpersandAmpersand;
+                    num_advance = 2;
+                    break;
+                default:
+                    tag = Token_Ampersand;
+                    num_advance = 1;
+            }
+            break;
+        case '|':
+            switch (peek_k(lexer, 1)) {
+                case '|':
+                    tag = Token_PipePipe;
+                    num_advance = 2;
+                    break;
+                default:
+                    tag = Token_Pipe;
                     num_advance = 1;
             }
             break;

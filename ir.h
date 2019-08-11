@@ -90,6 +90,8 @@ enum BinopExprIrTag {
     BinopExprIrTag_Le,
     BinopExprIrTag_Gt,
     BinopExprIrTag_Ge,
+    BinopExprIrTag_LogicalAnd,
+    BinopExprIrTag_LogicalOr,
 };
 
 enum UnopExprIrTag {

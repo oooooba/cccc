@@ -325,3 +325,7 @@ int test46(int n, int x) {
 }
 
 int test47(int n) { return n < 0 ? 1 : 2; }
+
+int test48(int x, int y) { return x && y; }
+
+int test49(int x, int y) { return x || y; }

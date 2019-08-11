@@ -48,8 +48,6 @@ enum TokenTag {
     Token_DotDotDot,
     Token_Question,
 
-    Token_Ampersand,
-
     Token_Equal,
     Token_EqualEqual,
     Token_Plus,
@@ -63,6 +61,10 @@ enum TokenTag {
     Token_Arrow,
     Token_Exclamation,
     Token_ExclamationEqual,
+    Token_Ampersand,
+    Token_AmpersandAmpersand,
+    Token_Pipe,
+    Token_PipePipe,
 
     Token_Integer,
     Token_String,
