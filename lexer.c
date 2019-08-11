@@ -29,6 +29,7 @@ static const struct ReservedKeywordsEntry reserved_keywords[] = {
     register_keyword(default, Default),
     register_keyword(else, Else),
     register_keyword(enum, Enum),
+    register_keyword(false, False),
     register_keyword(for, For),
     register_keyword(if, If),
     register_keyword(int, Int),
@@ -38,6 +39,7 @@ static const struct ReservedKeywordsEntry reserved_keywords[] = {
     register_keyword(static, Static),
     register_keyword(struct, Struct),
     register_keyword(switch, Switch),
+    register_keyword(true, True),
     register_keyword(typedef, Typedef),
     register_keyword(union, Union),
     register_keyword(void, Void),
@@ -133,6 +135,12 @@ static enum TokenTag tokenize_lexeme(struct Lexer* lexer) {
     }
     if (tag == Token_KeywordConst) {
         // ignore const keyword, ToDo: fix
+    } else if (tag == Token_KeywordTrue) {
+        token->tag = Token_Integer;
+        token->integer = 1;
+    } else if (tag == Token_KeywordFalse) {
+        token->tag = Token_Integer;
+        token->integer = 0;
     } else
         list_insert_at_end(lexer->tokens, list_from(token));
     return tag;
