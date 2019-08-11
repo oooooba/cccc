@@ -47,18 +47,21 @@ static bool acceptable_storage_class_specifier(struct Parser* parser) {
            acceptable(parser, Token_KeywordTypedef);
 }
 
-static bool acceptable_type_specifier(struct Parser* parser) {
-    if (acceptable(parser, Token_Id)) {
-        strtable_id id = peek(parser)->strtable_index;
+static bool acceptable_type_specifier_token(struct Parser* parser,
+                                            struct Token* token) {
+    if (token->tag == Token_Id) {
+        strtable_id id = token->strtable_index;
         return context_find_user_defined_type(parser->context, id);
     }
-    return acceptable(parser, Token_KeywordLong) ||
-           acceptable(parser, Token_KeywordInt) ||
-           acceptable(parser, Token_KeywordChar) ||
-           acceptable(parser, Token_KeywordVoid) ||
-           acceptable(parser, Token_KeywordEnum) ||
-           acceptable(parser, Token_KeywordStruct) ||
-           acceptable(parser, Token_KeywordUnion);
+    return token->tag == Token_KeywordLong || token->tag == Token_KeywordInt ||
+           token->tag == Token_KeywordChar || token->tag == Token_KeywordVoid ||
+           token->tag == Token_KeywordEnum ||
+           token->tag == Token_KeywordStruct ||
+           token->tag == Token_KeywordUnion;
+}
+
+static bool acceptable_type_specifier(struct Parser* parser) {
+    return acceptable_type_specifier_token(parser, peek(parser));
 }
 
 static void expect(struct Parser* parser, enum TokenTag expected) {
