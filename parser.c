@@ -1137,7 +1137,7 @@ static struct SwitchStmtIr* parse_switch_statement(struct Parser* parser) {
                  acceptable(parser, Token_KeywordDefault) ||
                  acceptable(parser, Token_RightCurry))) {
             struct StmtIr* stmt = parse_statement(parser);
-            ir_block_stmt_insert_at_end(block, stmt);
+            if (stmt) ir_block_stmt_insert_at_end(block, stmt);
         }
 
         if (is_default_label) {
