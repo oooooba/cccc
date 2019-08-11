@@ -194,6 +194,20 @@ static struct ExprIr* visit_cast_expr(struct DumpVisitor* visitor,
     return ir_cast_expr_cast(ir);
 }
 
+static struct ExprIr* visit_cond_expr(struct DumpVisitor* visitor,
+                                      struct CondExprIr* ir) {
+    visitor_visit_cond_expr(as_visitor(visitor), ir);
+    struct ExprIr* cond = ir_cond_expr_cond(ir);
+    struct ExprIr* true_expr = ir_cond_expr_true_expr(ir);
+    struct ExprIr* false_expr = ir_cond_expr_false_expr(ir);
+    fprintf(visitor->stream, "v%p = v%p ? v%p : v%p :: ", ir, cond, true_expr,
+            false_expr);
+    context_dump_type(ctx(visitor), visitor->stream,
+                      ir_expr_type(ir_cond_expr_cast(ir)));
+    fprintf(visitor->stream, "\n");
+    return ir_cond_expr_cast(ir);
+}
+
 static struct StmtIr* visit_block_stmt(struct DumpVisitor* visitor,
                                        struct BlockStmtIr* ir) {
     fprintf(visitor->stream, "[@%p]{\n", ir);
@@ -325,6 +339,7 @@ struct DumpVisitor* new_dump_visitor(struct Context* context, FILE* stream) {
     register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr);
     register_visitor(visitor->as_visitor, visit_addrof_expr, visit_addrof_expr);
     register_visitor(visitor->as_visitor, visit_cast_expr, visit_cast_expr);
+    register_visitor(visitor->as_visitor, visit_cond_expr, visit_cond_expr);
 
     register_visitor(visitor->as_visitor, visit_block_stmt, visit_block_stmt);
     register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);

@@ -262,6 +262,10 @@ struct CastExprIr* ir_expr_as_cast(struct ExprIr* ir) {
     return ir->tag == ExprIrTag_Cast ? (struct CastExprIr*)ir : NULL;
 }
 
+struct CondExprIr* ir_expr_as_cond(struct ExprIr* ir) {
+    return ir->tag == ExprIrTag_Cond ? (struct CondExprIr*)ir : NULL;
+}
+
 enum ExprIrTag ir_expr_tag(struct ExprIr* ir) { return ir->tag; }
 
 struct TypeIr* ir_expr_type(struct ExprIr* ir) {
@@ -721,6 +725,54 @@ struct ExprIr* ir_expr_clone(struct ExprIr* ir) {
             assert(false);
             return NULL;
     }
+}
+
+struct CondExprIr {
+    struct ExprIr as_expr;
+    struct ExprIr* cond;
+    struct ExprIr* true_expr;
+    struct ExprIr* false_expr;
+};
+
+struct CondExprIr* ir_new_cond_expr(struct ExprIr* cond,
+                                    struct ExprIr* true_expr,
+                                    struct ExprIr* false_expr) {
+    struct CondExprIr* ir = malloc(sizeof(struct CondExprIr));
+    initialize_expr(ir_cond_expr_cast(ir), ExprIrTag_Cond);
+    ir->cond = cond;
+    ir->true_expr = true_expr;
+    ir->false_expr = false_expr;
+    return ir;
+}
+
+struct ExprIr* ir_cond_expr_cast(struct CondExprIr* ir) {
+    return &ir->as_expr;
+}
+
+struct ExprIr* ir_cond_expr_cond(struct CondExprIr* ir) {
+    return ir->cond;
+}
+
+struct ExprIr* ir_cond_expr_true_expr(struct CondExprIr* ir) {
+    return ir->true_expr;
+}
+
+struct ExprIr* ir_cond_expr_false_expr(struct CondExprIr* ir) {
+    return ir->false_expr;
+}
+
+void ir_cond_expr_set_cond(struct CondExprIr* ir, struct ExprIr* cond) {
+    ir->cond = cond;
+}
+
+void ir_cond_expr_set_true_expr(struct CondExprIr* ir,
+                                struct ExprIr* true_expr) {
+    ir->true_expr = true_expr;
+}
+
+void ir_cond_expr_set_false_expr(struct CondExprIr* ir,
+                                 struct ExprIr* false_expr) {
+    ir->false_expr = false_expr;
 }
 
 struct StmtIr {

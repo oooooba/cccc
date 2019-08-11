@@ -227,6 +227,24 @@ static struct ExprIr* visit_cast_expr(struct RegallocVisitor* visitor,
     return ir_cast_expr_cast(ir);
 }
 
+static struct ExprIr* visit_cond_expr(struct RegallocVisitor* visitor,
+                                      struct CondExprIr* ir) {
+    visitor_visit_expr(as_visitor(visitor), ir_cond_expr_cond(ir));
+    release_register(visitor);
+
+    visitor_visit_expr(as_visitor(visitor), ir_cond_expr_true_expr(ir));
+    release_register(visitor);
+
+    visitor_visit_expr(as_visitor(visitor), ir_cond_expr_false_expr(ir));
+    release_register(visitor);
+
+    strtable_id reg_id =
+        acquire_register(visitor, ir_expr_type(ir_cond_expr_cast(ir)));
+    ir_expr_set_reg_id(ir_cond_expr_cast(ir), reg_id);
+
+    return ir_cond_expr_cast(ir);
+}
+
 static struct StmtIr* visit_expr_stmt(struct RegallocVisitor* visitor,
                                       struct ExprStmtIr* ir) {
     visitor_visit_expr(as_visitor(visitor), ir_expr_stmt_expr(ir));
@@ -304,6 +322,7 @@ struct RegallocVisitor* new_regalloc_visitor(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr);
     register_visitor(visitor->as_visitor, visit_addrof_expr, NULL);
     register_visitor(visitor->as_visitor, visit_cast_expr, visit_cast_expr);
+    register_visitor(visitor->as_visitor, visit_cond_expr, visit_cond_expr);
 
     register_visitor(visitor->as_visitor, visit_expr_stmt, visit_expr_stmt);
     register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);

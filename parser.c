@@ -647,12 +647,22 @@ static struct ExprIr* parse_equality_expression(struct Parser* parser) {
     return lhs;
 }
 
+static struct ExprIr* parse_conditional_expression(struct Parser* parser) {
+    struct ExprIr* cond = parse_equality_expression(parser);
+    if (!acceptable(parser, Token_Question)) return cond;
+    advance(parser);
+    struct ExprIr* true_expr = parse_expression(parser);
+    expect(parser, Token_Colon);
+    struct ExprIr* false_expr = parse_conditional_expression(parser);
+    return ir_cond_expr_cast(ir_new_cond_expr(cond, true_expr, false_expr));
+}
+
 static struct ExprIr* parse_assignment_expression(struct Parser* parser) {
-    struct ExprIr* lhs = parse_equality_expression(parser);
+    struct ExprIr* lhs = parse_conditional_expression(parser);
     if (acceptable(parser, Token_Equal)) {
         advance(parser);
         struct AddrofExprIr* addrof = ir_new_addrof_expr(lhs);
-        struct ExprIr* rhs = parse_equality_expression(parser);
+        struct ExprIr* rhs = parse_assignment_expression(parser);
         struct SubstExprIr* subst =
             ir_new_subst_expr(ir_addrof_expr_cast(addrof), rhs);
         lhs = ir_subst_expr_cast(subst);

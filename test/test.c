@@ -323,3 +323,5 @@ int test46(int n, int x) {
         f.f = test26;
     return f.f(x);
 }
+
+int test47(int n) { return n < 0 ? 1 : 2; }

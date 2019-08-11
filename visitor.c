@@ -39,6 +39,8 @@ struct ExprIr* visitor_visit_expr(struct Visitor* visitor, struct ExprIr* ir) {
             return visitor->visit_addrof_expr(visitor, ir_expr_as_addrof(ir));
         case ExprIrTag_Cast:
             return visitor->visit_cast_expr(visitor, ir_expr_as_cast(ir));
+        case ExprIrTag_Cond:
+            return visitor->visit_cond_expr(visitor, ir_expr_as_cond(ir));
         default:
             assert(false);
     }
@@ -194,6 +196,22 @@ struct ExprIr* visitor_visit_cast_expr(struct Visitor* visitor,
     return ir_cast_expr_cast(ir);
 }
 
+struct ExprIr* visitor_visit_cond_expr(struct Visitor* visitor,
+                                       struct CondExprIr* ir) {
+    struct ExprIr* cond = visitor_visit_expr(visitor, ir_cond_expr_cond(ir));
+    ir_cond_expr_set_cond(ir, cond);
+
+    struct ExprIr* true_expr =
+        visitor_visit_expr(visitor, ir_cond_expr_true_expr(ir));
+    ir_cond_expr_set_true_expr(ir, true_expr);
+
+    struct ExprIr* false_expr =
+        visitor_visit_expr(visitor, ir_cond_expr_false_expr(ir));
+    ir_cond_expr_set_false_expr(ir, false_expr);
+
+    return ir_cond_expr_cast(ir);
+}
+
 struct StmtIr* visitor_visit_expr_stmt(struct Visitor* visitor,
                                        struct ExprStmtIr* ir) {
     struct ExprIr* expr = visitor_visit_expr(visitor, ir_expr_stmt_expr(ir));
@@ -301,6 +319,7 @@ void visitor_initialize(struct Visitor* visitor, struct Context* context) {
     register_visitor(*visitor, visit_deref_expr, visitor_visit_deref_expr);
     register_visitor(*visitor, visit_addrof_expr, visitor_visit_addrof_expr);
     register_visitor(*visitor, visit_cast_expr, visitor_visit_cast_expr);
+    register_visitor(*visitor, visit_cond_expr, visitor_visit_cond_expr);
 
     register_visitor(*visitor, visit_stmt_pre, visitor_visit_stmt_pre);
 

@@ -47,6 +47,7 @@ int test43(void);
 char test44(int x);
 int test45(int, int);
 int test46(int, int);
+int test47(int);
 
 static int num_test_counter = 0;
 static int num_passed_test_counter = 0;
@@ -131,6 +132,9 @@ int main(void) {
     check("test45", 4, test45(0, 5));
     check("test46", 6, test46(1, 5));
     check("test46", 4, test46(0, 5));
+    check("test47", 1, test47(-1));
+    check("test47", 2, test47(0));
+    check("test47", 2, test47(1));
     printf("result: total = %d, passed = %d\n", num_test_counter,
            num_passed_test_counter);
     return 0;

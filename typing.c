@@ -224,6 +224,14 @@ static struct ExprIr* visit_addrof_expr(struct TypingVisitor* visitor,
     return ir_addrof_expr_cast(ir);
 }
 
+static struct ExprIr* visit_cond_expr(struct TypingVisitor* visitor,
+                                      struct CondExprIr* ir) {
+    visitor_visit_cond_expr(as_visitor(visitor), ir);
+    ir_expr_set_type(ir_cond_expr_cast(ir),
+                     ir_expr_type(ir_cond_expr_true_expr(ir)));
+    return ir_cond_expr_cast(ir);
+}
+
 static struct StmtIr* visit_if_stmt(struct TypingVisitor* visitor,
                                     struct IfStmtIr* ir) {
     visitor_visit_if_stmt(as_visitor(visitor), ir);
@@ -287,6 +295,7 @@ struct TypingVisitor* new_typing_visitor(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_member_expr, visit_member_expr);
     register_visitor(visitor->as_visitor, visit_deref_expr, visit_deref_expr);
     register_visitor(visitor->as_visitor, visit_addrof_expr, visit_addrof_expr);
+    register_visitor(visitor->as_visitor, visit_cond_expr, visit_cond_expr);
 
     register_visitor(visitor->as_visitor, visit_if_stmt, visit_if_stmt);
     register_visitor(visitor->as_visitor, visit_while_stmt, visit_while_stmt);

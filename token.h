@@ -46,6 +46,7 @@ enum TokenTag {
     Token_Semicolon,
     Token_Dot,
     Token_DotDotDot,
+    Token_Question,
 
     Token_Ampersand,
 

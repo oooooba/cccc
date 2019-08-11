@@ -25,6 +25,7 @@ struct MemberExprIr;
 struct DerefExprIr;
 struct AddrofExprIr;
 struct CastExprIr;
+struct CondExprIr;
 
 struct StmtIr;
 struct ExprStmtIr;
@@ -58,6 +59,7 @@ enum ExprIrTag {
     ExprIrTag_Deref,
     ExprIrTag_Addrof,
     ExprIrTag_Cast,
+    ExprIrTag_Cond,
 };
 
 enum StmtIrTag {
@@ -132,6 +134,7 @@ struct MemberExprIr* ir_expr_as_member(struct ExprIr* ir);
 struct DerefExprIr* ir_expr_as_deref(struct ExprIr* ir);
 struct AddrofExprIr* ir_expr_as_addrof(struct ExprIr* ir);
 struct CastExprIr* ir_expr_as_cast(struct ExprIr* ir);
+struct CondExprIr* ir_expr_as_cond(struct ExprIr* ir);
 
 enum ExprIrTag ir_expr_tag(struct ExprIr* ir);
 struct TypeIr* ir_expr_type(struct ExprIr* ir);
@@ -217,6 +220,19 @@ struct ExprIr* ir_cast_expr_cast(struct CastExprIr* ir);
 struct ExprIr* ir_cast_expr_operand(struct CastExprIr* ir);
 void ir_cast_expr_set_operand(struct CastExprIr* ir, struct ExprIr* operand);
 struct ExprIr* ir_expr_clone(struct ExprIr* ir);
+
+struct CondExprIr* ir_new_cond_expr(struct ExprIr* cond,
+                                    struct ExprIr* true_expr,
+                                    struct ExprIr* false_expr);
+struct ExprIr* ir_cond_expr_cast(struct CondExprIr* ir);
+struct ExprIr* ir_cond_expr_cond(struct CondExprIr* ir);
+struct ExprIr* ir_cond_expr_true_expr(struct CondExprIr* ir);
+struct ExprIr* ir_cond_expr_false_expr(struct CondExprIr* ir);
+void ir_cond_expr_set_cond(struct CondExprIr* ir, struct ExprIr* cond);
+void ir_cond_expr_set_true_expr(struct CondExprIr* ir,
+                                struct ExprIr* true_expr);
+void ir_cond_expr_set_false_expr(struct CondExprIr* ir,
+                                 struct ExprIr* false_expr);
 
 enum StmtIrTag ir_stmt_tag(struct StmtIr* ir);
 strtable_id ir_stmt_label_index(struct StmtIr* ir);

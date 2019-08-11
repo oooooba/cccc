@@ -27,6 +27,8 @@ struct Visitor {
                                         struct AddrofExprIr* ir);
     struct ExprIr* (*visit_cast_expr)(struct Visitor* visitor,
                                       struct CastExprIr* ir);
+    struct ExprIr* (*visit_cond_expr)(struct Visitor* visitor,
+                                      struct CondExprIr* ir);
 
     struct StmtIr* (*visit_stmt_pre)(struct Visitor* visitor,
                                      struct StmtIr* ir);
@@ -91,6 +93,8 @@ struct ExprIr* visitor_visit_addrof_expr(struct Visitor* visitor,
                                          struct AddrofExprIr* ir);
 struct ExprIr* visitor_visit_cast_expr(struct Visitor* visitor,
                                        struct CastExprIr* ir);
+struct ExprIr* visitor_visit_cond_expr(struct Visitor* visitor,
+                                       struct CondExprIr* ir);
 
 struct StmtIr* visitor_visit_expr_stmt(struct Visitor* visitor,
                                        struct ExprStmtIr* ir);
