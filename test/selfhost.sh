@@ -34,7 +34,7 @@ compile_gcc simplify
 compile_gcc type
 compile_gcc typing
 compile_cccc vector
-compile_gcc visitor
+compile_cccc visitor
 
 $GCC -std=c11 -Wall \
     $TMP/main.S \
