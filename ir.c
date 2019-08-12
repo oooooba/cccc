@@ -17,7 +17,8 @@ struct Region {
 
 static struct Region* ir_new_region(void) {
     struct Region* region = malloc(sizeof(struct Region));
-    *region = (struct Region){.base = INVALID_VALUE, .size = 0};
+    region->base = INVALID_VALUE;
+    region->size = 0;
     return region;
 }
 
@@ -60,7 +61,7 @@ static size_t ir_region_align(struct Region* region, size_t alignment) {
 static size_t ir_region_freeze(struct Region* region, size_t base,
                                size_t alignment) {
     assert(region->base == INVALID_VALUE);
-    assert(base % alignment == 0);
+    assert(roundup(base, alignment) == base);
     size_t diff = ir_region_align(region, alignment);
     region->base = base;
     return diff;
@@ -159,7 +160,7 @@ size_t ir_function_region_size(struct FunctionIr* ir) {
 }
 
 void ir_function_set_region_size(struct FunctionIr* ir, size_t region_size) {
-    assert(region_size % sizeof(void*) == 0);
+    assert(roundup(region_size, sizeof(void*)) == region_size);
     assert(ir->region_size == (size_t)-1);
     ir->region_size = region_size;
 }
