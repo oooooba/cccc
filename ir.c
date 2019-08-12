@@ -34,7 +34,7 @@ static size_t ir_region_size(struct Region* region) {
 static size_t ir_region_allocate(struct Region* region, size_t size) {
     assert(region->base == INVALID_VALUE);
     size_t offset = region->size;
-    region->size += size;
+    region->size = region->size + size;
     return offset;
 }
 

@@ -72,7 +72,9 @@ static char peek_k(struct Lexer* lexer, size_t k) {
 
 static char peek(struct Lexer* lexer) { return peek_k(lexer, 0); }
 
-static void advance_k(struct Lexer* lexer, size_t k) { lexer->pos += k; }
+static void advance_k(struct Lexer* lexer, size_t k) {
+    lexer->pos = lexer->pos + k;
+}
 
 static void advance(struct Lexer* lexer) { advance_k(lexer, 1); }
 

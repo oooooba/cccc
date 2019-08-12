@@ -184,7 +184,7 @@ static size_t roundup(size_t x, size_t y) {
     long ix = x;
     size_t z = 0;
     while (ix > 0) {
-        ix -= y;
+        ix = ix - y;
         ++z;
     }
     return z * y;
@@ -200,7 +200,6 @@ static size_t set_member_offset(struct StructTypeIr* type, size_t base) {
         struct MemberEntry* entry = (struct MemberEntry*)it;
         struct TypeIr* member_type = entry->type;
         size_t s = member_type->size;
-        // if (!is_union) offset = (offset + s - 1) / s * s;
         if (!is_union) offset = roundup(offset, s);
         entry->offset = base + offset;
         if (entry->name_index == STRTABLE_INVALID_ID) {
@@ -212,7 +211,7 @@ static size_t set_member_offset(struct StructTypeIr* type, size_t base) {
         if (is_union)
             size = size > s ? size : s;
         else {
-            offset += s;
+            offset = offset + s;
             size = offset;
         }
     }
