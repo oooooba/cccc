@@ -30,7 +30,7 @@ compile_cccc nameresolve
 compile_gcc parser
 compile_cccc regalloc
 compile_cccc strtable
-compile_gcc simplify
+compile_cccc simplify
 compile_cccc type
 compile_cccc typing
 compile_cccc vector
