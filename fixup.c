@@ -24,6 +24,17 @@ static void insert(struct List* list, struct ListHeader* point, void* item) {
     list_insert_at(list, point, list_from(list_item));
 }
 
+static size_t roundup(size_t x, size_t y) {
+    // to avoid division operation, ToDo: fix to handle div instruction
+    long ix = x;
+    size_t z = 0;
+    while (ix > 0) {
+        ix = ix - y;
+        ++z;
+    }
+    return z * y;
+}
+
 static struct StmtIr* visit_expr_stmt(struct FixupVisitor* visitor,
                                       struct ExprStmtIr* ir) {
     (void)visitor;
@@ -96,9 +107,8 @@ static struct FunctionIr* visit_function(struct FixupVisitor* visitor,
     // insert allocating stack frame code
     {
         size_t sp_alignment = 16;
-        size_t frame_size = (ir_function_region_size(ir) + sp_alignment - 1) /
-                            sp_alignment * sp_alignment;
-        frame_size += sizeof(void*);  // for 'push rbx'
+        size_t frame_size = roundup(ir_function_region_size(ir), sp_alignment);
+        frame_size = frame_size + sizeof(void*);  // for 'push rbx'
         struct ConstExprIr* size = ir_new_integer_const_expr(frame_size);
         ir_expr_set_reg_id(
             ir_const_expr_cast(size),
