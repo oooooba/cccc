@@ -440,6 +440,12 @@ static struct ExprIr* parse_primary_expression(struct Parser* parser) {
             return parse_constant(parser);
         case Token_Id: {
             strtable_id index = parse_identifier(parser);
+            intptr_t value = (intptr_t)map_find(
+                parser->enumeration_constant_map, (void*)index);
+            if (value) {
+                --value;
+                return ir_const_expr_cast(ir_new_integer_const_expr(value));
+            }
             struct VarExprIr* var = ir_new_var_expr(index);
             struct DerefExprIr* deref_var =
                 ir_new_deref_expr(ir_var_expr_cast(var));
