@@ -38,10 +38,21 @@ static size_t ir_region_allocate(struct Region* region, size_t size) {
     return offset;
 }
 
+static size_t roundup(size_t x, size_t y) {
+    // to avoid division operation, ToDo: fix to handle div instruction
+    long ix = x;
+    size_t z = 0;
+    while (ix > 0) {
+        ix = ix - y;
+        ++z;
+    }
+    return z * y;
+}
+
 static size_t ir_region_align(struct Region* region, size_t alignment) {
     assert(region->base == INVALID_VALUE);
     size_t old_size = region->size;
-    size_t new_size = (old_size + alignment - 1) / alignment * alignment;
+    size_t new_size = roundup(old_size, alignment);
     region->size = new_size;
     return new_size - old_size;
 }
