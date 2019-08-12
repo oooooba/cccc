@@ -68,6 +68,9 @@ static struct ExprIr* visit_binop_expr(struct TypingVisitor* visitor,
                        type_tag(rhs_type) == Type_Int)
                 rhs = ir_cast_expr_cast(
                     ir_new_cast_expr(rhs, type_long_super(type_new_long())));
+        } else if (ir_binop_expr_op(ir) == BinopExprIrTag_Equal &&
+                   type_tag(lhs_type) == Type_Pointer &&
+                   type_tag(rhs_type) == Type_Pointer) {
         } else
             assert(false);
     }
