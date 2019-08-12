@@ -269,7 +269,9 @@ static struct StmtIr* visit_while_stmt(struct DumpVisitor* visitor,
                                        struct WhileStmtIr* ir) {
     struct ExprIr* cond_expr = ir_while_stmt_cond_expr(ir);
     visitor_visit_expr(as_visitor(visitor), cond_expr);
-    fprintf(visitor->stream, "while (v%p) ", cond_expr);
+    struct ExprIr* update_expr = ir_while_stmt_update_expr(ir);
+    if (update_expr) visitor_visit_expr(as_visitor(visitor), update_expr);
+    fprintf(visitor->stream, "while (v%p; v%p) ", cond_expr, update_expr);
 
     struct StmtIr* body_stmt = ir_while_stmt_body_stmt(ir);
     visitor_visit_stmt(as_visitor(visitor), body_stmt);

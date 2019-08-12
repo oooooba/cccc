@@ -1227,7 +1227,8 @@ static struct StmtIr* parse_iteration_statement(struct Parser* parser) {
 
         struct StmtIr* body_stmt = parse_statement(parser);
 
-        return ir_while_stmt_super(ir_new_while_stmt(cond_expr, body_stmt));
+        return ir_while_stmt_super(
+            ir_new_while_stmt(cond_expr, NULL, body_stmt));
     } else if (acceptable(parser, Token_KeywordFor)) {
         advance(parser);
 
@@ -1263,25 +1264,14 @@ static struct StmtIr* parse_iteration_statement(struct Parser* parser) {
         expect(parser, Token_Semicolon);
 
         struct ExprIr* tail_expr = NULL;
-        (void)tail_expr;
         if (!acceptable(parser, Token_RightParen))
             tail_expr = parse_expression(parser);
         expect(parser, Token_RightParen);
 
         struct StmtIr* body_stmt = parse_statement(parser);
-        if (tail_expr) {
-            struct BlockStmtIr* body_block = ir_stmt_as_block(body_stmt);
-            if (!body_block) {
-                body_block = ir_new_block_stmt();
-                ir_block_stmt_insert_at_end(body_block, body_stmt);
-                body_stmt = ir_block_stmt_super(body_block);
-            }
-            struct ExprStmtIr* expr_stmt = ir_new_expr_stmt(tail_expr);
-            ir_block_stmt_insert_at_end(body_block,
-                                        ir_expr_stmt_super(expr_stmt));
-        }
 
-        struct WhileStmtIr* stmt = ir_new_while_stmt(cond_expr, body_stmt);
+        struct WhileStmtIr* stmt =
+            ir_new_while_stmt(cond_expr, tail_expr, body_stmt);
         if (block) {
             ir_block_stmt_insert_at_end(block, ir_while_stmt_super(stmt));
             return ir_block_stmt_super(block);

@@ -286,6 +286,11 @@ static struct StmtIr* visit_while_stmt(struct RegallocVisitor* visitor,
     visitor_visit_expr(as_visitor(visitor), ir_while_stmt_cond_expr(ir));
     release_register(visitor);
 
+    if (ir_while_stmt_update_expr(ir)) {
+        visitor_visit_expr(as_visitor(visitor), ir_while_stmt_update_expr(ir));
+        release_register(visitor);
+    }
+
     visitor_visit_stmt(as_visitor(visitor), ir_while_stmt_body_stmt(ir));
 
     return ir_while_stmt_super(ir);

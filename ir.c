@@ -1025,14 +1025,17 @@ void ir_switch_stmt_set_default_stmt(struct SwitchStmtIr* ir,
 struct WhileStmtIr {
     struct StmtIr super;
     struct ExprIr* cond_expr;
+    struct ExprIr* update_expr;
     struct StmtIr* body_stmt;
 };
 
 struct WhileStmtIr* ir_new_while_stmt(struct ExprIr* cond_expr,
+                                      struct ExprIr* update_expr,
                                       struct StmtIr* body_stmt) {
     struct WhileStmtIr* ir = malloc(sizeof(struct WhileStmtIr));
     initialize_stmt(ir_while_stmt_super(ir), StmtIrTag_While);
     ir->cond_expr = cond_expr;
+    ir->update_expr = update_expr;
     ir->body_stmt = body_stmt;
     return ir;
 }
@@ -1048,6 +1051,15 @@ struct ExprIr* ir_while_stmt_cond_expr(struct WhileStmtIr* ir) {
 void ir_while_stmt_set_cond_expr(struct WhileStmtIr* ir,
                                  struct ExprIr* cond_expr) {
     ir->cond_expr = cond_expr;
+}
+
+struct ExprIr* ir_while_stmt_update_expr(struct WhileStmtIr* ir) {
+    return ir->update_expr;
+}
+
+void ir_while_stmt_set_update_expr(struct WhileStmtIr* ir,
+                                   struct ExprIr* update_expr) {
+    ir->update_expr = update_expr;
 }
 
 struct StmtIr* ir_while_stmt_body_stmt(struct WhileStmtIr* ir) {

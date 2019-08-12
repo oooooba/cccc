@@ -299,11 +299,15 @@ void ir_switch_branch_set_stmt(struct SwitchStmtBranch* branch,
                                struct StmtIr* stmt);
 
 struct WhileStmtIr* ir_new_while_stmt(struct ExprIr* cond_expr,
+                                      struct ExprIr* update_expr,
                                       struct StmtIr* body_stmt);
 struct StmtIr* ir_while_stmt_super(struct WhileStmtIr* ir);
 struct ExprIr* ir_while_stmt_cond_expr(struct WhileStmtIr* ir);
 void ir_while_stmt_set_cond_expr(struct WhileStmtIr* ir,
                                  struct ExprIr* cond_expr);
+struct ExprIr* ir_while_stmt_update_expr(struct WhileStmtIr* ir);
+void ir_while_stmt_set_update_expr(struct WhileStmtIr* ir,
+                                   struct ExprIr* update_expr);
 struct StmtIr* ir_while_stmt_body_stmt(struct WhileStmtIr* ir);
 void ir_while_stmt_set_body_stmt(struct WhileStmtIr* ir,
                                  struct StmtIr* body_stmt);

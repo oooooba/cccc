@@ -452,6 +452,12 @@ static struct StmtIr* visit_while_stmt(struct CodegenVisitor* visitor,
     fprintf(visitor->stream, "\tjz\tlab_%p_cont\n", ir);
 
     visitor_visit_stmt(as_visitor(visitor), ir_while_stmt_body_stmt(ir));
+
+    if (ir_while_stmt_update_expr(ir)) {
+        fprintf(visitor->stream, "lab_%p_update:\n", ir);
+        visitor_visit_expr(as_visitor(visitor), ir_while_stmt_update_expr(ir));
+    }
+
     fprintf(visitor->stream, "\tjmp\tlab_%p_head\n", ir);
 
     fprintf(visitor->stream, "lab_%p_cont:\n", ir);

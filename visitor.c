@@ -281,6 +281,12 @@ struct StmtIr* visitor_visit_while_stmt(struct Visitor* visitor,
         visitor_visit_expr(visitor, ir_while_stmt_cond_expr(ir));
     ir_while_stmt_set_cond_expr(ir, cond);
 
+    if (ir_while_stmt_update_expr(ir)) {
+        struct ExprIr* update =
+            visitor_visit_expr(visitor, ir_while_stmt_update_expr(ir));
+        ir_while_stmt_set_update_expr(ir, update);
+    }
+
     struct StmtIr* body_stmt =
         visitor_visit_stmt(visitor, ir_while_stmt_body_stmt(ir));
     ir_while_stmt_set_body_stmt(ir, body_stmt);
