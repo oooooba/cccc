@@ -4,9 +4,7 @@
 #include <stdlib.h>
 
 #define assert(cond) \
-    if (cond) {      \
-    } else           \
-        abort();
+    if (!cond) abort()
 
 #endif  // CCCC_ASSERT_H
 
