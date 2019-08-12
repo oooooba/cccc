@@ -19,7 +19,7 @@ function compile_gcc () {
 
 compile_cccc main
 compile_gcc codegen
-compile_gcc context
+compile_cccc context
 compile_gcc dump
 compile_gcc fixup
 compile_gcc ir
