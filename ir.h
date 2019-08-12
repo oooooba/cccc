@@ -106,9 +106,11 @@ struct FunctionIr* ir_as_function(struct Ir* ir);
 enum IrTag ir_tag(struct Ir* ir);
 
 struct GlobalIr* ir_new_global_from_function(struct FunctionIr* function,
-                                             bool has_definition);
+                                             bool has_definition,
+                                             bool is_public);
 struct Ir* ir_global_cast(struct GlobalIr* ir);
 bool ir_global_has_definition(struct GlobalIr* ir);
+bool ir_global_is_public(struct GlobalIr* ir);
 struct FunctionIr* ir_global_function(struct GlobalIr* ir);
 
 struct FunctionIr* ir_new_function(strtable_id name_index,

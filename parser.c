@@ -231,6 +231,7 @@ struct Res {
     struct FunctionTypeIr* type;
     struct BlockStmtIr* block;
     struct List* decl_stmt_list;
+    bool is_static;
 };
 
 static struct DeclStmtIr* insert_normalized_declaration_statement(
@@ -1328,11 +1329,15 @@ static struct StmtIr* parse_statement(struct Parser* parser) {
 static struct Res* parse_function_declaration(
     struct Context* context, struct List* declaration_specifier_list,
     struct Declarator* declarator) {
+    struct Res* res = malloc(sizeof(struct Res));
+
     struct DeclarationSpecifier* specifier =
         nth_list_item(declaration_specifier_list, 0);
-    if (specifier->tag == DeclarationSpecifierTag_StorageClass)
-        // ignore storage class specifier, ToDo: fix
+    if (specifier->tag == DeclarationSpecifierTag_StorageClass) {
+        res->is_static =
+            specifier->storage_class_tag == StorageClassSpecifierTag_Static;
         specifier = nth_list_item(declaration_specifier_list, 1);
+    }
     struct TypeIr* return_type = specifier->type;
     if (declarator->has_pointer)
         return_type = type_pointer_super(type_new_pointer(return_type));
@@ -1359,7 +1364,6 @@ static struct Res* parse_function_declaration(
             assert(false);
     }
 
-    struct Res* res = malloc(sizeof(struct Res));
     construct_function_type(context, return_type, direct_declarator, res);
     res->id = name_index;
     return res;
@@ -1396,7 +1400,8 @@ static struct FunctionIr* parse_function_definition(struct Parser* parser) {
     assert(!ir_function_has_defined(function));
     ir_function_define(function, param_decl_stmt_list, body);
 
-    struct GlobalIr* global = ir_new_global_from_function(function, true);
+    struct GlobalIr* global =
+        ir_new_global_from_function(function, true, !result->is_static);
     context_append_global_declaration(parser->context, global);
 
     return function;
@@ -1433,7 +1438,6 @@ static void parse_external_declaration(struct Parser* parser) {
             } else {
                 assert(first_specifier->storage_class_tag ==
                        StorageClassSpecifierTag_Static);
-                // ignore 'static' specifier, ToDo: fix
                 first_specifier =
                     nth_list_item(declaration->declaration_specifiers, 1);
             }
@@ -1446,7 +1450,8 @@ static void parse_external_declaration(struct Parser* parser) {
         struct Res* result = parse_function_declaration(
             parser->context, declaration_specifiers, declarator);
         struct FunctionIr* function = ir_new_function(result->id, result->type);
-        struct GlobalIr* global = ir_new_global_from_function(function, false);
+        struct GlobalIr* global =
+            ir_new_global_from_function(function, false, !result->is_static);
         context_append_global_declaration(parser->context, global);
         return;
     }

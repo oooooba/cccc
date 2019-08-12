@@ -508,6 +508,17 @@ static struct StmtIr* visit_pop_stmt(struct CodegenVisitor* visitor,
     return ir_pop_stmt_super(ir);
 }
 
+static struct GlobalIr* visit_global(struct CodegenVisitor* visitor,
+                                     struct GlobalIr* ir) {
+    if (ir_global_is_public(ir)) {
+        struct FunctionIr* function = ir_global_function(ir);
+        const char* name = strtable_at(&ctx(visitor)->strtable,
+                                       ir_function_name_index(function));
+        fprintf(visitor->stream, ".global %s\n", name);
+    }
+    return ir;
+}
+
 static struct FunctionIr* visit_function(struct CodegenVisitor* visitor,
                                          struct FunctionIr* ir) {
     fprintf(visitor->stream, "\n");
@@ -515,7 +526,6 @@ static struct FunctionIr* visit_function(struct CodegenVisitor* visitor,
 
     const char* name =
         strtable_at(&ctx(visitor)->strtable, ir_function_name_index(ir));
-    fprintf(visitor->stream, ".global %s\n", name);
     fprintf(visitor->stream, "%s:\n", name);
 
     struct BlockStmtIr* body = ir_function_body2(ir);
@@ -565,6 +575,8 @@ struct CodegenVisitor* new_codegen_visitor(struct Context* context,
     register_visitor(visitor->as_visitor, visit_pop_stmt, visit_pop_stmt);
 
     register_visitor(visitor->as_visitor, visit_function, visit_function);
+
+    register_visitor(visitor->as_visitor, visit_global, visit_global);
 
     visitor->stream = stream;
     visitor->break_dst = NULL;

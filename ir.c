@@ -74,14 +74,17 @@ enum IrTag ir_tag(struct Ir* ir) { return ir->tag; }
 struct GlobalIr {
     struct Ir as_ir;
     bool has_definition;
+    bool is_public;
     struct FunctionIr* function;
 };
 
 struct GlobalIr* ir_new_global_from_function(struct FunctionIr* function,
-                                             bool has_definition) {
+                                             bool has_definition,
+                                             bool is_public) {
     struct GlobalIr* ir = malloc(sizeof(struct GlobalIr));
     initialize_ir(ir_global_cast(ir), IrTag_Global);
     ir->has_definition = has_definition;
+    ir->is_public = is_public;
     ir->function = function;
     return ir;
 }
@@ -93,6 +96,8 @@ struct Ir* ir_global_cast(struct GlobalIr* ir) {
 bool ir_global_has_definition(struct GlobalIr* ir) {
     return ir->has_definition;
 }
+
+bool ir_global_is_public(struct GlobalIr* ir) { return ir->is_public; }
 
 struct FunctionIr* ir_global_function(struct GlobalIr* ir) {
     return ir->function;
