@@ -145,7 +145,11 @@ int main(void) {
     check("test49", 1, test49(1, 0));
     check("test49", 1, test49(0, 1));
     check("test49", 0, test49(0, 0));
+
+    bool failed = num_test_counter != num_passed_test_counter;
+    if (failed) printf("\n\n============================================\n");
     printf("result: total = %d, passed = %d\n", num_test_counter,
            num_passed_test_counter);
+    if (failed) printf("============================================\n\n\n");
     return 0;
 }
