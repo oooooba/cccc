@@ -74,11 +74,8 @@ struct VoidTypeIr {
 };
 
 struct VoidTypeIr* type_new_void(void) {
-    static struct VoidTypeIr* type = NULL;
-    if (!type) {
-        type = malloc(sizeof(struct VoidTypeIr));
-        initialize_type(type_void_super(type), Type_Void, 1);  // ToDo: fix
-    }
+    struct VoidTypeIr* type = malloc(sizeof(struct VoidTypeIr));
+    initialize_type(type_void_super(type), Type_Void, 1);
     return type;
 }
 
@@ -91,12 +88,9 @@ struct LongTypeIr {
 };
 
 struct LongTypeIr* type_new_long(void) {
-    static struct LongTypeIr* type = NULL;
-    if (!type) {
-        type = malloc(sizeof(struct LongTypeIr));
-        initialize_type(type_long_super(type), Type_Long, sizeof(long));
-        assert(sizeof(long) == 8);
-    }
+    struct LongTypeIr* type = malloc(sizeof(struct LongTypeIr));
+    assert(sizeof(long) == 8);
+    initialize_type(type_long_super(type), Type_Long, sizeof(long));
     return type;
 }
 
@@ -109,11 +103,9 @@ struct IntTypeIr {
 };
 
 struct IntTypeIr* type_new_int(void) {
-    static struct IntTypeIr* type = NULL;
-    if (!type) {
-        type = malloc(sizeof(struct IntTypeIr));
-        initialize_type(type_int_super(type), Type_Int, sizeof(int));
-    }
+    struct IntTypeIr* type = malloc(sizeof(struct IntTypeIr));
+    assert(sizeof(int) == 4);
+    initialize_type(type_int_super(type), Type_Int, sizeof(int));
     return type;
 }
 
@@ -126,11 +118,9 @@ struct CharTypeIr {
 };
 
 struct CharTypeIr* type_new_char(void) {
-    static struct CharTypeIr* type = NULL;
-    if (!type) {
-        type = malloc(sizeof(struct CharTypeIr));
-        initialize_type(type_char_super(type), Type_Char, sizeof(char));
-    }
+    struct CharTypeIr* type = malloc(sizeof(struct CharTypeIr));
+    assert(sizeof(char) == 1);
+    initialize_type(type_char_super(type), Type_Char, sizeof(char));
     return type;
 }
 
