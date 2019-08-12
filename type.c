@@ -179,6 +179,17 @@ struct List* type_struct_elem_types(struct StructTypeIr* type) {
     return type->elem_types;
 }
 
+static size_t roundup(size_t x, size_t y) {
+    // to avoid division operation, ToDo: fix to handle div instruction
+    long ix = x + y - 1;
+    size_t r = 0;
+    while (ix > 0) {
+        ix -= y;
+        ++r;
+    }
+    return r * y;
+}
+
 static size_t set_member_offset(struct StructTypeIr* type, size_t base) {
     size_t offset = 0;
     size_t size = 0;
@@ -189,7 +200,7 @@ static size_t set_member_offset(struct StructTypeIr* type, size_t base) {
         struct MemberEntry* entry = (struct MemberEntry*)it;
         struct TypeIr* member_type = entry->type;
         size_t s = member_type->size;
-        if (!is_union) offset = (offset + s - 1) / s * s;
+        if (!is_union) offset = roundup(offset, s);
         entry->offset = base + offset;
         if (entry->name_index == STRTABLE_INVALID_ID) {
             assert(type_as_struct(member_type));
@@ -205,7 +216,7 @@ static size_t set_member_offset(struct StructTypeIr* type, size_t base) {
         }
     }
     size_t alignment = sizeof(void*);
-    size = (size + alignment - 1) / alignment * alignment;
+    size = roundup(size, alignment);
     return size;
 }
 
