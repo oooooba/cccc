@@ -47,6 +47,8 @@ struct Visitor {
                                         struct ReturnStmtIr* ir);
     struct StmtIr* (*visit_break_stmt)(struct Visitor* visitor,
                                        struct BreakStmtIr* ir);
+    struct StmtIr* (*visit_continue_stmt)(struct Visitor* visitor,
+                                          struct ContinueStmtIr* ir);
     struct StmtIr* (*visit_push_stmt)(struct Visitor* visitor,
                                       struct PushStmtIr* ir);
     struct StmtIr* (*visit_pop_stmt)(struct Visitor* visitor,
@@ -110,6 +112,8 @@ struct StmtIr* visitor_visit_return_stmt(struct Visitor* visitor,
                                          struct ReturnStmtIr* ir);
 struct StmtIr* visitor_visit_break_stmt(struct Visitor* visitor,
                                         struct BreakStmtIr* ir);
+struct StmtIr* visitor_visit_continue_stmt(struct Visitor* visitor,
+                                           struct ContinueStmtIr* ir);
 struct StmtIr* visitor_visit_decl_stmt(struct Visitor* visitor,
                                        struct DeclStmtIr* ir);
 

@@ -296,6 +296,13 @@ static struct StmtIr* visit_break_stmt(struct DumpVisitor* visitor,
     return ir_break_stmt_super(ir);
 }
 
+static struct StmtIr* visit_continue_stmt(struct DumpVisitor* visitor,
+                                          struct ContinueStmtIr* ir) {
+    (void)visitor;
+    fprintf(visitor->stream, "continue\n");
+    return ir_continue_stmt_super(ir);
+}
+
 static struct StmtIr* visit_decl_stmt(struct DumpVisitor* visitor,
                                       struct DeclStmtIr* ir) {
     const char* name =
@@ -356,6 +363,8 @@ struct DumpVisitor* new_dump_visitor(struct Context* context, FILE* stream) {
     register_visitor(visitor->as_visitor, visit_while_stmt, visit_while_stmt);
     register_visitor(visitor->as_visitor, visit_return_stmt, visit_return_stmt);
     register_visitor(visitor->as_visitor, visit_break_stmt, visit_break_stmt);
+    register_visitor(visitor->as_visitor, visit_continue_stmt,
+                     visit_continue_stmt);
     register_visitor(visitor->as_visitor, visit_decl_stmt, visit_decl_stmt);
 
     register_visitor(visitor->as_visitor, visit_function, visit_function2);

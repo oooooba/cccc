@@ -80,6 +80,10 @@ struct StmtIr* visitor_visit_stmt(struct Visitor* visitor, struct StmtIr* ir) {
         case StmtIrTag_Break:
             stmt = visitor->visit_break_stmt(visitor, ir_stmt_as_break(ir));
             break;
+        case StmtIrTag_Continue:
+            stmt =
+                visitor->visit_continue_stmt(visitor, ir_stmt_as_continue(ir));
+            break;
         case StmtIrTag_Push:
             stmt = visitor->visit_push_stmt(visitor, ir_stmt_as_push(ir));
             break;
@@ -300,6 +304,12 @@ struct StmtIr* visitor_visit_break_stmt(struct Visitor* visitor,
     return ir_break_stmt_super(ir);
 }
 
+struct StmtIr* visitor_visit_continue_stmt(struct Visitor* visitor,
+                                           struct ContinueStmtIr* ir) {
+    (void)visitor;
+    return ir_continue_stmt_super(ir);
+}
+
 struct StmtIr* visitor_visit_decl_stmt(struct Visitor* visitor,
                                        struct DeclStmtIr* ir) {
     (void)visitor;
@@ -330,6 +340,8 @@ void visitor_initialize(struct Visitor* visitor, struct Context* context) {
     register_visitor(*visitor, visit_while_stmt, visitor_visit_while_stmt);
     register_visitor(*visitor, visit_return_stmt, visitor_visit_return_stmt);
     register_visitor(*visitor, visit_break_stmt, visitor_visit_break_stmt);
+    register_visitor(*visitor, visit_continue_stmt,
+                     visitor_visit_continue_stmt);
     register_visitor(*visitor, visit_push_stmt, NULL);
     register_visitor(*visitor, visit_pop_stmt, NULL);
     register_visitor(*visitor, visit_decl_stmt, visitor_visit_decl_stmt);

@@ -13,6 +13,7 @@ enum TokenTag {
     Token_KeywordCase,
     Token_KeywordChar,
     Token_KeywordConst,
+    Token_KeywordContinue,
     Token_KeywordDefault,
     Token_KeywordElse,
     Token_KeywordEnum,

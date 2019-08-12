@@ -827,6 +827,10 @@ struct BreakStmtIr* ir_stmt_as_break(struct StmtIr* ir) {
     return ir->tag == StmtIrTag_Break ? (struct BreakStmtIr*)ir : NULL;
 }
 
+struct ContinueStmtIr* ir_stmt_as_continue(struct StmtIr* ir) {
+    return ir->tag == StmtIrTag_Continue ? (struct ContinueStmtIr*)ir : NULL;
+}
+
 struct PushStmtIr* ir_stmt_as_push(struct StmtIr* ir) {
     return ir->tag == StmtIrTag_Push ? (struct PushStmtIr*)ir : NULL;
 }
@@ -1090,6 +1094,20 @@ struct BreakStmtIr* ir_new_break_stmt(void) {
 }
 
 struct StmtIr* ir_break_stmt_super(struct BreakStmtIr* ir) {
+    return &ir->super;
+}
+
+struct ContinueStmtIr {
+    struct StmtIr super;
+};
+
+struct ContinueStmtIr* ir_new_continue_stmt(void) {
+    struct ContinueStmtIr* ir = malloc(sizeof(struct ContinueStmtIr));
+    initialize_stmt(ir_continue_stmt_super(ir), StmtIrTag_Continue);
+    return ir;
+}
+
+struct StmtIr* ir_continue_stmt_super(struct ContinueStmtIr* ir) {
     return &ir->super;
 }
 
