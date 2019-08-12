@@ -52,6 +52,7 @@ int test48(int, int);
 int test49(int, int);
 int test50(void);
 int test51(int);
+int test52(int, int);
 
 static int num_test_counter = 0;
 static int num_passed_test_counter = 0;
@@ -150,6 +151,7 @@ int main(void) {
     check("test50", -1, test50());
     check("test51", -2, test51(2));
     check("test51", 2, test51(-2));
+    check("test52", 49, test52(10, 6));
 
     bool failed = num_test_counter != num_passed_test_counter;
     if (failed) printf("\n\n============================================\n");

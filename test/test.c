@@ -333,3 +333,12 @@ int test49(int x, int y) { return x || y; }
 int test50(void) { return -1; }
 
 int test51(int x) { return -x; }
+
+int test52(int x, int y) {
+    int sum = 0;
+    for (int i = 1; i <= x; ++i) {
+        if (i == y) continue;
+        sum = sum + i;
+    }
+    return sum;
+}

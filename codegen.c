@@ -12,6 +12,7 @@ struct CodegenVisitor {
     FILE* stream;
     struct FunctionIr* function;
     struct StmtIr* break_dst;
+    struct StmtIr* continue_dst;
 };
 
 static struct Visitor* as_visitor(struct CodegenVisitor* visitor) {
@@ -439,6 +440,8 @@ static struct StmtIr* visit_while_stmt(struct CodegenVisitor* visitor,
                                        struct WhileStmtIr* ir) {
     struct StmtIr* prev_break_dst = visitor->break_dst;
     visitor->break_dst = ir_while_stmt_super(ir);
+    struct StmtIr* prev_continue_dst = visitor->continue_dst;
+    visitor->continue_dst = ir_while_stmt_super(ir);
 
     fprintf(visitor->stream, "lab_%p_head:\n", ir);
 
@@ -463,6 +466,7 @@ static struct StmtIr* visit_while_stmt(struct CodegenVisitor* visitor,
     fprintf(visitor->stream, "lab_%p_cont:\n", ir);
 
     visitor->break_dst = prev_break_dst;
+    visitor->continue_dst = prev_continue_dst;
 
     return ir_while_stmt_super(ir);
 }
@@ -479,6 +483,13 @@ static struct StmtIr* visit_break_stmt(struct CodegenVisitor* visitor,
     (void)visitor;
     fprintf(visitor->stream, "\tjmp\tlab_%p_cont\n", visitor->break_dst);
     return ir_break_stmt_super(ir);
+}
+
+static struct StmtIr* visit_continue_stmt(struct CodegenVisitor* visitor,
+                                          struct ContinueStmtIr* ir) {
+    (void)visitor;
+    fprintf(visitor->stream, "\tjmp\tlab_%p_update\n", visitor->continue_dst);
+    return ir_continue_stmt_super(ir);
 }
 
 static struct StmtIr* visit_push_stmt(struct CodegenVisitor* visitor,
@@ -548,6 +559,8 @@ struct CodegenVisitor* new_codegen_visitor(struct Context* context,
     register_visitor(visitor->as_visitor, visit_while_stmt, visit_while_stmt);
     register_visitor(visitor->as_visitor, visit_return_stmt, visit_return_stmt);
     register_visitor(visitor->as_visitor, visit_break_stmt, visit_break_stmt);
+    register_visitor(visitor->as_visitor, visit_continue_stmt,
+                     visit_continue_stmt);
     register_visitor(visitor->as_visitor, visit_push_stmt, visit_push_stmt);
     register_visitor(visitor->as_visitor, visit_pop_stmt, visit_pop_stmt);
 
@@ -555,6 +568,7 @@ struct CodegenVisitor* new_codegen_visitor(struct Context* context,
 
     visitor->stream = stream;
     visitor->break_dst = NULL;
+    visitor->continue_dst = NULL;
 
     fprintf(stream, ".intel_syntax noprefix\n");
     emit_string_literals(visitor);
