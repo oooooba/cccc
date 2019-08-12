@@ -329,3 +329,7 @@ int test47(int n) { return n < 0 ? 1 : 2; }
 int test48(int x, int y) { return x && y; }
 
 int test49(int x, int y) { return x || y; }
+
+int test50(void) { return -1; }
+
+int test51(int x) { return -x; }

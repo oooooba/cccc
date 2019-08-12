@@ -198,6 +198,9 @@ static struct ExprIr* visit_unop_expr(struct CodegenVisitor* visitor,
 
     const char* op;
     switch (ir_unop_expr_op(ir)) {
+        case UnopExprIrTag_Neg:
+            op = "neg";
+            break;
         case UnopExprIrTag_Not:
             fprintf(visitor->stream, "\tand\t%s, %s\n", result_reg, result_reg);
             fprintf(visitor->stream, "\tjz\tlab_%p_else\n", ir);

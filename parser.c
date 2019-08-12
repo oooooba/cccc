@@ -528,6 +528,10 @@ static struct ExprIr* parse_unary_expression(struct Parser* parser) {
         advance(parser);
         struct ExprIr* operand = parse_cast_expression(parser);
         return ir_deref_expr_cast(ir_new_deref_expr(operand));
+    } else if (acceptable(parser, Token_Minus)) {
+        advance(parser);
+        struct ExprIr* operand = parse_cast_expression(parser);
+        return ir_unop_expr_cast(ir_new_unop_expr(UnopExprIrTag_Neg, operand));
     } else if (acceptable(parser, Token_Exclamation)) {
         advance(parser);
         struct ExprIr* operand = parse_cast_expression(parser);

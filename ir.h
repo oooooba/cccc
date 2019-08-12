@@ -95,6 +95,7 @@ enum BinopExprIrTag {
 };
 
 enum UnopExprIrTag {
+    UnopExprIrTag_Neg,
     UnopExprIrTag_Not,
 };
 

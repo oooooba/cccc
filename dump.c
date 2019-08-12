@@ -94,6 +94,9 @@ static struct ExprIr* visit_unop_expr(struct DumpVisitor* visitor,
     struct ExprIr* operand = ir_unop_expr_operand(ir);
     const char* op;
     switch (ir_unop_expr_op(ir)) {
+        case UnopExprIrTag_Neg:
+            op = "neg";
+            break;
         case UnopExprIrTag_Not:
             op = "not";
             break;
