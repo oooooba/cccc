@@ -28,7 +28,7 @@ compile_cccc list
 compile_cccc map
 compile_cccc nameresolve
 compile_gcc parser
-compile_gcc regalloc
+compile_cccc regalloc
 compile_cccc strtable
 compile_gcc simplify
 compile_cccc type
