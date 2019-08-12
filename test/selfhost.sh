@@ -32,7 +32,7 @@ compile_gcc regalloc
 compile_cccc strtable
 compile_gcc simplify
 compile_gcc type
-compile_gcc typing
+compile_cccc typing
 compile_cccc vector
 compile_cccc visitor
 
