@@ -22,7 +22,7 @@ compile_gcc codegen
 compile_cccc context
 compile_cccc dump
 compile_cccc fixup
-compile_gcc ir
+compile_cccc ir
 compile_gcc lexer
 compile_cccc list
 compile_cccc map
