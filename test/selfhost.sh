@@ -18,7 +18,7 @@ function compile_gcc () {
 }
 
 compile_cccc main
-compile_gcc codegen
+compile_cccc codegen
 compile_cccc context
 compile_cccc dump
 compile_cccc fixup
