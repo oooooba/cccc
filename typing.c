@@ -71,6 +71,8 @@ static struct ExprIr* visit_binop_expr(struct TypingVisitor* visitor,
         } else if (ir_binop_expr_op(ir) == BinopExprIrTag_Equal &&
                    type_tag(lhs_type) == Type_Pointer &&
                    type_tag(rhs_type) == Type_Pointer) {
+        } else if (ir_binop_expr_op(ir) == BinopExprIrTag_LogicalAnd ||
+                   ir_binop_expr_op(ir) == BinopExprIrTag_LogicalOr) {
         } else
             assert(false);
     }
