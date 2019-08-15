@@ -2,6 +2,7 @@
 #include "context.h"
 #include "list.h"
 #include "token.h"
+#include "vector.h"
 
 #include <assert.h>
 #include <stdbool.h>
@@ -17,44 +18,49 @@ struct ReservedKeywordsEntry {
     enum TokenTag token_tag;
 };
 
-static const struct ReservedKeywordsEntry reserved_keywords[] = {
-#define register_keyword(symbol, tag) \
-    { .keyword = #symbol, .token_tag = Token_Keyword##tag }
+static void register_reserved_keywords(struct Lexer* lexer) {
+#define register_keyword(symbol, tag)                        \
+    {                                                        \
+        struct ReservedKeywordsEntry* entry =                \
+            vector_allocate_back(&lexer->reserved_keywords); \
+        entry->keyword = #symbol;                            \
+        entry->token_tag = Token_Keyword##tag;               \
+    }
 
-    register_keyword(_Bool, Char),
-    register_keyword(break, Break),
-    register_keyword(case, Case),
-    register_keyword(char, Char),
-    register_keyword(const, Const),
-    register_keyword(continue, Continue),
-    register_keyword(default, Default),
-    register_keyword(else, Else),
-    register_keyword(enum, Enum),
-    register_keyword(false, False),
-    register_keyword(for, For),
-    register_keyword(if, If),
-    register_keyword(int, Int),
-    register_keyword(long, Long),
-    register_keyword(return, Return),
-    register_keyword(sizeof, Sizeof),
-    register_keyword(static, Static),
-    register_keyword(struct, Struct),
-    register_keyword(switch, Switch),
-    register_keyword(true, True),
-    register_keyword(typedef, Typedef),
-    register_keyword(union, Union),
-    register_keyword(void, Void),
-    register_keyword(while, While),
+    register_keyword(_Bool, Char);
+    register_keyword(break, Break);
+    register_keyword(case, Case);
+    register_keyword(char, Char);
+    register_keyword(const, Const);
+    register_keyword(continue, Continue);
+    register_keyword(default, Default);
+    register_keyword(else, Else);
+    register_keyword(enum, Enum);
+    register_keyword(false, False);
+    register_keyword(for, For);
+    register_keyword(if, If);
+    register_keyword(int, Int);
+    register_keyword(long, Long);
+    register_keyword(return, Return);
+    register_keyword(sizeof, Sizeof);
+    register_keyword(static, Static);
+    register_keyword(struct, Struct);
+    register_keyword(switch, Switch);
+    register_keyword(true, True);
+    register_keyword(typedef, Typedef);
+    register_keyword(union, Union);
+    register_keyword(void, Void);
+    register_keyword(while, While);
 
 #undef register_keyword
-};
+}
 
-static enum TokenTag find_token_tag(const char* str) {
-    for (size_t i = 0;
-         i < sizeof(reserved_keywords) / sizeof(struct ReservedKeywordsEntry);
+static enum TokenTag find_token_tag(struct Lexer* lexer, const char* str) {
+    for (size_t i = 0, len = vector_size(&lexer->reserved_keywords); i < len;
          ++i) {
-        if (strcmp(str, reserved_keywords[i].keyword) == 0)
-            return reserved_keywords[i].token_tag;
+        struct ReservedKeywordsEntry* entry =
+            vector_at(&lexer->reserved_keywords, i);
+        if (strcmp(str, entry->keyword) == 0) return entry->token_tag;
     }
     return Token_Id;
 }
@@ -131,7 +137,7 @@ static enum TokenTag tokenize_lexeme(struct Lexer* lexer) {
     memcpy(str, lexer->buf + begin_pos, len);
     str[len] = 0;
 
-    enum TokenTag tag = find_token_tag(str);
+    enum TokenTag tag = find_token_tag(lexer, str);
     struct Token* token = new_token(tag, lexer->line, begin_pos);
     if (tag == Token_Id) {
         strtable_id index = strtable_find(&lexer->context->strtable, str);
@@ -460,4 +466,7 @@ void lexer_initialize(struct Lexer* lexer, struct Context* context,
     lexer->pos = 0;
     lexer->input_stream = input_stream;
     lexer->tokens = tokens;
+    vector_initialize(&lexer->reserved_keywords,
+                      sizeof(struct ReservedKeywordsEntry));
+    register_reserved_keywords(lexer);
 }

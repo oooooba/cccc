@@ -3,6 +3,7 @@
 
 #include "context.h"
 #include "list.h"
+#include "vector.h"
 
 #include <stdio.h>
 
@@ -13,6 +14,7 @@ struct Lexer {
     size_t pos;
     struct List* tokens;
     FILE* input_stream;
+    struct Vector reserved_keywords;
 };
 
 void lexer_initialize(struct Lexer* lexer, struct Context* context,
