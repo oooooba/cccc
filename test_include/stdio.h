@@ -10,5 +10,7 @@ int fprintf(FILE* stream, const char* format, ...);
 FILE* fopen(const char* path, const char* mode);
 int fclose(FILE* stream);
 
+char* fgets(char* s, int size, FILE* stream);
+
 #endif  // CCCC_STDIO_H
 
