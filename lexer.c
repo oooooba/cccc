@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define LEXER_INPUT_STREAM_BUFFER_SIZE 128
+#define LEXER_INPUT_STREAM_BUFFER_SIZE 256
 
 struct ReservedKeywordsEntry {
     const char* keyword;
