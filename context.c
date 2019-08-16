@@ -83,7 +83,7 @@ void context_register_registers(struct Context* context) {
     reg(bl);
     reg(ebx);
     reg(rbx);
-    reg(r10l);
+    reg(r10b);
     reg(r10d);
     reg(r10);
 
@@ -99,10 +99,10 @@ void context_register_registers(struct Context* context) {
     reg(cl);
     reg(ecx);
     reg(rcx);
-    reg(r8l);
+    reg(r8b);
     reg(r8d);
     reg(r8);
-    reg(r9l);
+    reg(r9b);
     reg(r9d);
     reg(r9);
 
