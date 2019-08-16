@@ -1263,6 +1263,8 @@ static struct StmtIr* parse_iteration_statement(struct Parser* parser) {
         if (!acceptable(parser, Token_Semicolon))
             cond_expr = parse_expression(parser);
         expect(parser, Token_Semicolon);
+        if (!cond_expr)
+            cond_expr = ir_const_expr_cast(ir_new_integer_const_expr(1));
 
         struct ExprIr* tail_expr = NULL;
         if (!acceptable(parser, Token_RightParen))
