@@ -430,8 +430,8 @@ static void tokenize(struct Lexer* lexer) {
             if (c == '\n' || c == ' ')
                 advance(lexer);
             else {
-                fprintf(stderr, "line = %zu, pos = %zu\n", lexer->line,
-                        lexer->pos);
+                fprintf(lexer->error_stream, "line = %zu, pos = %zu\n",
+                        lexer->line, lexer->pos);
                 assert(false);
             }
         }
@@ -459,12 +459,14 @@ void lexer_read_and_tokenize(struct Lexer* lexer) {
 }
 
 void lexer_initialize(struct Lexer* lexer, struct Context* context,
-                      struct List* tokens, FILE* input_stream) {
+                      struct List* tokens, FILE* input_stream,
+                      FILE* error_stream) {
     lexer->context = context;
     lexer->buf = malloc(LEXER_INPUT_STREAM_BUFFER_SIZE);
     lexer->line = 0;
     lexer->pos = 0;
     lexer->input_stream = input_stream;
+    lexer->error_stream = error_stream;
     lexer->tokens = tokens;
     vector_initialize(&lexer->reserved_keywords,
                       sizeof(struct ReservedKeywordsEntry));

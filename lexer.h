@@ -14,11 +14,13 @@ struct Lexer {
     size_t pos;
     struct List* tokens;
     FILE* input_stream;
+    FILE* error_stream;
     struct Vector reserved_keywords;
 };
 
 void lexer_initialize(struct Lexer* lexer, struct Context* context,
-                      struct List* tokens, FILE* input_stream);
+                      struct List* tokens, FILE* input_stream,
+                      FILE* error_stream);
 
 void lexer_read_and_tokenize(struct Lexer* lexer);
 

@@ -47,7 +47,7 @@ int main(void) {
     assert(stderr);
 
     struct Lexer lexer;
-    lexer_initialize(&lexer, &context, &tokens, stdin);
+    lexer_initialize(&lexer, &context, &tokens, stdin, stderr);
     lexer_read_and_tokenize(&lexer);
 
     struct Parser* parser = parser_new(&context, lexer.tokens);
