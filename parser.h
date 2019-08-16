@@ -5,7 +5,12 @@
 #include "ir.h"
 #include "list.h"
 
-struct Parser* parser_new(struct Context* context, struct List* tokens);
+#include <stdio.h>
+
+struct Parser;
+
+struct Parser* parser_new(struct Context* context, struct List* tokens,
+                          FILE* error_stream);
 void parser_run(struct Parser* parser);
 
 #endif

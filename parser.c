@@ -17,6 +17,7 @@ struct Parser {
     struct List* tokens;
     struct ListHeader* current_token;
     struct Map* enumeration_constant_map;
+    FILE* error_stream;
 };
 
 /***** helper functions *****/
@@ -1475,10 +1476,12 @@ static void parse_translation_unit(struct Parser* parser) {
 
 void parser_run(struct Parser* parser) { parse_translation_unit(parser); }
 
-struct Parser* parser_new(struct Context* context, struct List* tokens) {
+struct Parser* parser_new(struct Context* context, struct List* tokens,
+                          FILE* error_stream) {
     struct Parser* parser = malloc(sizeof(struct Parser));
     parser->context = context;
     parser->tokens = tokens;
+    parser->error_stream = error_stream;
     parser->current_token = list_begin(tokens);
     parser->enumeration_constant_map = malloc(sizeof(struct Map));
     map_initialize(parser->enumeration_constant_map);

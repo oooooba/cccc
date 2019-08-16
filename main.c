@@ -50,7 +50,7 @@ int main(void) {
     lexer_initialize(&lexer, &context, &tokens, stdin, stderr);
     lexer_read_and_tokenize(&lexer);
 
-    struct Parser* parser = parser_new(&context, lexer.tokens);
+    struct Parser* parser = parser_new(&context, lexer.tokens, stderr);
     parser_run(parser);
 
     fprintf(stderr, "[apply dump (1)]\n");
