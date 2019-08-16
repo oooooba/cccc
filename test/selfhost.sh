@@ -23,7 +23,7 @@ compile_cccc context
 compile_cccc dump
 compile_cccc fixup
 compile_cccc ir
-compile_gcc lexer
+compile_cccc lexer
 compile_cccc list
 compile_cccc map
 compile_cccc nameresolve
