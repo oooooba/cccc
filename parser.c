@@ -68,8 +68,9 @@ static bool acceptable_type_specifier(struct Parser* parser) {
 static void expect(struct Parser* parser, enum TokenTag expected) {
     if (!acceptable(parser, expected)) {
         struct Token* token = peek(parser);
-        fprintf(stderr, "expected %d, actual %d (line = %zu, pos = %zu)\n",
-                expected, peek(parser)->tag, token->line, token->position);
+        fprintf(parser->error_stream,
+                "expected %d, actual %d (line = %zu, pos = %zu)\n", expected,
+                peek(parser)->tag, token->line, token->position);
         assert(false);
     }
     advance(parser);
@@ -131,9 +132,7 @@ static struct DirectDeclarator* new_direct_declarator(
     enum DirectDeclaratorTag tag) {
     struct DirectDeclarator* direct_declarator =
         malloc(sizeof(struct DirectDeclarator));
-    *direct_declarator = (struct DirectDeclarator){
-        .tag = tag,
-    };
+    direct_declarator->tag = tag;
     return direct_declarator;
 }
 
@@ -145,9 +144,8 @@ struct Declarator {
 static struct Declarator* new_declarator(
     bool has_pointer, struct DirectDeclarator* direct_declarator) {
     struct Declarator* declarator = malloc(sizeof(struct Declarator));
-    *declarator = (struct Declarator){
-        .has_pointer = has_pointer, .direct_declarator = direct_declarator,
-    };
+    declarator->has_pointer = has_pointer;
+    declarator->direct_declarator = direct_declarator;
     return declarator;
 }
 
@@ -160,9 +158,8 @@ static struct InitDeclarator* new_init_declarator(
     struct Declarator* declarator, struct ExprIr* assign_expression) {
     struct InitDeclarator* init_declarator =
         malloc(sizeof(struct InitDeclarator));
-    *init_declarator = (struct InitDeclarator){
-        .declarator = declarator, .assign_expression = assign_expression,
-    };
+    init_declarator->declarator = declarator;
+    init_declarator->assign_expression = assign_expression;
     return init_declarator;
 }
 
@@ -188,9 +185,7 @@ static struct DeclarationSpecifier* new_declaration_specifier(
     enum DeclarationSpecifierTag tag) {
     struct DeclarationSpecifier* specifier =
         malloc(sizeof(struct DeclarationSpecifier));
-    *specifier = (struct DeclarationSpecifier){
-        .tag = tag,
-    };
+    specifier->tag = tag;
     return specifier;
 }
 
@@ -206,10 +201,8 @@ static struct Declaration2* new_declaration(struct List* declaration_specifiers,
     assert(declaration_specifiers);
 
     struct Declaration2* declaration = malloc(sizeof(struct Declaration2));
-    *declaration = (struct Declaration2){
-        .declaration_specifiers = declaration_specifiers,
-        .init_declarator_list = init_declarator_list,
-    };
+    declaration->declaration_specifiers = declaration_specifiers;
+    declaration->init_declarator_list = init_declarator_list;
     return declaration;
 }
 
