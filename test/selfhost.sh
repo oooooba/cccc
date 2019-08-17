@@ -67,7 +67,7 @@ compile_cccc 1 nameresolve
 compile_gcc 1 parser
 compile_gcc 1 regalloc
 compile_cccc 1 strtable
-compile_gcc 1 simplify
+compile_cccc 1 simplify
 compile_gcc 1 type
 compile_gcc 1 typing
 compile_cccc 1 vector
