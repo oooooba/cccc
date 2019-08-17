@@ -81,14 +81,57 @@ static struct ExprIr* visit_unop_expr(struct RegallocVisitor* visitor,
 
 static struct ExprIr* visit_call_expr(struct RegallocVisitor* visitor,
                                       struct CallExprIr* ir) {
+    struct BlockStmtIr* pre_block = ir_call_expr_pre_expr_block(ir);
+    struct BlockStmtIr* post_block = ir_call_expr_post_expr_block(ir);
+
+    struct VarExprIr* func_name = ir_expr_as_var(ir_call_expr_function(ir));
+    bool is_indirect_call = func_name == NULL;
+    if (is_indirect_call) {
+        struct ExprIr* func_expr = ir_call_expr_function(ir);
+        visitor_visit_expr(as_visitor(visitor), func_expr);
+    }
+
+    for (struct ListHeader *it = list_begin(ir_call_expr_args(ir)),
+                           *eit = list_end(ir_call_expr_args(ir));
+         it != eit; it = list_next(it)) {
+        struct ExprIr* arg = ((struct ListItem*)it)->item;
+        visitor_visit_expr(as_visitor(visitor), arg);
+    }
+
+    // copy argument registers to parameter ones
+    size_t i = list_size(ir_call_expr_args(ir)) - 1;
+    for (struct ListHeader *eit = list_end(ir_call_expr_args(ir)),
+                           *it = list_prev(eit);
+         it != eit; it = list_prev(it)) {
+        struct ExprIr* arg = ((struct ListItem*)it)->item;
+
+        strtable_id arg_reg_id = ir_expr_reg_id(arg);
+        strtable_id param_reg_id =
+            get_nth_func_call_arg_register(ctx(visitor), i, ir_expr_type(arg));
+
+        struct ConstExprIr* copy_instr = ir_new_register_const_expr(arg_reg_id);
+        ir_expr_set_reg_id(ir_const_expr_cast(copy_instr), param_reg_id);
+        struct ExprStmtIr* stmt =
+            ir_new_expr_stmt(ir_const_expr_cast(copy_instr));
+        ir_block_stmt_insert_at_end(pre_block, ir_expr_stmt_super(stmt));
+        --i;
+    }
+
+    for (struct ListHeader *it = list_begin(ir_call_expr_args(ir)),
+                           *eit = list_end(ir_call_expr_args(ir));
+         it != eit; it = list_next(it)) {
+        release_register(visitor);
+    }
+
+    if (is_indirect_call) release_register(visitor);
+
     struct TypeIr* result_type = ir_expr_type(ir_call_expr_cast(ir));
     strtable_id reg_id = acquire_register(visitor, result_type);
     ir_expr_set_reg_id(ir_call_expr_cast(ir), reg_id);
 
-    struct BlockStmtIr* pre_block = ir_call_expr_pre_expr_block(ir);
-    struct BlockStmtIr* post_block = ir_call_expr_post_expr_block(ir);
-
     if (reg_id !=
+            context_func_call_result_reg(ctx(visitor), RegisterSizeKind_8) &&
+        reg_id !=
             context_func_call_result_reg(ctx(visitor), RegisterSizeKind_32) &&
         reg_id !=
             context_func_call_result_reg(ctx(visitor), RegisterSizeKind_64)) {
@@ -120,59 +163,6 @@ static struct ExprIr* visit_call_expr(struct RegallocVisitor* visitor,
         // restore result register
         struct PopStmtIr* pop_instr = ir_new_pop_stmt(result_reg_id);
         ir_block_stmt_insert_at_end(post_block, ir_pop_stmt_super(pop_instr));
-    }
-
-    struct VarExprIr* func_name = ir_expr_as_var(ir_call_expr_function(ir));
-    if (!func_name) {
-        struct ExprIr* func_expr = ir_call_expr_function(ir);
-        visitor_visit_expr(as_visitor(visitor), func_expr);
-
-        strtable_id func_expr_reg_id = ir_expr_reg_id(func_expr);
-        strtable_id func_ptr_reg_id = get_func_call_result_register(
-            ctx(visitor), ir_expr_type(func_expr));
-        if (func_expr_reg_id != func_ptr_reg_id) {
-            struct ConstExprIr* copy_instr =
-                ir_new_register_const_expr(func_expr_reg_id);
-            ir_expr_set_reg_id(ir_const_expr_cast(copy_instr), func_ptr_reg_id);
-            struct ExprStmtIr* stmt =
-                ir_new_expr_stmt(ir_const_expr_cast(copy_instr));
-            ir_block_stmt_insert_at_end(pre_block, ir_expr_stmt_super(stmt));
-        }
-    }
-
-    for (struct ListHeader *it = list_begin(ir_call_expr_args(ir)),
-                           *eit = list_end(ir_call_expr_args(ir));
-         it != eit; it = list_next(it)) {
-        struct ExprIr* arg = ((struct ListItem*)it)->item;
-        visitor_visit_expr(as_visitor(visitor), arg);
-    }
-
-    for (struct ListHeader *it = list_begin(ir_call_expr_args(ir)),
-                           *eit = list_end(ir_call_expr_args(ir));
-         it != eit; it = list_next(it)) {
-        release_register(visitor);
-    }
-    if (!func_name) {
-        release_register(visitor);
-    }
-
-    // copy argument registers to parameter ones
-    size_t i = list_size(ir_call_expr_args(ir)) - 1;
-    for (struct ListHeader *eit = list_end(ir_call_expr_args(ir)),
-                           *it = list_prev(eit);
-         it != eit; it = list_prev(it)) {
-        struct ExprIr* arg = ((struct ListItem*)it)->item;
-
-        strtable_id arg_reg_id = ir_expr_reg_id(arg);
-        strtable_id param_reg_id =
-            get_nth_func_call_arg_register(ctx(visitor), i, ir_expr_type(arg));
-
-        struct ConstExprIr* copy_instr = ir_new_register_const_expr(arg_reg_id);
-        ir_expr_set_reg_id(ir_const_expr_cast(copy_instr), param_reg_id);
-        struct ExprStmtIr* stmt =
-            ir_new_expr_stmt(ir_const_expr_cast(copy_instr));
-        ir_block_stmt_insert_at_end(pre_block, ir_expr_stmt_super(stmt));
-        --i;
     }
 
     return ir_call_expr_cast(ir);
