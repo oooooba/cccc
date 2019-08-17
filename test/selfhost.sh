@@ -55,23 +55,23 @@ function link () {
 CCCC=$CCCC1
 
 compile_cccc 1 main
-compile_gcc 1 codegen
+compile_cccc 1 codegen
 compile_cccc 1 context
 compile_gcc 1 dump
-compile_gcc 1 fixup
-compile_gcc 1 ir
+compile_cccc 1 fixup
+compile_cccc 1 ir
 compile_gcc 1 lexer
 compile_cccc 1 list
 compile_cccc 1 map
 compile_cccc 1 nameresolve
 compile_gcc 1 parser
-compile_gcc 1 regalloc
+compile_cccc 1 regalloc
 compile_cccc 1 strtable
 compile_cccc 1 simplify
-compile_gcc 1 type
-compile_gcc 1 typing
+compile_cccc 1 type
+compile_cccc 1 typing
 compile_cccc 1 vector
-compile_gcc 1 visitor
+compile_cccc 1 visitor
 
 link 1
 
