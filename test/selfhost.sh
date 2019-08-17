@@ -53,7 +53,7 @@ function link () {
 
 CCCC=$CCCC1
 
-compile_gcc 1 main
+compile_cccc 1 main
 compile_gcc 1 codegen
 compile_gcc 1 context
 compile_gcc 1 dump
