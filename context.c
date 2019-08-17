@@ -233,6 +233,7 @@ void context_dump_type(struct Context* context, FILE* stream,
 }
 
 enum RegisterSizeKind context_type_to_register_size_kind(struct TypeIr* type) {
+    if (type_tag(type) == Type_Function) return RegisterSizeKind_64;
     switch (type_size(type)) {
         case 1:
             return RegisterSizeKind_8;

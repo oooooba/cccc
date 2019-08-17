@@ -67,7 +67,10 @@ struct FunctionTypeIr* type_as_function(struct TypeIr* type) {
 
 enum TypeTag type_tag(struct TypeIr* type) { return type->tag; }
 
-size_t type_size(struct TypeIr* type) { return type->size; }
+size_t type_size(struct TypeIr* type) {
+    assert(type->tag != Type_Function);
+    return type->size;
+}
 
 struct VoidTypeIr {
     struct TypeIr super;
