@@ -292,7 +292,8 @@ bool type_equal(struct TypeIr* type1, struct TypeIr* type2) {
         return type_equal(type_as_pointer(type1)->elem_type,
                           type_as_pointer(type2)->elem_type);
     else if (type1->tag == Type_Struct && type2->tag == Type_Struct)
-        assert(false);
+        return type_as_struct(type1)->name_index ==
+               type_as_struct(type2)->name_index;
     else if (type1->tag == Type_Function && type2->tag == Type_Function) {
         struct FunctionTypeIr* ft1 = type_as_function(type1);
         struct FunctionTypeIr* ft2 = type_as_function(type2);
