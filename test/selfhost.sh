@@ -4,6 +4,7 @@ set -eu
 CCCC1=../build/cccc
 CCCC2=./cccc2
 CCCC3=cccc3
+CCCC=false
 GCC=gcc
 SRC=..
 INCLUDE=../test_include
@@ -62,7 +63,7 @@ compile_gcc 1 ir
 compile_gcc 1 lexer
 compile_cccc 1 list
 compile_cccc 1 map
-compile_gcc 1 nameresolve
+compile_cccc 1 nameresolve
 compile_gcc 1 parser
 compile_gcc 1 regalloc
 compile_cccc 1 strtable
