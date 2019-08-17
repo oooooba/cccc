@@ -61,7 +61,7 @@ compile_gcc 1 fixup
 compile_gcc 1 ir
 compile_gcc 1 lexer
 compile_cccc 1 list
-compile_gcc 1 map
+compile_cccc 1 map
 compile_gcc 1 nameresolve
 compile_gcc 1 parser
 compile_gcc 1 regalloc
