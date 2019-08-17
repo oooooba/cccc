@@ -45,34 +45,33 @@ static struct ExprIr* visit_binop_expr(struct TypingVisitor* visitor,
     struct TypeIr* rhs_type = ir_expr_type(rhs);
 
     if (!type_equal(lhs_type, rhs_type)) {
-        if (type_tag(lhs_type) == Type_Int && type_tag(rhs_type) == Type_Char)
+        enum TypeTag lhs_tag = type_tag(lhs_type);
+        enum TypeTag rhs_tag = type_tag(rhs_type);
+        enum BinopExprIrTag op = ir_binop_expr_op(ir);
+
+        if (op == BinopExprIrTag_Equal && lhs_tag == Type_Pointer &&
+            rhs_tag == Type_Pointer) {
+            // do nothing
+        } else if (op == BinopExprIrTag_LogicalAnd ||
+                   op == BinopExprIrTag_LogicalOr) {
+            // do nothing
+        } else if (lhs_tag == Type_Int && rhs_tag == Type_Char)
             rhs = ir_cast_expr_cast(ir_new_cast_expr(rhs, lhs_type));
-        else if (type_tag(lhs_type) == Type_Char &&
-                 type_tag(rhs_type) == Type_Int)
+        else if (lhs_tag == Type_Char && rhs_tag == Type_Int)
             lhs = ir_cast_expr_cast(ir_new_cast_expr(lhs, rhs_type));
-        else if (type_tag(lhs_type) == Type_Long &&
-                 type_tag(rhs_type) == Type_Int)
+        else if (lhs_tag == Type_Long && rhs_tag == Type_Int)
             rhs = ir_cast_expr_cast(ir_new_cast_expr(rhs, lhs_type));
-        else if (type_tag(lhs_type) == Type_Int &&
-                 type_tag(rhs_type) == Type_Long)
+        else if (lhs_tag == Type_Int && rhs_tag == Type_Long)
             lhs = ir_cast_expr_cast(ir_new_cast_expr(lhs, rhs_type));
-        else if (ir_binop_expr_op(ir) == BinopExprIrTag_Add ||
-                 ir_binop_expr_op(ir) == BinopExprIrTag_Sub) {
-            if (type_tag(lhs_type) == Type_Int &&
-                type_tag(rhs_type) == Type_Pointer) {
+        else if (op == BinopExprIrTag_Add || op == BinopExprIrTag_Sub) {
+            if (lhs_tag == Type_Int && rhs_tag == Type_Pointer) {
                 struct CastExprIr* new_rhs =
                     ir_new_cast_expr(lhs, type_long_super(type_new_long()));
                 lhs = rhs;
                 rhs = ir_cast_expr_cast(new_rhs);
-            } else if (type_tag(lhs_type) == Type_Pointer &&
-                       type_tag(rhs_type) == Type_Int)
+            } else if (lhs_tag == Type_Pointer && rhs_tag == Type_Int)
                 rhs = ir_cast_expr_cast(
                     ir_new_cast_expr(rhs, type_long_super(type_new_long())));
-        } else if (ir_binop_expr_op(ir) == BinopExprIrTag_Equal &&
-                   type_tag(lhs_type) == Type_Pointer &&
-                   type_tag(rhs_type) == Type_Pointer) {
-        } else if (ir_binop_expr_op(ir) == BinopExprIrTag_LogicalAnd ||
-                   ir_binop_expr_op(ir) == BinopExprIrTag_LogicalOr) {
         } else
             assert(false);
     }
