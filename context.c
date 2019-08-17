@@ -75,43 +75,43 @@ struct TypeIr* context_find_user_defined_type(struct Context* context,
 void context_register_registers(struct Context* context) {
 #define reg(name)                                                   \
     *((strtable_id*)vector_allocate_back(&context->register_ids)) = \
-        strtable_register(&context->strtable, "%" #name)
+        strtable_register(&context->strtable, name)
 
-    reg(al);
-    reg(eax);
-    reg(rax);
-    reg(bl);
-    reg(ebx);
-    reg(rbx);
-    reg(r10b);
-    reg(r10d);
-    reg(r10);
+    reg("%al");
+    reg("%eax");
+    reg("%rax");
+    reg("%bl");
+    reg("%ebx");
+    reg("%rbx");
+    reg("%r10b");
+    reg("%r10d");
+    reg("%r10");
 
-    reg(dil);
-    reg(edi);
-    reg(rdi);
-    reg(sil);
-    reg(esi);
-    reg(rsi);
-    reg(dl);
-    reg(edx);
-    reg(rdx);
-    reg(cl);
-    reg(ecx);
-    reg(rcx);
-    reg(r8b);
-    reg(r8d);
-    reg(r8);
-    reg(r9b);
-    reg(r9d);
-    reg(r9);
+    reg("%dil");
+    reg("%edi");
+    reg("%rdi");
+    reg("%sil");
+    reg("%esi");
+    reg("%rsi");
+    reg("%dl");
+    reg("%edx");
+    reg("%rdx");
+    reg("%cl");
+    reg("%ecx");
+    reg("%rcx");
+    reg("%r8b");
+    reg("%r8d");
+    reg("%r8");
+    reg("%r9b");
+    reg("%r9d");
+    reg("%r9");
 
-    reg(spl);
-    reg(esp);
-    reg(rsp);
-    reg(bpl);
-    reg(ebp);
-    reg(rbp);
+    reg("%spl");
+    reg("%esp");
+    reg("%rsp");
+    reg("%bpl");
+    reg("%ebp");
+    reg("%rbp");
 
 #undef reg
 }
