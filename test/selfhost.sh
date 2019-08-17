@@ -69,7 +69,7 @@ compile_gcc 1 strtable
 compile_gcc 1 simplify
 compile_gcc 1 type
 compile_gcc 1 typing
-compile_gcc 1 vector
+compile_cccc 1 vector
 compile_gcc 1 visitor
 
 link 1
