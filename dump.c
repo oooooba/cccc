@@ -27,11 +27,11 @@ static struct ExprIr* visit_const_expr(struct DumpVisitor* visitor,
             fprintf(visitor->stream, "v%p = %ld :: ", ir,
                     ir_const_expr_integer_value(ir));
             break;
-        case ConstExprIrTag_String:
-            fprintf(visitor->stream, "v%p = <<%s>> :: ", ir,
-                    strtable_at(&ctx(visitor)->strtable,
-                                ir_const_expr_string_literal_id(ir)));
-            break;
+        case ConstExprIrTag_String: {
+            strtable_id id = ir_const_expr_string_literal_id(ir);
+            const char* s = strtable_at(&ctx(visitor)->strtable, id);
+            fprintf(visitor->stream, "v%p = <<%s>> :: ", ir, s);
+        } break;
         default:
             assert(false);
     }
