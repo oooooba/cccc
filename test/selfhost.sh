@@ -60,7 +60,7 @@ compile_cccc 1 context
 compile_cccc 1 dump
 compile_cccc 1 fixup
 compile_cccc 1 ir
-compile_gcc 1 lexer
+compile_cccc 1 lexer
 compile_cccc 1 list
 compile_cccc 1 map
 compile_cccc 1 nameresolve
