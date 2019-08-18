@@ -19,8 +19,7 @@ struct Lexer {
 };
 
 void lexer_initialize(struct Lexer* lexer, struct Context* context,
-                      struct List* tokens, FILE* input_stream,
-                      FILE* error_stream);
+                      struct List* tokens);
 
 void lexer_read_and_tokenize(struct Lexer* lexer);
 

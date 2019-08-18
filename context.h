@@ -11,6 +11,9 @@
 #include <stdio.h>
 
 struct Context {
+    FILE* input_stream;
+    FILE* output_stream;
+    FILE* error_stream;
     struct Strtable strtable;
     struct List
         global_declaration_list;  // ListItem list, elem: struct GlobaIr*
@@ -27,7 +30,8 @@ enum RegisterSizeKind {
     RegisterSizeKind_Num,
 };
 
-void context_initialize(struct Context* context);
+void context_initialize(struct Context* context, FILE* input_stream,
+                        FILE* output_stream, FILE* error_stream);
 
 void context_append_global_declaration(struct Context* context,
                                        struct GlobalIr* global);

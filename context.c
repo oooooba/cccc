@@ -12,7 +12,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void context_initialize(struct Context* context) {
+void context_initialize(struct Context* context, FILE* input_stream,
+                        FILE* output_stream, FILE* error_stream) {
+    context->input_stream = input_stream;
+    context->output_stream = output_stream;
+    context->error_stream = error_stream;
     strtable_initialize(&context->strtable);
     list_initialize(&context->global_declaration_list);
     map_initialize(&context->function_definition_map);

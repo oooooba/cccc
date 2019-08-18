@@ -32,13 +32,6 @@ struct CodegenVisitor* new_codegen_visitor(struct Context* context,
                                            FILE* stream);
 
 int main(void) {
-    struct Context context;
-    context_initialize(&context);
-    context_register_registers(&context);
-
-    struct List tokens;
-    list_initialize(&tokens);
-
     FILE* stdin = fopen("/dev/stdin", "r");
     assert(stdin);
     FILE* stdout = fopen("/dev/stdout", "w");
@@ -46,11 +39,18 @@ int main(void) {
     FILE* stderr = fopen("/dev/stderr", "w");
     assert(stderr);
 
+    struct Context context;
+    context_initialize(&context, stdin, stdout, stderr);
+    context_register_registers(&context);
+
+    struct List tokens;
+    list_initialize(&tokens);
+
     struct Lexer lexer;
-    lexer_initialize(&lexer, &context, &tokens, stdin, stderr);
+    lexer_initialize(&lexer, &context, &tokens);
     lexer_read_and_tokenize(&lexer);
 
-    struct Parser* parser = parser_new(&context, lexer.tokens, stderr);
+    struct Parser* parser = parser_new(&context, lexer.tokens);
     parser_run(parser);
 
     fprintf(stderr, "[apply dump (1)]\n");
