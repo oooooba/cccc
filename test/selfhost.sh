@@ -4,6 +4,8 @@ set -eu
 CCCC1=../build/cccc
 CCCC2=./cccc2
 CCCC3=./cccc3
+TEST2=./test2
+TEST3=./test3
 CCCC=false
 GCC=gcc
 SRC=..
@@ -79,8 +81,8 @@ link 1
 
 $GCC -std=c11 -Wall -I$INCLUDE -E test.c >$TMP/test.c
 $CCCC2 <$TMP/test.c >/tmp/output.S
-$GCC -std=c11 -Wall main.c /tmp/output.S
-./a.out
+$GCC -std=c11 -Wall main.c /tmp/output.S -o $TEST2
+$TEST2
 
 # compile with 2nd-generation compiler
 
@@ -106,6 +108,13 @@ compile_gcc 2 vector
 compile_gcc 2 visitor
 
 link 2
+
+# test 3rd-generation compiler
+
+$GCC -std=c11 -Wall -I$INCLUDE -E test.c >$TMP/test.c
+$CCCC3 <$TMP/test.c >/tmp/output.S
+$GCC -std=c11 -Wall main.c /tmp/output.S -o $TEST3
+$TEST3
 
 # verification
 
