@@ -3,7 +3,7 @@ set -eu
 
 CCCC1=../build/cccc
 CCCC2=./cccc2
-CCCC3=cccc3
+CCCC3=./cccc3
 CCCC=false
 GCC=gcc
 SRC=..
@@ -81,3 +81,32 @@ $GCC -std=c11 -Wall -I$INCLUDE -E test.c >$TMP/test.c
 $CCCC2 <$TMP/test.c >/tmp/output.S
 $GCC -std=c11 -Wall main.c /tmp/output.S
 ./a.out
+
+# compile with 2nd-generation compiler
+
+CCCC=$CCCC2
+
+compile_gcc 2 main
+compile_gcc 2 codegen
+compile_gcc 2 context
+compile_gcc 2 dump
+compile_gcc 2 fixup
+compile_gcc 2 ir
+compile_gcc 2 lexer
+compile_gcc 2 list
+compile_gcc 2 map
+compile_gcc 2 nameresolve
+compile_gcc 2 parser
+compile_gcc 2 regalloc
+compile_gcc 2 strtable
+compile_gcc 2 simplify
+compile_gcc 2 type
+compile_gcc 2 typing
+compile_gcc 2 vector
+compile_gcc 2 visitor
+
+link 2
+
+# verification
+
+sha1sum $CCCC1 $CCCC2 $CCCC3
