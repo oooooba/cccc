@@ -19,8 +19,11 @@ static struct ExprIr* visit_binop_expr(struct SimplifyVisitor* visitor,
     visitor_visit_binop_expr(as_visitor(visitor), ir);
 
     struct ConstExprIr* lhs_expr = ir_expr_as_const(ir_binop_expr_lhs(ir));
+    if (!(lhs_expr && ir_const_expr_tag(lhs_expr) == ConstExprIrTag_Integer))
+        return ir_binop_expr_cast(ir);
     struct ConstExprIr* rhs_expr = ir_expr_as_const(ir_binop_expr_rhs(ir));
-    if (!(lhs_expr && rhs_expr)) return ir_binop_expr_cast(ir);
+    if (!(rhs_expr && ir_const_expr_tag(rhs_expr) == ConstExprIrTag_Integer))
+        return ir_binop_expr_cast(ir);
 
     intptr_t lhs_const = ir_const_expr_integer_value(lhs_expr);
     intptr_t rhs_const = ir_const_expr_integer_value(rhs_expr);
