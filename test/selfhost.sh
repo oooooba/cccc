@@ -95,7 +95,7 @@ compile_gcc 2 dump
 compile_gcc 2 fixup
 compile_gcc 2 ir
 compile_gcc 2 lexer
-compile_gcc 2 list
+compile_cccc 2 list
 compile_gcc 2 map
 compile_gcc 2 nameresolve
 compile_gcc 2 parser
