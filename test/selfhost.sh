@@ -57,7 +57,7 @@ CCCC=$CCCC1
 compile_cccc 1 main
 compile_cccc 1 codegen
 compile_cccc 1 context
-compile_gcc 1 dump
+compile_cccc 1 dump
 compile_cccc 1 fixup
 compile_cccc 1 ir
 compile_gcc 1 lexer
