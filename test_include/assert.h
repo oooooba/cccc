@@ -3,8 +3,7 @@
 
 #include <stdlib.h>
 
-#define assert(cond) \
-    if (!(cond)) abort()
+#define assert(cond) ((cond) ? (void)0 : abort())
 
 #endif  // CCCC_ASSERT_H
 
