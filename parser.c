@@ -92,7 +92,7 @@ static void insert_at_end_as_list_item(struct List* list, void* item) {
 }
 
 static void* nth_list_item(struct List* list, size_t n) {
-    assert(list_size(list));
+    assert(n < list_size(list));
     for (struct ListHeader *it = list_begin(list), *eit = list_end(list);
          it != eit; it = list_next(it)) {
         if (n) {
@@ -301,6 +301,7 @@ static struct DeclStmtIr* insert_normalized_declaration_statement(
     struct InitDeclarator* init_declarator =
         nth_list_item(declaration->init_declarator_list, 0);
     struct Declarator* declarator = init_declarator->declarator;
+    assert(declarator);
     struct DirectDeclarator* direct_declarator = declarator->direct_declarator;
 
     strtable_id name_index;
