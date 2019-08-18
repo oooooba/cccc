@@ -10,7 +10,7 @@
 #include <stdio.h>
 
 struct DumpVisitor;
-struct DumpVisitor* new_dump_visitor(struct Context* context, FILE* stream);
+struct DumpVisitor* new_dump_visitor(struct Context* context);
 
 struct NameresolveVisitor;
 struct NameresolveVisitor* new_nameresolve_visitor(struct Context* context);
@@ -28,8 +28,7 @@ struct FixupVisitor;
 struct FixupVisitor* new_fixup_visitor(struct Context* context);
 
 struct CodegenVisitor;
-struct CodegenVisitor* new_codegen_visitor(struct Context* context,
-                                           FILE* stream);
+struct CodegenVisitor* new_codegen_visitor(struct Context* context);
 
 int main(void) {
     FILE* stdin = fopen("/dev/stdin", "r");
@@ -54,7 +53,7 @@ int main(void) {
     parser_run(parser);
 
     fprintf(stderr, "[apply dump (1)]\n");
-    struct DumpVisitor* dump_visitor = new_dump_visitor(&context, stderr);
+    struct DumpVisitor* dump_visitor = new_dump_visitor(&context);
     visitor_apply((struct Visitor*)dump_visitor);
 
     fprintf(stderr, "[apply nameresolve]\n");
@@ -82,8 +81,7 @@ int main(void) {
     visitor_apply((struct Visitor*)fixup_visitor);
 
     fprintf(stderr, "[apply codegen]\n");
-    struct CodegenVisitor* codegen_visitor =
-        new_codegen_visitor(&context, stdout);
+    struct CodegenVisitor* codegen_visitor = new_codegen_visitor(&context);
     visitor_apply((struct Visitor*)codegen_visitor);
 
     fclose(stdin);

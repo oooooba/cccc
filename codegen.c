@@ -547,8 +547,7 @@ static void emit_string_literals(struct CodegenVisitor* visitor) {
     }
 }
 
-struct CodegenVisitor* new_codegen_visitor(struct Context* context,
-                                           FILE* stream) {
+struct CodegenVisitor* new_codegen_visitor(struct Context* context) {
     struct CodegenVisitor* visitor = malloc(sizeof(struct CodegenVisitor));
     visitor_initialize(as_visitor(visitor), context);
 
@@ -580,13 +579,13 @@ struct CodegenVisitor* new_codegen_visitor(struct Context* context,
 
     register_visitor(visitor->as_visitor, visit_global, visit_global);
 
-    visitor->stream = stream;
+    visitor->stream = context->output_stream;
     visitor->break_dst = NULL;
     visitor->continue_dst = NULL;
 
-    fprintf(stream, ".intel_syntax noprefix\n");
+    fprintf(visitor->stream, ".intel_syntax noprefix\n");
     emit_string_literals(visitor);
-    fprintf(stream, ".text\n");
+    fprintf(visitor->stream, ".text\n");
 
     return visitor;
 }

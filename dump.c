@@ -343,7 +343,7 @@ static struct FunctionIr* visit_function2(struct DumpVisitor* visitor,
     return ir;
 }
 
-struct DumpVisitor* new_dump_visitor(struct Context* context, FILE* stream) {
+struct DumpVisitor* new_dump_visitor(struct Context* context) {
     struct DumpVisitor* visitor = malloc(sizeof(struct DumpVisitor));
     visitor_initialize(as_visitor(visitor), context);
 
@@ -371,6 +371,6 @@ struct DumpVisitor* new_dump_visitor(struct Context* context, FILE* stream) {
 
     register_visitor(visitor->as_visitor, visit_function, visit_function2);
 
-    visitor->stream = stream;
+    visitor->stream = context->error_stream;
     return visitor;
 }
