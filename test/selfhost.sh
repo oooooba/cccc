@@ -64,7 +64,7 @@ compile_cccc 1 lexer
 compile_cccc 1 list
 compile_cccc 1 map
 compile_cccc 1 nameresolve
-compile_gcc 1 parser
+compile_cccc 1 parser
 compile_cccc 1 regalloc
 compile_cccc 1 strtable
 compile_cccc 1 simplify
