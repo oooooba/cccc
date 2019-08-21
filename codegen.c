@@ -11,8 +11,10 @@ struct CodegenVisitor {
     struct Visitor as_visitor;
     FILE* stream;
     struct FunctionIr* function;
-    struct StmtIr* break_dst;
-    struct StmtIr* continue_dst;
+    size_t label_counter;
+    size_t current_function_label_id;
+    size_t break_dst_label_id;
+    size_t continue_dst_label_id;
 };
 
 static struct Visitor* as_visitor(struct CodegenVisitor* visitor) {
@@ -21,6 +23,12 @@ static struct Visitor* as_visitor(struct CodegenVisitor* visitor) {
 
 static struct Context* ctx(struct CodegenVisitor* visitor) {
     return visitor_context(as_visitor(visitor));
+}
+
+static size_t gen_fresh_label_id(struct CodegenVisitor* visitor) {
+    size_t id = visitor->label_counter;
+    ++visitor->label_counter;
+    return id;
 }
 
 static const char* register_name(struct CodegenVisitor* visitor,
@@ -57,16 +65,16 @@ static struct ExprIr* visit_const_expr(struct CodegenVisitor* visitor,
     return ir_const_expr_cast(ir);
 }
 
-static void print_relational_instr(struct CodegenVisitor* visitor, void* label,
-                                   const char* op, const char* lhs_reg,
-                                   const char* rhs_reg) {
+static void print_relational_instr(struct CodegenVisitor* visitor,
+                                   size_t label_id, const char* op,
+                                   const char* lhs_reg, const char* rhs_reg) {
     fprintf(visitor->stream, "\tcmp\t%s, %s\n", lhs_reg, rhs_reg);
-    fprintf(visitor->stream, "\t%s\tlab_%p_else\n", op, label);
+    fprintf(visitor->stream, "\t%s\tlab_%ld_else\n", op, label_id);
     fprintf(visitor->stream, "\tmov\t%s, 1\n", lhs_reg);
-    fprintf(visitor->stream, "\tjmp\tlab_%p_cont\n", label);
-    fprintf(visitor->stream, "lab_%p_else:\n", label);
+    fprintf(visitor->stream, "\tjmp\tlab_%ld_cont\n", label_id);
+    fprintf(visitor->stream, "lab_%ld_else:\n", label_id);
     fprintf(visitor->stream, "\tmov\t%s, 0\n", lhs_reg);
-    fprintf(visitor->stream, "lab_%p_cont:\n", label);
+    fprintf(visitor->stream, "lab_%ld_cont:\n", label_id);
 }
 
 static void print_logical_op_instr(struct CodegenVisitor* visitor,
@@ -100,8 +108,9 @@ static void print_logical_op_instr(struct CodegenVisitor* visitor,
     assert(lhs_reg_id == result_reg_id);
     const char* result_reg = register_name(visitor, result_reg_id);
 
+    size_t label_id = gen_fresh_label_id(visitor);
     fprintf(visitor->stream, "\t%s\t%s, %s\n", opcode, result_reg, result_reg);
-    fprintf(visitor->stream, "\t%s\tlab_%p_shortcut\n", jmp_opcode, ir);
+    fprintf(visitor->stream, "\t%s\tlab_%ld_shortcut\n", jmp_opcode, label_id);
 
     struct ExprIr* rhs = ir_binop_expr_rhs(ir);
     visitor_visit_expr(as_visitor(visitor), rhs);
@@ -110,14 +119,14 @@ static void print_logical_op_instr(struct CodegenVisitor* visitor,
     const char* rhs_reg = register_name(visitor, rhs_reg_id);
 
     fprintf(visitor->stream, "\t%s\t%s, %s\n", opcode, rhs_reg, rhs_reg);
-    fprintf(visitor->stream, "\t%s\tlab_%p_shortcut\n", jmp_opcode, ir);
+    fprintf(visitor->stream, "\t%s\tlab_%ld_shortcut\n", jmp_opcode, label_id);
 
     fprintf(visitor->stream, "\tmov\t%s, %d\n", result_reg, final_value);
-    fprintf(visitor->stream, "\tjmp\tlab_%p_cont\n", ir);
+    fprintf(visitor->stream, "\tjmp\tlab_%ld_cont\n", label_id);
 
-    fprintf(visitor->stream, "lab_%p_shortcut:\n", ir);
+    fprintf(visitor->stream, "lab_%ld_shortcut:\n", label_id);
     fprintf(visitor->stream, "\tmov\t%s, %d\n", result_reg, shortcut_value);
-    fprintf(visitor->stream, "lab_%p_cont:\n", ir);
+    fprintf(visitor->stream, "lab_%ld_cont:\n", label_id);
 }
 
 static struct ExprIr* visit_binop_expr(struct CodegenVisitor* visitor,
@@ -140,6 +149,7 @@ static struct ExprIr* visit_binop_expr(struct CodegenVisitor* visitor,
     const char* rhs_reg = register_name(visitor, rhs_reg_id);
     const char* result_reg = register_name(visitor, result_reg_id);
 
+    size_t label_id = gen_fresh_label_id(visitor);
     const char* opcode;
     switch (op) {
         case BinopExprIrTag_Add:
@@ -152,22 +162,28 @@ static struct ExprIr* visit_binop_expr(struct CodegenVisitor* visitor,
             opcode = "imul";
             break;
         case BinopExprIrTag_Equal:
-            print_relational_instr(visitor, ir, "jnz", result_reg, rhs_reg);
+            print_relational_instr(visitor, label_id, "jnz", result_reg,
+                                   rhs_reg);
             return ir_binop_expr_cast(ir);
         case BinopExprIrTag_Lt:
-            print_relational_instr(visitor, ir, "jge", result_reg, rhs_reg);
+            print_relational_instr(visitor, label_id, "jge", result_reg,
+                                   rhs_reg);
             return ir_binop_expr_cast(ir);
         case BinopExprIrTag_Le:
-            print_relational_instr(visitor, ir, "jg", result_reg, rhs_reg);
+            print_relational_instr(visitor, label_id, "jg", result_reg,
+                                   rhs_reg);
             return ir_binop_expr_cast(ir);
         case BinopExprIrTag_Gt:
-            print_relational_instr(visitor, ir, "jle", result_reg, rhs_reg);
+            print_relational_instr(visitor, label_id, "jle", result_reg,
+                                   rhs_reg);
             return ir_binop_expr_cast(ir);
         case BinopExprIrTag_Ge:
-            print_relational_instr(visitor, ir, "jl", result_reg, rhs_reg);
+            print_relational_instr(visitor, label_id, "jl", result_reg,
+                                   rhs_reg);
             return ir_binop_expr_cast(ir);
         case BinopExprIrTag_LogicalAnd:
-            print_relational_instr(visitor, ir, "jl", result_reg, rhs_reg);
+            print_relational_instr(visitor, label_id, "jl", result_reg,
+                                   rhs_reg);
             return ir_binop_expr_cast(ir);
         default:
             assert(false);
@@ -202,15 +218,17 @@ static struct ExprIr* visit_unop_expr(struct CodegenVisitor* visitor,
         case UnopExprIrTag_Neg:
             op = "neg";
             break;
-        case UnopExprIrTag_Not:
+        case UnopExprIrTag_Not: {
+            size_t label_id = gen_fresh_label_id(visitor);
             fprintf(visitor->stream, "\tand\t%s, %s\n", result_reg, result_reg);
-            fprintf(visitor->stream, "\tjz\tlab_%p_else\n", ir);
+            fprintf(visitor->stream, "\tjz\tlab_%ld_else\n", label_id);
             fprintf(visitor->stream, "\tmov\t%s, 0\n", result_reg);
-            fprintf(visitor->stream, "\tjmp\tlab_%p_cont\n", ir);
-            fprintf(visitor->stream, "lab_%p_else:\n", ir);
+            fprintf(visitor->stream, "\tjmp\tlab_%ld_cont\n", label_id);
+            fprintf(visitor->stream, "lab_%ld_else:\n", label_id);
             fprintf(visitor->stream, "\tmov\t%s, 1\n", result_reg);
-            fprintf(visitor->stream, "lab_%p_cont:\n", ir);
+            fprintf(visitor->stream, "lab_%ld_cont:\n", label_id);
             return ir_unop_expr_cast(ir);
+        } break;
         default:
             assert(false);
     }
@@ -354,16 +372,17 @@ static struct ExprIr* visit_cond_expr(struct CodegenVisitor* visitor,
     strtable_id cond_reg_id = ir_expr_reg_id(cond);
     const char* cond_reg = register_name(visitor, cond_reg_id);
 
+    size_t label_id = gen_fresh_label_id(visitor);
     fprintf(visitor->stream, "\tand\t%s, %s\n", cond_reg, cond_reg);
-    fprintf(visitor->stream, "\tjz\tlab_%p_else\n", ir);
+    fprintf(visitor->stream, "\tjz\tlab_%ld_else\n", label_id);
 
     visitor_visit_expr(as_visitor(visitor), ir_cond_expr_true_expr(ir));
-    fprintf(visitor->stream, "\tjmp\tlab_%p_cont\n", ir);
+    fprintf(visitor->stream, "\tjmp\tlab_%ld_cont\n", label_id);
 
-    fprintf(visitor->stream, "lab_%p_else:\n", ir);
+    fprintf(visitor->stream, "lab_%ld_else:\n", label_id);
     visitor_visit_expr(as_visitor(visitor), ir_cond_expr_false_expr(ir));
 
-    fprintf(visitor->stream, "lab_%p_cont:\n", ir);
+    fprintf(visitor->stream, "lab_%ld_cont:\n", label_id);
     return ir_cond_expr_cast(ir);
 }
 
@@ -371,7 +390,8 @@ static struct StmtIr* visit_stmt_pre(struct CodegenVisitor* visitor,
                                      struct StmtIr* ir) {
     strtable_id label_index = ir_stmt_label_index(ir);
     if (label_index == (strtable_id)-1)
-        fprintf(visitor->stream, "lab_%p_end:\n", visitor->function);
+        fprintf(visitor->stream, "lab_%ld_end:\n",
+                visitor->current_function_label_id);
     return NULL;
 }
 
@@ -383,23 +403,25 @@ static struct StmtIr* visit_if_stmt(struct CodegenVisitor* visitor,
     strtable_id cond_reg_id = ir_expr_reg_id(cond_expr);
     const char* cond_reg = register_name(visitor, cond_reg_id);
 
+    size_t label_id = gen_fresh_label_id(visitor);
     fprintf(visitor->stream, "\tand\t%s, %s\n", cond_reg, cond_reg);
-    fprintf(visitor->stream, "\tjz\tlab_%p_else\n", ir);
+    fprintf(visitor->stream, "\tjz\tlab_%ld_else\n", label_id);
 
     visitor_visit_stmt(as_visitor(visitor), ir_if_stmt_true_stmt(ir));
-    fprintf(visitor->stream, "\tjmp\tlab_%p_cont\n", ir);
+    fprintf(visitor->stream, "\tjmp\tlab_%ld_cont\n", label_id);
 
-    fprintf(visitor->stream, "lab_%p_else:\n", ir);
+    fprintf(visitor->stream, "lab_%ld_else:\n", label_id);
     visitor_visit_stmt(as_visitor(visitor), ir_if_stmt_false_stmt(ir));
 
-    fprintf(visitor->stream, "lab_%p_cont:\n", ir);
+    fprintf(visitor->stream, "lab_%ld_cont:\n", label_id);
     return ir_if_stmt_super(ir);
 }
 
 static struct StmtIr* visit_switch_stmt(struct CodegenVisitor* visitor,
                                         struct SwitchStmtIr* ir) {
-    struct StmtIr* prev_break_dst = visitor->break_dst;
-    visitor->break_dst = ir_switch_stmt_super(ir);
+    size_t prev_break_dst_label_id = visitor->break_dst_label_id;
+    size_t label_id = gen_fresh_label_id(visitor);
+    visitor->break_dst_label_id = label_id;
 
     struct ExprIr* cond_expr = ir_switch_stmt_cond_expr(ir);
     visitor_visit_expr(as_visitor(visitor), cond_expr);
@@ -408,6 +430,7 @@ static struct StmtIr* visit_switch_stmt(struct CodegenVisitor* visitor,
     const char* cond_reg = register_name(visitor, cond_reg_id);
 
     struct List* branches = ir_switch_stmt_branches(ir);
+    int i = 0;
     for (struct ListHeader *it = list_begin(branches),
                            *eit = list_end(branches);
          it != eit; it = list_next(it)) {
@@ -415,37 +438,41 @@ static struct StmtIr* visit_switch_stmt(struct CodegenVisitor* visitor,
 
         fprintf(visitor->stream, "\tcmp\t%s, %ld\n", cond_reg,
                 ir_switch_branch_case_value(branch));
-        fprintf(visitor->stream, "\tjz\tlab_%p_case\n", branch);
+        fprintf(visitor->stream, "\tjz\tlab_%ld_%d_case\n", label_id, i);
+        ++i;
     }
-    fprintf(visitor->stream, "\tjmp\tlab_%p_default\n", ir);
+    fprintf(visitor->stream, "\tjmp\tlab_%ld_default\n", label_id);
 
+    i = 0;
     for (struct ListHeader *it = list_begin(branches),
                            *eit = list_end(branches);
          it != eit; it = list_next(it)) {
         struct SwitchStmtBranch* branch = ((struct ListItem*)it)->item;
 
-        fprintf(visitor->stream, "lab_%p_case:\n", branch);
+        fprintf(visitor->stream, "lab_%ld_%d_case:\n", label_id, i);
         visitor_visit_stmt(as_visitor(visitor), ir_switch_branch_stmt(branch));
+        ++i;
     }
 
-    fprintf(visitor->stream, "lab_%p_default:\n", ir);
+    fprintf(visitor->stream, "lab_%ld_default:\n", label_id);
     visitor_visit_stmt(as_visitor(visitor), ir_switch_stmt_default_stmt(ir));
 
-    fprintf(visitor->stream, "lab_%p_cont:\n", ir);
+    fprintf(visitor->stream, "lab_%ld_cont:\n", label_id);
 
-    visitor->break_dst = prev_break_dst;
+    visitor->break_dst_label_id = prev_break_dst_label_id;
 
     return ir_switch_stmt_super(ir);
 }
 
 static struct StmtIr* visit_while_stmt(struct CodegenVisitor* visitor,
                                        struct WhileStmtIr* ir) {
-    struct StmtIr* prev_break_dst = visitor->break_dst;
-    visitor->break_dst = ir_while_stmt_super(ir);
-    struct StmtIr* prev_continue_dst = visitor->continue_dst;
-    visitor->continue_dst = ir_while_stmt_super(ir);
+    size_t prev_break_dst_label_id = visitor->break_dst_label_id;
+    size_t prev_continue_dst_label_id = visitor->continue_dst_label_id;
+    size_t label_id = gen_fresh_label_id(visitor);
+    visitor->break_dst_label_id = label_id;
+    visitor->continue_dst_label_id = label_id;
 
-    fprintf(visitor->stream, "lab_%p_head:\n", ir);
+    fprintf(visitor->stream, "lab_%ld_head:\n", label_id);
 
     struct ExprIr* cond_expr = ir_while_stmt_cond_expr(ir);
     visitor_visit_expr(as_visitor(visitor), cond_expr);
@@ -454,21 +481,21 @@ static struct StmtIr* visit_while_stmt(struct CodegenVisitor* visitor,
     const char* cond_reg = register_name(visitor, cond_reg_id);
 
     fprintf(visitor->stream, "\tand\t%s, %s\n", cond_reg, cond_reg);
-    fprintf(visitor->stream, "\tjz\tlab_%p_cont\n", ir);
+    fprintf(visitor->stream, "\tjz\tlab_%ld_cont\n", label_id);
 
     visitor_visit_stmt(as_visitor(visitor), ir_while_stmt_body_stmt(ir));
 
-    fprintf(visitor->stream, "lab_%p_update:\n", ir);
+    fprintf(visitor->stream, "lab_%ld_update:\n", label_id);
     if (ir_while_stmt_update_expr(ir)) {
         visitor_visit_expr(as_visitor(visitor), ir_while_stmt_update_expr(ir));
     }
 
-    fprintf(visitor->stream, "\tjmp\tlab_%p_head\n", ir);
+    fprintf(visitor->stream, "\tjmp\tlab_%ld_head\n", label_id);
 
-    fprintf(visitor->stream, "lab_%p_cont:\n", ir);
+    fprintf(visitor->stream, "lab_%ld_cont:\n", label_id);
 
-    visitor->break_dst = prev_break_dst;
-    visitor->continue_dst = prev_continue_dst;
+    visitor->break_dst_label_id = prev_break_dst_label_id;
+    visitor->continue_dst_label_id = prev_continue_dst_label_id;
 
     return ir_while_stmt_super(ir);
 }
@@ -476,21 +503,24 @@ static struct StmtIr* visit_while_stmt(struct CodegenVisitor* visitor,
 static struct StmtIr* visit_return_stmt(struct CodegenVisitor* visitor,
                                         struct ReturnStmtIr* ir) {
     visitor_visit_return_stmt(as_visitor(visitor), ir);
-    fprintf(visitor->stream, "\tjmp\tlab_%p_end\n", visitor->function);
+    fprintf(visitor->stream, "\tjmp\tlab_%ld_end\n",
+            visitor->current_function_label_id);
     return ir_return_stmt_super(ir);
 }
 
 static struct StmtIr* visit_break_stmt(struct CodegenVisitor* visitor,
                                        struct BreakStmtIr* ir) {
     (void)visitor;
-    fprintf(visitor->stream, "\tjmp\tlab_%p_cont\n", visitor->break_dst);
+    fprintf(visitor->stream, "\tjmp\tlab_%ld_cont\n",
+            visitor->break_dst_label_id);
     return ir_break_stmt_super(ir);
 }
 
 static struct StmtIr* visit_continue_stmt(struct CodegenVisitor* visitor,
                                           struct ContinueStmtIr* ir) {
     (void)visitor;
-    fprintf(visitor->stream, "\tjmp\tlab_%p_update\n", visitor->continue_dst);
+    fprintf(visitor->stream, "\tjmp\tlab_%ld_update\n",
+            visitor->continue_dst_label_id);
     return ir_continue_stmt_super(ir);
 }
 
@@ -512,6 +542,7 @@ static struct StmtIr* visit_pop_stmt(struct CodegenVisitor* visitor,
 
 static struct GlobalIr* visit_global(struct CodegenVisitor* visitor,
                                      struct GlobalIr* ir) {
+    fprintf(visitor->stream, "\n");
     if (ir_global_is_public(ir)) {
         struct FunctionIr* function = ir_global_function(ir);
         const char* name = strtable_at(&ctx(visitor)->strtable,
@@ -523,8 +554,8 @@ static struct GlobalIr* visit_global(struct CodegenVisitor* visitor,
 
 static struct FunctionIr* visit_function(struct CodegenVisitor* visitor,
                                          struct FunctionIr* ir) {
-    fprintf(visitor->stream, "\n");
     visitor->function = ir;
+    visitor->current_function_label_id = gen_fresh_label_id(visitor);
 
     const char* name =
         strtable_at(&ctx(visitor)->strtable, ir_function_name_index(ir));
@@ -580,8 +611,7 @@ struct CodegenVisitor* new_codegen_visitor(struct Context* context) {
     register_visitor(visitor->as_visitor, visit_global, visit_global);
 
     visitor->stream = context->output_stream;
-    visitor->break_dst = NULL;
-    visitor->continue_dst = NULL;
+    visitor->label_counter = 0;
 
     fprintf(visitor->stream, ".intel_syntax noprefix\n");
     emit_string_literals(visitor);
