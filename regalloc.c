@@ -60,9 +60,17 @@ static struct ExprIr* visit_const_expr(struct RegallocVisitor* visitor,
 
 static struct ExprIr* visit_binop_expr(struct RegallocVisitor* visitor,
                                        struct BinopExprIr* ir) {
-    visitor_visit_binop_expr(as_visitor(visitor), ir);
-    release_register(visitor);
-    release_register(visitor);
+    enum BinopExprIrTag op = ir_binop_expr_op(ir);
+    if (op == BinopExprIrTag_LogicalAnd || op == BinopExprIrTag_LogicalOr) {
+        visitor_visit_expr(as_visitor(visitor), ir_binop_expr_lhs(ir));
+        release_register(visitor);
+        visitor_visit_expr(as_visitor(visitor), ir_binop_expr_rhs(ir));
+        release_register(visitor);
+    } else {
+        visitor_visit_binop_expr(as_visitor(visitor), ir);
+        release_register(visitor);
+        release_register(visitor);
+    }
     strtable_id reg_id =
         acquire_register(visitor, ir_expr_type(ir_binop_expr_cast(ir)));
     ir_expr_set_reg_id(ir_binop_expr_cast(ir), reg_id);
