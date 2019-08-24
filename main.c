@@ -45,10 +45,12 @@ int main(void) {
     struct List tokens;
     list_initialize(&tokens);
 
+    fprintf(stderr, "[lexer]\n");
     struct Lexer lexer;
     lexer_initialize(&lexer, &context, &tokens);
     lexer_read_and_tokenize(&lexer);
 
+    fprintf(stderr, "[parser]\n");
     struct Parser* parser = parser_new(&context, lexer.tokens);
     parser_run(parser);
 

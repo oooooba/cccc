@@ -459,6 +459,17 @@ void lexer_read_and_tokenize(struct Lexer* lexer) {
     list_insert_at_end(
         lexer->tokens,
         list_from(new_token(Token_PseudoFileEnd, lexer->line, lexer->pos)));
+
+#if 0
+    struct ListHeader* it = list_begin(lexer->tokens);
+    while (true) {
+        struct Token* token = (struct Token*)it;
+        if (token->tag == Token_PseudoFileEnd) break;
+        fprintf(lexer->error_stream, "line=%zu, pos=%zu, %d %zu\n", token->line,
+                token->position, token->tag, token->strtable_index);
+        it = list_next(it);
+    }
+#endif
 }
 
 void lexer_initialize(struct Lexer* lexer, struct Context* context,
