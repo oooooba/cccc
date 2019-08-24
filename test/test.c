@@ -353,3 +353,8 @@ int test53(const char** sp) {
         return 0;
     }
 }
+
+int test54(void) {
+    printf("[[%c %c %c %c]]\n", 'a', '\'', '\\', '\n');
+    return 0;
+}

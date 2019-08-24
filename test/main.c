@@ -54,6 +54,7 @@ int test50(void);
 int test51(int);
 int test52(int, int);
 int test53(const char** sp);
+int test54(void);
 
 static int num_test_counter = 0;
 static int num_passed_test_counter = 0;
@@ -159,6 +160,7 @@ int main(void) {
     check("test53", 0, test53(&s1));
     check("test53", -1, test53(&s2));
     check("test53", 1, test53(&s3));
+    check("test54", 0, test54());
 
     bool failed = num_test_counter != num_passed_test_counter;
     if (failed) printf("\n\n============================================\n");
