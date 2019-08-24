@@ -143,19 +143,17 @@ static enum TokenTag tokenize_lexeme(struct Lexer* lexer) {
         strtable_id index = strtable_find(&lexer->context->strtable, str);
         if (!index) index = strtable_register(&lexer->context->strtable, str);
         token->strtable_index = index;
-    }
-    if (tag == Token_KeywordConst) {
-        // ignore const keyword, ToDo: fix
-        return tag;
-    }
-
-    if (tag == Token_KeywordTrue) {
+    } else if (tag == Token_KeywordTrue) {
         token->tag = Token_Integer;
         token->integer = 1;
     } else if (tag == Token_KeywordFalse) {
         token->tag = Token_Integer;
         token->integer = 0;
+    } else if (tag == Token_KeywordConst) {
+        // ignore const keyword, ToDo: fix
+        return tag;
     }
+
     list_insert_at_end(lexer->tokens, list_from(token));
     return tag;
 }
