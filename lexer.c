@@ -146,14 +146,17 @@ static enum TokenTag tokenize_lexeme(struct Lexer* lexer) {
     }
     if (tag == Token_KeywordConst) {
         // ignore const keyword, ToDo: fix
-    } else if (tag == Token_KeywordTrue) {
+        return tag;
+    }
+
+    if (tag == Token_KeywordTrue) {
         token->tag = Token_Integer;
         token->integer = 1;
     } else if (tag == Token_KeywordFalse) {
         token->tag = Token_Integer;
         token->integer = 0;
-    } else
-        list_insert_at_end(lexer->tokens, list_from(token));
+    }
+    list_insert_at_end(lexer->tokens, list_from(token));
     return tag;
 }
 
