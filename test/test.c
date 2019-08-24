@@ -342,3 +342,14 @@ int test52(int x, int y) {
     }
     return sum;
 }
+
+int test53(const char** sp) {
+    int r = strcmp(*sp, "cccc");
+    if (r < 0) {
+        return -1;
+    } else if (r > 0) {
+        return 1;
+    } else {
+        return 0;
+    }
+}

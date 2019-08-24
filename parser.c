@@ -137,14 +137,14 @@ static struct DirectDeclarator* new_direct_declarator(
 }
 
 struct Declarator {
-    bool has_pointer;  // ToDo: fix to handle precisely
+    size_t num_star;
     struct DirectDeclarator* direct_declarator;
 };
 
 static struct Declarator* new_declarator(
-    bool has_pointer, struct DirectDeclarator* direct_declarator) {
+    size_t num_star, struct DirectDeclarator* direct_declarator) {
     struct Declarator* declarator = malloc(sizeof(struct Declarator));
-    declarator->has_pointer = has_pointer;
+    declarator->num_star = num_star;
     declarator->direct_declarator = direct_declarator;
     return declarator;
 }
@@ -232,6 +232,14 @@ static struct DeclStmtIr* insert_normalized_declaration_statement(
     struct Declaration2* declaration, struct Context* context,
     struct BlockStmtIr* block);
 
+static struct TypeIr* apply_star(struct TypeIr* type, size_t n) {
+    while (n > 0) {
+        type = type_pointer_super(type_new_pointer(type));
+        --n;
+    }
+    return type;
+}
+
 static void construct_function_type(struct Context* context,
                                     struct TypeIr* return_type,
                                     struct DirectDeclarator* direct_declarator,
@@ -309,9 +317,7 @@ static struct DeclStmtIr* insert_normalized_declaration_statement(
     switch (direct_declarator->tag) {
         case DirectDeclaratorTag_Identifier:
             name_index = direct_declarator->identifier;
-            type = declarator->has_pointer
-                       ? type_pointer_super(type_new_pointer(base_type))
-                       : base_type;
+            type = apply_star(base_type, declarator->num_star);
             break;
         case DirectDeclaratorTag_Declarator:
             assert(false);
@@ -323,7 +329,7 @@ static struct DeclStmtIr* insert_normalized_declaration_statement(
                    DirectDeclaratorTag_Declarator);
             struct Declarator* inner_declarator =
                 inner_direct_declarator->declarator;
-            assert(inner_declarator->has_pointer);
+            assert(inner_declarator->num_star);
             assert(inner_declarator->direct_declarator->tag ==
                    DirectDeclaratorTag_Identifier);
 
@@ -894,8 +900,7 @@ static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser) {
             struct TypeIr* type = declaration->type_specifier;
             strtable_id member_index = STRTABLE_INVALID_ID;
             if (declaration->declarator) {  // NULL for anonymous struct
-                if (declaration->declarator->has_pointer)
-                    type = type_pointer_super(type_new_pointer(type));
+                type = apply_star(type, declaration->declarator->num_star);
                 struct DirectDeclarator* direct_declarator =
                     declaration->declarator->direct_declarator;
                 switch (direct_declarator->tag) {
@@ -950,15 +955,15 @@ static struct StructDeclaration* parse_struct_declaration(
 }
 
 static struct Declarator* parse_declarator2(struct Parser* parser) {
-    bool has_pointer = false;
-    if (acceptable(parser, Token_Asterisk)) {
+    size_t num_star = 0;
+    while (acceptable(parser, Token_Asterisk)) {
         advance(parser);
-        has_pointer = true;
+        ++num_star;
     }
 
     struct DirectDeclarator* direct_declarator =
         parse_direct_declarator(parser);
-    return direct_declarator ? new_declarator(has_pointer, direct_declarator)
+    return direct_declarator ? new_declarator(num_star, direct_declarator)
                              : NULL;
 }
 
@@ -1050,7 +1055,7 @@ static struct List* parse_parameter_list(struct Parser* parser) {
                 nth_list_item(first_decl->init_declarator_list, 0);
             struct Declarator* first_declarator = first_init->declarator;
             if (first_init->declarator)
-                assert(first_declarator->has_pointer);
+                assert(first_declarator->num_star);
             else
                 list_initialize(parameter_list);
         }
@@ -1336,8 +1341,7 @@ static struct Res* parse_function_declaration(
         specifier = nth_list_item(declaration_specifier_list, 1);
     }
     struct TypeIr* return_type = specifier->type;
-    if (declarator->has_pointer)
-        return_type = type_pointer_super(type_new_pointer(return_type));
+    return_type = apply_star(return_type, declarator->num_star);
 
     struct DirectDeclarator* direct_declarator = declarator->direct_declarator;
     assert(direct_declarator->tag == DirectDeclaratorTag_Parameters);
@@ -1352,7 +1356,7 @@ static struct Res* parse_function_declaration(
         case DirectDeclaratorTag_Declarator: {
             struct Declarator* inner_declarator =
                 inner_direct_declarator->declarator;
-            assert(inner_declarator->has_pointer);
+            assert(inner_declarator->num_star);
             assert(inner_declarator->direct_declarator->tag ==
                    DirectDeclaratorTag_Identifier);
             name_index = inner_declarator->direct_declarator->identifier;
