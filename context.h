@@ -65,8 +65,7 @@ strtable_id context_stack_pointer_reg(struct Context* context,
 strtable_id context_base_pointer_reg(struct Context* context,
                                      enum RegisterSizeKind kind);
 
-void context_dump_type(struct Context* context, FILE* stream,
-                       struct TypeIr* type);
+void context_dump_type(struct Context* context, struct TypeIr* type);
 
 enum RegisterSizeKind context_type_to_register_size_kind(struct TypeIr* type);
 

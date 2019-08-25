@@ -35,8 +35,7 @@ static struct ExprIr* visit_const_expr(struct DumpVisitor* visitor,
         default:
             assert(false);
     }
-    context_dump_type(ctx(visitor), visitor->stream,
-                      ir_expr_type(ir_const_expr_cast(ir)));
+    context_dump_type(ctx(visitor), ir_expr_type(ir_const_expr_cast(ir)));
     fprintf(visitor->stream, "\n");
     return ir_const_expr_cast(ir);
 }
@@ -82,8 +81,7 @@ static struct ExprIr* visit_binop_expr(struct DumpVisitor* visitor,
             assert(false);
     }
     fprintf(visitor->stream, "v%p = %s v%p, v%p :: ", ir, op, lhs, rhs);
-    context_dump_type(ctx(visitor), visitor->stream,
-                      ir_expr_type(ir_binop_expr_cast(ir)));
+    context_dump_type(ctx(visitor), ir_expr_type(ir_binop_expr_cast(ir)));
     fprintf(visitor->stream, "\n");
     return ir_binop_expr_cast(ir);
 }
@@ -104,8 +102,7 @@ static struct ExprIr* visit_unop_expr(struct DumpVisitor* visitor,
             assert(false);
     }
     fprintf(visitor->stream, "v%p = %s v%p :: ", ir, op, operand);
-    context_dump_type(ctx(visitor), visitor->stream,
-                      ir_expr_type(ir_unop_expr_cast(ir)));
+    context_dump_type(ctx(visitor), ir_expr_type(ir_unop_expr_cast(ir)));
     fprintf(visitor->stream, "\n");
     return ir_unop_expr_cast(ir);
 }
@@ -126,8 +123,7 @@ static struct ExprIr* visit_call_expr(struct DumpVisitor* visitor,
         fprintf(visitor->stream, "v%p", arg);
     }
     fprintf(visitor->stream, ") :: ");
-    context_dump_type(ctx(visitor), visitor->stream,
-                      ir_expr_type(ir_call_expr_cast(ir)));
+    context_dump_type(ctx(visitor), ir_expr_type(ir_call_expr_cast(ir)));
     fprintf(visitor->stream, "\n");
     return ir_call_expr_cast(ir);
 }
@@ -137,8 +133,7 @@ static struct ExprIr* visit_var_expr(struct DumpVisitor* visitor,
     strtable_id index = ir_var_expr_index(ir);
     const char* name = strtable_at(&ctx(visitor)->strtable, index);
     fprintf(visitor->stream, "v%p = address of %s :: ", ir, name);
-    context_dump_type(ctx(visitor), visitor->stream,
-                      ir_expr_type(ir_var_expr_cast(ir)));
+    context_dump_type(ctx(visitor), ir_expr_type(ir_var_expr_cast(ir)));
     fprintf(visitor->stream, "\n");
     return ir_var_expr_cast(ir);
 }
@@ -149,8 +144,7 @@ static struct ExprIr* visit_subst_expr(struct DumpVisitor* visitor,
     struct ExprIr* value = ir_subst_expr_value(ir);
     struct ExprIr* addr = ir_subst_expr_addr(ir);
     fprintf(visitor->stream, "v%p = subst v%p, v%p :: ", ir, addr, value);
-    context_dump_type(ctx(visitor), visitor->stream,
-                      ir_expr_type(ir_subst_expr_cast(ir)));
+    context_dump_type(ctx(visitor), ir_expr_type(ir_subst_expr_cast(ir)));
     fprintf(visitor->stream, "\n");
     return ir_subst_expr_cast(ir);
 }
@@ -164,8 +158,7 @@ static struct ExprIr* visit_member_expr(struct DumpVisitor* visitor,
         strtable_at(&ctx(visitor)->strtable, member_index);
     fprintf(visitor->stream, "v%p = member <v%p + offset(%s)> :: ", ir, base,
             member_name);
-    context_dump_type(ctx(visitor), visitor->stream,
-                      ir_expr_type(ir_member_expr_cast(ir)));
+    context_dump_type(ctx(visitor), ir_expr_type(ir_member_expr_cast(ir)));
     fprintf(visitor->stream, "\n");
     return ir_member_expr_cast(ir);
 }
@@ -175,8 +168,7 @@ static struct ExprIr* visit_deref_expr(struct DumpVisitor* visitor,
     visitor_visit_deref_expr(as_visitor(visitor), ir);
     struct ExprIr* operand = ir_deref_expr_operand(ir);
     fprintf(visitor->stream, "v%p = deref v%p :: ", ir, operand);
-    context_dump_type(ctx(visitor), visitor->stream,
-                      ir_expr_type(ir_deref_expr_cast(ir)));
+    context_dump_type(ctx(visitor), ir_expr_type(ir_deref_expr_cast(ir)));
     fprintf(visitor->stream, "\n");
     return ir_deref_expr_cast(ir);
 }
@@ -186,8 +178,7 @@ static struct ExprIr* visit_addrof_expr(struct DumpVisitor* visitor,
     visitor_visit_addrof_expr(as_visitor(visitor), ir);
     struct ExprIr* operand = ir_addrof_expr_operand(ir);
     fprintf(visitor->stream, "v%p = addrof <v%p> :: ", ir, operand);
-    context_dump_type(ctx(visitor), visitor->stream,
-                      ir_expr_type(ir_addrof_expr_cast(ir)));
+    context_dump_type(ctx(visitor), ir_expr_type(ir_addrof_expr_cast(ir)));
     fprintf(visitor->stream, "\n");
     return ir_addrof_expr_cast(ir);
 }
@@ -197,8 +188,7 @@ static struct ExprIr* visit_cast_expr(struct DumpVisitor* visitor,
     visitor_visit_cast_expr(as_visitor(visitor), ir);
     struct ExprIr* operand = ir_cast_expr_operand(ir);
     fprintf(visitor->stream, "v%p = cast v%p :: ", ir, operand);
-    context_dump_type(ctx(visitor), visitor->stream,
-                      ir_expr_type(ir_cast_expr_cast(ir)));
+    context_dump_type(ctx(visitor), ir_expr_type(ir_cast_expr_cast(ir)));
     fprintf(visitor->stream, "\n");
     return ir_cast_expr_cast(ir);
 }
@@ -211,8 +201,7 @@ static struct ExprIr* visit_cond_expr(struct DumpVisitor* visitor,
     struct ExprIr* false_expr = ir_cond_expr_false_expr(ir);
     fprintf(visitor->stream, "v%p = v%p ? v%p : v%p :: ", ir, cond, true_expr,
             false_expr);
-    context_dump_type(ctx(visitor), visitor->stream,
-                      ir_expr_type(ir_cond_expr_cast(ir)));
+    context_dump_type(ctx(visitor), ir_expr_type(ir_cond_expr_cast(ir)));
     fprintf(visitor->stream, "\n");
     return ir_cond_expr_cast(ir);
 }
@@ -310,7 +299,7 @@ static struct StmtIr* visit_decl_stmt(struct DumpVisitor* visitor,
     const char* name =
         strtable_at(&ctx(visitor)->strtable, ir_decl_stmt_var_id(ir));
     fprintf(visitor->stream, "decl %s :: ", name);
-    context_dump_type(ctx(visitor), visitor->stream, ir_decl_stmt_type(ir));
+    context_dump_type(ctx(visitor), ir_decl_stmt_type(ir));
     fprintf(visitor->stream, "\n");
     return ir_decl_stmt_super(ir);
 }
@@ -332,12 +321,10 @@ static struct FunctionIr* visit_function2(struct DumpVisitor* visitor,
         else
             fprintf(visitor->stream, ", ");
         fprintf(visitor->stream, "%s :: ", var_name);
-        context_dump_type(ctx(visitor), visitor->stream,
-                          ir_decl_stmt_type(decl));
+        context_dump_type(ctx(visitor), ir_decl_stmt_type(decl));
     }
     fprintf(visitor->stream, ") :: ");
-    context_dump_type(ctx(visitor), visitor->stream,
-                      ir_function_result_type(ir));
+    context_dump_type(ctx(visitor), ir_function_result_type(ir));
     fprintf(visitor->stream, " ");
     visit_block_stmt(visitor, ir_function_body2(ir));
     return ir;

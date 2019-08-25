@@ -154,8 +154,8 @@ strtable_id context_base_pointer_reg(struct Context* context,
     return *((strtable_id*)vector_at(&context->register_ids, i));
 }
 
-void context_dump_type(struct Context* context, FILE* stream,
-                       struct TypeIr* type) {
+void context_dump_type(struct Context* context, struct TypeIr* type) {
+    FILE* stream = context->error_stream;
     if (!type) {
         fprintf(stream, "<untyped>");
         return;
@@ -181,14 +181,14 @@ void context_dump_type(struct Context* context, FILE* stream,
                 struct StructTypeIr* s = type_as_struct(elem_type);
                 strtable_id name_index = type_struct_name_index(s);
                 if (name_index == STRTABLE_INVALID_ID) {
-                    context_dump_type(context, stream, elem_type);
+                    context_dump_type(context, elem_type);
                 } else {
                     fprintf(stream, "struct");
                     fprintf(stream, " %s",
                             strtable_at(&context->strtable, name_index));
                 }
             } else
-                context_dump_type(context, stream, elem_type);
+                context_dump_type(context, elem_type);
             fprintf(stream, "*");
         } break;
         case Type_Struct: {
@@ -206,8 +206,7 @@ void context_dump_type(struct Context* context, FILE* stream,
                                    *eit = list_end(type_struct_elem_types(s));
                  it != eit; it = list_next(it)) {
                 struct MemberEntry* entry = (struct MemberEntry*)it;
-                context_dump_type(context, stream,
-                                  type_member_entry_type(entry));
+                context_dump_type(context, type_member_entry_type(entry));
                 strtable_id name_index = type_member_entry_name_index(entry);
                 const char* name = "";
                 if (name_index != STRTABLE_INVALID_ID)
@@ -225,10 +224,10 @@ void context_dump_type(struct Context* context, FILE* stream,
                                    *eit = list_end(param_types);
                  it != eit; it = list_next(it)) {
                 struct TypeIr* param_type = ((struct ListItem*)it)->item;
-                context_dump_type(context, stream, param_type);
+                context_dump_type(context, param_type);
                 fprintf(stream, " -> ");
             }
-            context_dump_type(context, stream, type_function_result_type(f));
+            context_dump_type(context, type_function_result_type(f));
             fprintf(stream, ")");
         } break;
         default:
