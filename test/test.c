@@ -358,3 +358,12 @@ int test54(void) {
     printf("[[%c %c %c %c]]\n", 'a', '\'', '\\', '\n');
     return 0;
 }
+
+#include <stdbool.h>
+
+bool test55(bool b) {
+    if (b)
+        return false;
+    else
+        return true;
+}
