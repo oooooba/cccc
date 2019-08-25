@@ -922,6 +922,7 @@ static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser) {
 
                         member_index = res->id;
                         type = type_function_super(res->type);
+                        type = type_pointer_super(type_new_pointer(type));
                     } break;
                     default:
                         assert(false);
