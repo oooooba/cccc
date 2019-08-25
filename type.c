@@ -204,7 +204,12 @@ static size_t set_member_offset(struct StructTypeIr* type, size_t base) {
         struct MemberEntry* entry = (struct MemberEntry*)it;
         struct TypeIr* member_type = entry->type;
         size_t s = member_type->size;
-        if (!is_union) offset = roundup(offset, s);
+
+        if (!is_union) {
+            size_t alignment = s > sizeof(void*) ? sizeof(void*) : s;
+            offset = roundup(offset, alignment);
+        }
+
         entry->offset = base + offset;
         if (entry->name_index == STRTABLE_INVALID_ID) {
             assert(type_as_struct(member_type));
