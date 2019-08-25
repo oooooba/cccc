@@ -36,7 +36,6 @@ static void register_reserved_keywords(struct Lexer* lexer) {
     register_keyword(default, Default);
     register_keyword(else, Else);
     register_keyword(enum, Enum);
-    register_keyword(false, False);
     register_keyword(for, For);
     register_keyword(if, If);
     register_keyword(int, Int);
@@ -46,7 +45,6 @@ static void register_reserved_keywords(struct Lexer* lexer) {
     register_keyword(static, Static);
     register_keyword(struct, Struct);
     register_keyword(switch, Switch);
-    register_keyword(true, True);
     register_keyword(typedef, Typedef);
     register_keyword(union, Union);
     register_keyword(void, Void);
@@ -138,20 +136,17 @@ static enum TokenTag tokenize_lexeme(struct Lexer* lexer) {
     str[len] = 0;
 
     enum TokenTag tag = find_token_tag(lexer, str);
+
+    if (tag == Token_KeywordConst) {
+        // ignore const keyword, ToDo: fix
+        return tag;
+    }
+
     struct Token* token = new_token(tag, lexer->line, begin_pos);
     if (tag == Token_Id) {
         strtable_id index = strtable_find(&lexer->context->strtable, str);
         if (!index) index = strtable_register(&lexer->context->strtable, str);
         token->strtable_index = index;
-    } else if (tag == Token_KeywordTrue) {
-        token->tag = Token_Integer;
-        token->integer = 1;
-    } else if (tag == Token_KeywordFalse) {
-        token->tag = Token_Integer;
-        token->integer = 0;
-    } else if (tag == Token_KeywordConst) {
-        // ignore const keyword, ToDo: fix
-        return tag;
     }
 
     list_insert_at_end(lexer->tokens, list_from(token));
