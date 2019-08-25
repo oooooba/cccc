@@ -207,10 +207,11 @@ void context_dump_type(struct Context* context, struct TypeIr* type) {
                  it != eit; it = list_next(it)) {
                 struct MemberEntry* entry = (struct MemberEntry*)it;
                 context_dump_type(context, type_member_entry_type(entry));
-                strtable_id name_index = type_member_entry_name_index(entry);
+                strtable_id member_name_index =
+                    type_member_entry_name_index(entry);
                 const char* name = "";
-                if (name_index != STRTABLE_INVALID_ID)
-                    name = strtable_at(&context->strtable, name_index);
+                if (member_name_index != STRTABLE_INVALID_ID)
+                    name = strtable_at(&context->strtable, member_name_index);
                 fprintf(stream, " %s; ", name);
             }
 

@@ -38,16 +38,16 @@ static void release_register(struct RegallocVisitor* visitor) {
     --visitor->free_register_index;
 }
 
-static strtable_id get_nth_func_call_arg_register(struct Context* ctx, size_t n,
-                                                  struct TypeIr* type) {
+static strtable_id get_nth_func_call_arg_register(
+    struct RegallocVisitor* visitor, size_t n, struct TypeIr* type) {
     enum RegisterSizeKind kind = context_type_to_register_size_kind(type);
-    return context_nth_func_call_arg_reg(ctx, n, kind);
+    return context_nth_func_call_arg_reg(ctx(visitor), n, kind);
 }
 
-static strtable_id get_func_call_result_register(struct Context* ctx,
-                                                 struct TypeIr* type) {
+static strtable_id get_func_call_result_register(
+    struct RegallocVisitor* visitor, struct TypeIr* type) {
     enum RegisterSizeKind kind = context_type_to_register_size_kind(type);
-    return context_func_call_result_reg(ctx, kind);
+    return context_func_call_result_reg(ctx(visitor), kind);
 }
 
 static struct ExprIr* visit_const_expr(struct RegallocVisitor* visitor,
@@ -115,7 +115,7 @@ static struct ExprIr* visit_call_expr(struct RegallocVisitor* visitor,
 
         strtable_id arg_reg_id = ir_expr_reg_id(arg);
         strtable_id param_reg_id =
-            get_nth_func_call_arg_register(ctx(visitor), i, ir_expr_type(arg));
+            get_nth_func_call_arg_register(visitor, i, ir_expr_type(arg));
 
         struct ConstExprIr* copy_instr = ir_new_register_const_expr(arg_reg_id);
         ir_expr_set_reg_id(ir_const_expr_cast(copy_instr), param_reg_id);
@@ -152,7 +152,7 @@ static struct ExprIr* visit_call_expr(struct RegallocVisitor* visitor,
 
         // copy result register to expected one
         struct ConstExprIr* copy_instr = ir_new_register_const_expr(
-            get_func_call_result_register(ctx(visitor), result_type));
+            get_func_call_result_register(visitor, result_type));
         ir_expr_set_reg_id(ir_const_expr_cast(copy_instr), reg_id);
         struct ExprStmtIr* stmt =
             ir_new_expr_stmt(ir_const_expr_cast(copy_instr));

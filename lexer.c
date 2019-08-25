@@ -486,7 +486,7 @@ static void tokenize_string(struct Lexer* lexer) {
     size_t begin_pos = lexer->pos;
     advance(lexer);
     for (;;) {
-        char c = peek(lexer);
+        c = peek(lexer);
         if (is_string_quote(c)) break;
         advance(lexer);
     }

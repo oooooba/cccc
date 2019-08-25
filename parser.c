@@ -897,10 +897,11 @@ static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser) {
             struct StructDeclaration* declaration =
                 parse_struct_declaration(parser);
 
-            struct TypeIr* type = declaration->type_specifier;
+            struct TypeIr* elem_type = declaration->type_specifier;
             strtable_id member_index = STRTABLE_INVALID_ID;
             if (declaration->declarator) {  // NULL for anonymous struct
-                type = apply_star(type, declaration->declarator->num_star);
+                elem_type =
+                    apply_star(elem_type, declaration->declarator->num_star);
                 struct DirectDeclarator* direct_declarator =
                     declaration->declarator->direct_declarator;
                 switch (direct_declarator->tag) {
@@ -911,7 +912,7 @@ static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser) {
                         struct DeclarationSpecifier* specifier =
                             new_declaration_specifier(
                                 DeclarationSpecifierTag_Type);
-                        specifier->type = type;
+                        specifier->type = elem_type;
                         struct List* specifiers = malloc(sizeof(struct List));
                         list_initialize(specifiers);
                         insert_at_end_as_list_item(specifiers, specifier);
@@ -921,8 +922,9 @@ static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser) {
                             declaration->declarator);
 
                         member_index = res->id;
-                        type = type_function_super(res->type);
-                        type = type_pointer_super(type_new_pointer(type));
+                        elem_type = type_function_super(res->type);
+                        elem_type =
+                            type_pointer_super(type_new_pointer(elem_type));
                     } break;
                     default:
                         assert(false);
@@ -930,7 +932,7 @@ static struct TypeIr* parse_struct_or_union_specifier(struct Parser* parser) {
             }
 
             struct MemberEntry* entry =
-                type_new_member_entry(member_index, type);
+                type_new_member_entry(member_index, elem_type);
             list_insert_at_end(elem_types,
                                type_member_entry_as_list_header(entry));
         }
