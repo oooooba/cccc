@@ -71,6 +71,105 @@ static struct Token* new_token(enum TokenTag tag, size_t line, size_t pos) {
     return token;
 }
 
+static void dump_token(struct Lexer* lexer, struct Token* token) {
+#define branch(tag)                         \
+    case Token_##tag: {                     \
+        fprintf(lexer->error_stream, #tag); \
+    } break;
+
+    fprintf(lexer->error_stream, "line=%zu, pos=%zu, ", token->line,
+            token->position);
+    switch (token->tag) {
+        branch(Invalid);
+
+        branch(KeywordBreak);
+        branch(KeywordCase);
+        branch(KeywordChar);
+        branch(KeywordConst);
+        branch(KeywordContinue);
+        branch(KeywordDefault);
+        branch(KeywordElse);
+        branch(KeywordEnum);
+        branch(KeywordFor);
+        branch(KeywordIf);
+        branch(KeywordInt);
+        branch(KeywordLong);
+        branch(KeywordReturn);
+        branch(KeywordSizeof);
+        branch(KeywordStatic);
+        branch(KeywordStruct);
+        branch(KeywordSwitch);
+        branch(KeywordTypedef);
+        branch(KeywordUnion);
+        branch(KeywordVoid);
+        branch(KeywordWhile);
+
+        branch(LeftParen);
+        branch(RightParen);
+        branch(LeftCurry);
+        branch(RightCurry);
+        branch(LeftBracket);
+        branch(RightBracket);
+        branch(LeftAngle);
+        branch(LeftAngleEqual);
+        branch(RightAngle);
+        branch(RightAngleEqual);
+
+        branch(Comma);
+        branch(Colon);
+        branch(Semicolon);
+        branch(Dot);
+        branch(DotDotDot);
+        branch(Question);
+
+        branch(Equal);
+        branch(EqualEqual);
+        branch(Plus);
+        branch(PlusPlus);
+        branch(PlusEqual);
+        branch(Minus);
+        branch(MinusMinus);
+        branch(MinusEqual);
+        branch(Asterisk);
+        branch(AsteriskEqual);
+        branch(Arrow);
+        branch(Exclamation);
+        branch(ExclamationEqual);
+        branch(Ampersand);
+        branch(AmpersandAmpersand);
+        branch(Pipe);
+        branch(PipePipe);
+
+        branch(Integer);
+        branch(String);
+        branch(Id);
+
+        branch(PseudoFileBegin);
+        branch(PseudoFileEnd);
+
+        default:
+            assert(false);
+    }
+    const char* s;
+    switch (token->tag) {
+        case Token_Integer:
+            fprintf(lexer->error_stream, ", %ld", token->integer);
+            break;
+        case Token_String:
+            s = strtable_at(&lexer->context->strtable, token->strtable_index);
+            fprintf(lexer->error_stream, ", %s", s);
+            break;
+        case Token_Id:
+            s = strtable_at(&lexer->context->strtable, token->strtable_index);
+            fprintf(lexer->error_stream, ", %s", s);
+            break;
+        default:;
+    }
+    fprintf(lexer->error_stream, "\n");
+
+#undef branch
+}
+
 static char peek_k(struct Lexer* lexer, size_t k) {
     return lexer->buf[lexer->pos + k];
 }
@@ -453,16 +552,13 @@ void lexer_read_and_tokenize(struct Lexer* lexer) {
         lexer->tokens,
         list_from(new_token(Token_PseudoFileEnd, lexer->line, lexer->pos)));
 
-#if 0
     struct ListHeader* it = list_begin(lexer->tokens);
     while (true) {
         struct Token* token = (struct Token*)it;
+        dump_token(lexer, token);
         if (token->tag == Token_PseudoFileEnd) break;
-        fprintf(lexer->error_stream, "line=%zu, pos=%zu, %d %zu\n", token->line,
-                token->position, token->tag, token->strtable_index);
         it = list_next(it);
     }
-#endif
 }
 
 void lexer_initialize(struct Lexer* lexer, struct Context* context,
