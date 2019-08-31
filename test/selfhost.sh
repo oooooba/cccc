@@ -10,109 +10,131 @@ CCCC=false
 GCC=gcc
 SRC=..
 INCLUDE=../test_include
-TMP=/tmp
+TMP=./tmp_link
+
+function setup_tmp() {
+    tmp=tmp$1
+    if [ -e $tmp ]; then
+        rm -rf $tmp
+    fi
+    mkdir $tmp
+
+    if [ -e $TMP ]; then
+        rm -f $TMP
+    fi
+    ln -s $tmp $TMP
+}
 
 function compile_cccc () {
-    src=$SRC/$2.c
-    tmp=$TMP/$2_$1.c
-    asm=$TMP/$2_$1.S
+    src=$SRC/$1.c
+    tmp=$TMP/$1_tmp.c
+    asm=$TMP/$1.S
+    dump=$TMP/$1.dump
+    echo compile $src using $CCCC
 
     $GCC -std=c11 -Wall -I$INCLUDE -E $src >$tmp
-    $CCCC <$tmp >$asm
+    $CCCC <$tmp >$asm 2>$dump
 }
 
 function compile_gcc () {
-    src=$SRC/$2.c
-    asm=$TMP/$2_$1.S
+    src=$SRC/$1.c
+    asm=$TMP/$1.S
     $GCC -std=c11 -Wall $src -S -o $asm
 }
 
 function link () {
+    cd $TMP
     gen=$1
     compiler=cccc$((gen+1))
     $GCC -std=c11 -Wall \
-        $TMP/main_$gen.S \
-        $TMP/codegen_$gen.S \
-        $TMP/context_$gen.S \
-        $TMP/dump_$gen.S \
-        $TMP/fixup_$gen.S \
-        $TMP/ir_$gen.S \
-        $TMP/lexer_$gen.S \
-        $TMP/list_$gen.S \
-        $TMP/map_$gen.S \
-        $TMP/nameresolve_$gen.S \
-        $TMP/parser_$gen.S \
-        $TMP/regalloc_$gen.S \
-        $TMP/strtable_$gen.S \
-        $TMP/simplify_$gen.S \
-        $TMP/type_$gen.S \
-        $TMP/typing_$gen.S \
-        $TMP/vector_$gen.S \
-        $TMP/visitor_$gen.S \
-        -o $compiler
+        main.S \
+        codegen.S \
+        context.S \
+        dump.S \
+        fixup.S \
+        ir.S \
+        lexer.S \
+        list.S \
+        map.S \
+        nameresolve.S \
+        parser.S \
+        regalloc.S \
+        strtable.S \
+        simplify.S \
+        type.S \
+        typing.S \
+        vector.S \
+        visitor.S \
+        -save-temps \
+        -o ../$compiler
+    cd -
 }
 
 # compile with 1st-generation compiler
 
+setup_tmp 1
 CCCC=$CCCC1
+ls -l $TMP
 
-compile_cccc 1 main
-compile_cccc 1 codegen
-compile_cccc 1 context
-compile_cccc 1 dump
-compile_cccc 1 fixup
-compile_cccc 1 ir
-compile_cccc 1 lexer
-compile_cccc 1 list
-compile_cccc 1 map
-compile_cccc 1 nameresolve
-compile_cccc 1 parser
-compile_cccc 1 regalloc
-compile_cccc 1 strtable
-compile_cccc 1 simplify
-compile_cccc 1 type
-compile_cccc 1 typing
-compile_cccc 1 vector
-compile_cccc 1 visitor
+compile_cccc main
+compile_cccc codegen
+compile_cccc context
+compile_cccc dump
+compile_cccc fixup
+compile_cccc ir
+compile_cccc lexer
+compile_cccc list
+compile_cccc map
+compile_cccc nameresolve
+compile_cccc parser
+compile_cccc regalloc
+compile_cccc strtable
+compile_cccc simplify
+compile_cccc type
+compile_cccc typing
+compile_cccc vector
+compile_cccc visitor
 
 link 1
 
 # test 2nd-generation compiler
 
 $GCC -std=c11 -Wall -I$INCLUDE -E test.c >$TMP/test.c
-$CCCC2 <$TMP/test.c >/tmp/output.S
+$CCCC2 <$TMP/test.c >/tmp/output.S 2>/dev/null
 $GCC -std=c11 -Wall main.c /tmp/output.S -o $TEST2
 $TEST2
 
 # compile with 2nd-generation compiler
 
+setup_tmp 2
 CCCC=$CCCC2
+ls -l $TMP
 
-compile_gcc 2 main
-compile_gcc 2 codegen
-compile_gcc 2 context
-compile_gcc 2 dump
-compile_gcc 2 fixup
-compile_gcc 2 ir
-compile_gcc 2 lexer
-compile_cccc 2 list
-compile_gcc 2 map
-compile_gcc 2 nameresolve
-compile_gcc 2 parser
-compile_gcc 2 regalloc
-compile_gcc 2 strtable
-compile_gcc 2 simplify
-compile_gcc 2 type
-compile_gcc 2 typing
-compile_gcc 2 vector
-compile_gcc 2 visitor
+compile_cccc main
+compile_cccc codegen
+compile_cccc context
+compile_cccc dump
+compile_cccc fixup
+compile_cccc ir
+compile_cccc lexer
+compile_cccc list
+compile_cccc map
+compile_cccc nameresolve
+compile_cccc parser
+compile_cccc regalloc
+compile_cccc strtable
+compile_cccc simplify
+compile_cccc type
+compile_cccc typing
+compile_cccc vector
+compile_cccc visitor
 
 link 2
 
 # test 3rd-generation compiler
 
 $GCC -std=c11 -Wall -I$INCLUDE -E test.c >$TMP/test.c
-$CCCC3 <$TMP/test.c >/tmp/output.S
+$CCCC3 <$TMP/test.c >/tmp/output.S 2>/dev/null
 $GCC -std=c11 -Wall main.c /tmp/output.S -o $TEST3
 $TEST3
 
