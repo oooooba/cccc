@@ -1,0 +1,21 @@
+= Setup
+....
+$ git clone https://github.com/oooooba/cccc $CCCC
+$ cd $CCCC
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make
+....
+
+= Run compiler test
+....
+$ cd $CCCC/test
+$ bash run.sh
+....
+
+= Run self-hosting test
+....
+$ cd $CCCC/test
+$ bash selfhost.sh
+....
