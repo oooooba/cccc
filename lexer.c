@@ -27,7 +27,7 @@ static void register_reserved_keywords(struct Lexer* lexer) {
         entry->token_tag = Token_Keyword##tag;               \
     }
 
-    register_keyword(_Bool, Char);
+    register_keyword(_Bool, Bool);
     register_keyword(break, Break);
     register_keyword(case, Case);
     register_keyword(char, Char);
@@ -82,6 +82,7 @@ static void dump_token(struct Lexer* lexer, struct Token* token) {
     switch (token->tag) {
         branch(Invalid);
 
+        branch(KeywordBool);
         branch(KeywordBreak);
         branch(KeywordCase);
         branch(KeywordChar);

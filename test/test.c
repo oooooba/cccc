@@ -367,3 +367,21 @@ bool test55(bool b) {
     else
         return true;
 }
+
+int test56(void) {
+    if ((bool)256)  // 0x100
+        return 1;
+    else
+        return 2;
+}
+
+bool fb(void) {
+    return (bool)256;  // 0x100
+}
+
+int test57(void) {
+    if (fb())
+        return 1;
+    else
+        return 2;
+}

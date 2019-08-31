@@ -354,12 +354,19 @@ static struct ExprIr* visit_cast_expr(struct CodegenVisitor* visitor,
     const char* operand_reg = register_name(visitor, operand_reg_id);
     const char* result_reg = register_name(visitor, result_reg_id);
 
-    enum RegisterSizeKind operand_reg_size =
-        context_type_to_register_size_kind(ir_expr_type(operand));
-    enum RegisterSizeKind result_reg_size =
-        context_type_to_register_size_kind(ir_expr_type(ir_cast_expr_cast(ir)));
-    if (operand_reg_size < result_reg_size)
-        fprintf(visitor->stream, "\tmovsx\t%s, %s\n", result_reg, operand_reg);
+    if (type_tag(ir_expr_type(ir_cast_expr_cast(ir))) == Type_Bool) {
+        fprintf(visitor->stream, "\ttest\t%s, %s\n", operand_reg, operand_reg);
+        fprintf(visitor->stream, "\tsetne\t%s\n", result_reg);
+    } else {
+        enum RegisterSizeKind operand_reg_size =
+            context_type_to_register_size_kind(ir_expr_type(operand));
+        enum RegisterSizeKind result_reg_size =
+            context_type_to_register_size_kind(
+                ir_expr_type(ir_cast_expr_cast(ir)));
+        if (operand_reg_size < result_reg_size)
+            fprintf(visitor->stream, "\tmovsx\t%s, %s\n", result_reg,
+                    operand_reg);
+    }
 
     return ir_cast_expr_cast(ir);
 }

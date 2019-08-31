@@ -56,7 +56,7 @@ static bool acceptable_type_specifier_token(struct Parser* parser,
     }
     return token->tag == Token_KeywordLong || token->tag == Token_KeywordInt ||
            token->tag == Token_KeywordChar || token->tag == Token_KeywordVoid ||
-           token->tag == Token_KeywordEnum ||
+           token->tag == Token_KeywordBool || token->tag == Token_KeywordEnum ||
            token->tag == Token_KeywordStruct ||
            token->tag == Token_KeywordUnion;
 }
@@ -814,6 +814,9 @@ static struct TypeIr* parse_type_specifier(struct Parser* parser) {
             break;
         case Token_KeywordVoid:
             type = type_void_super(type_new_void());
+            break;
+        case Token_KeywordBool:
+            type = type_bool_super(type_new_bool());
             break;
         case Token_KeywordEnum:
             return parse_enum_specifier(parser);

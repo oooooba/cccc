@@ -8,9 +8,11 @@
 #include <stddef.h>
 
 struct TypeIr;
+struct VoidTypeIr;
 struct LongTypeIr;
 struct IntTypeIr;
 struct CharTypeIr;
+struct BoolTypeIr;
 struct PointerTypeIr;
 struct StructTypeIr;
 struct FunctionTypeIr;
@@ -22,6 +24,7 @@ enum TypeTag {
     Type_Long,
     Type_Int,
     Type_Char,
+    Type_Bool,
     Type_Pointer,
     Type_Struct,
     Type_Function,
@@ -46,6 +49,9 @@ struct TypeIr* type_int_super(struct IntTypeIr* type);
 
 struct CharTypeIr* type_new_char(void);
 struct TypeIr* type_char_super(struct CharTypeIr* type);
+
+struct BoolTypeIr* type_new_bool(void);
+struct TypeIr* type_bool_super(struct BoolTypeIr* type);
 
 struct PointerTypeIr* type_new_pointer(struct TypeIr* elem_type);
 struct TypeIr* type_pointer_super(struct PointerTypeIr* type);

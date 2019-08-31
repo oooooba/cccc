@@ -131,6 +131,21 @@ struct TypeIr* type_char_super(struct CharTypeIr* type) {
     return &type->super;
 }
 
+struct BoolTypeIr {
+    struct TypeIr super;
+};
+
+struct BoolTypeIr* type_new_bool(void) {
+    struct BoolTypeIr* type = malloc(sizeof(struct BoolTypeIr));
+    assert(sizeof(bool) == 1);
+    initialize_type(type_bool_super(type), Type_Bool, sizeof(bool));
+    return type;
+}
+
+struct TypeIr* type_bool_super(struct BoolTypeIr* type) {
+    return &type->super;
+}
+
 struct PointerTypeIr {
     struct TypeIr super;
     struct TypeIr* elem_type;

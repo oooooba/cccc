@@ -174,6 +174,9 @@ void context_dump_type(struct Context* context, struct TypeIr* type) {
         case Type_Char:
             fprintf(stream, "char");
             break;
+        case Type_Bool:
+            fprintf(stream, "bool");
+            break;
         case Type_Pointer: {
             struct PointerTypeIr* p = type_as_pointer(type);
             struct TypeIr* elem_type = type_pointer_elem_type(p);
