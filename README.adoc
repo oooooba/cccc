@@ -9,6 +9,25 @@ $ mkdir build
 $ cd build
 $ cmake ..
 $ make
+$ echo "int main(void) { return 42; }" | ./cccc 2>/dev/null
+.intel_syntax noprefix
+.text
+
+.global main
+main:
+	push	rbp
+	mov	rbp, rsp
+	mov	rax, 24
+	sub	rsp, rax
+	push	rbx
+	mov	eax, 42
+	jmp	lab_0_end
+lab_0_end:
+	pop	rbx
+	mov	rsp, rbp
+	pop	rbp
+	ret
+$
 ....
 
 == Run compiler test
