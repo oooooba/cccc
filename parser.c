@@ -52,7 +52,7 @@ static bool acceptable_type_specifier_token(struct Parser* parser,
                                             struct Token* token) {
     if (token->tag == Token_Id) {
         strtable_id id = token->strtable_index;
-        return context_find_user_defined_type(parser->context, id);
+        return context_find_user_defined_type(parser->context, id) != NULL;
     }
     return token->tag == Token_KeywordLong || token->tag == Token_KeywordInt ||
            token->tag == Token_KeywordChar || token->tag == Token_KeywordVoid ||
