@@ -1,4 +1,7 @@
-= Setup
+= CCCC - A tiny C Compiler
+
+== Setup
+
 ....
 $ git clone https://github.com/oooooba/cccc $CCCC
 $ cd $CCCC
@@ -8,13 +11,15 @@ $ cmake ..
 $ make
 ....
 
-= Run compiler test
+== Run compiler test
+
 ....
 $ cd $CCCC/test
 $ bash run.sh
 ....
 
-= Run self-hosting test
+== Run self-hosting test
+
 ....
 $ cd $CCCC/test
 $ bash selfhost.sh
